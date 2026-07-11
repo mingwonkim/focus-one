@@ -1,0 +1,39 @@
+name: focus_one
+description: "ADHD 사용자를 위한 싱글 태스크 집중 미니 위젯. 지금 이거 하나만."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 상태 관리
+  provider: ^6.1.2
+
+  # 데스크탑 창 제어 (always-on-top, frameless, 크기 전환)
+  window_manager: ^0.4.3
+
+  # 시스템 트레이 상주
+  tray_manager: ^0.2.4
+
+  # 전역 단축키 (브레인덤프 캡처)
+  hotkey_manager: ^0.2.3
+
+  # 세션 종료 알림
+  local_notifier: ^0.1.6
+
+  # 로컬 저장 경로
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
