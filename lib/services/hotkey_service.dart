@@ -1,4 +1,5 @@
 // lib/services/hotkey_service.dart
+import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 
 /// 전역 단축키: Ctrl+Shift+Space (macOS는 Cmd+Shift+Space 대응은 추후)

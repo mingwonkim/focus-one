@@ -33,7 +33,7 @@ Future<void> main() async {
   appState.onSessionComplete = (Task task, int minutes) {
     LocalNotification(
       title: '집중 완료!',
-      body: '"${task.title}" ${minutes}분 집중했어요. 잠깐 쉬어가세요.',
+      body: '"${task.title}" $minutes분 집중했어요. 잠깐 쉬어가세요.',
     ).show();
   };
 

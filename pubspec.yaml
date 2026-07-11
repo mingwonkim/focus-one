@@ -35,5 +35,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/
+  # 트레이 아이콘(assets/tray_icon.ico 등)을 추가하면 아래 주석을 해제한다
+  # assets:
+  #   - assets/

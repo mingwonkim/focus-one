@@ -175,7 +175,7 @@ class _DurationSelector extends StatelessWidget {
       children: _options.map((m) {
         final selected = totalSeconds == m * 60;
         return ChoiceChip(
-          label: Text('${m}분'),
+          label: Text('$m분'),
           selected: selected,
           onSelected: enabled ? (_) => onSelect(m) : null,
           labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(

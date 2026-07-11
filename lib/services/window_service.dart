@@ -1,5 +1,5 @@
 // lib/services/window_service.dart
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../core/design_tokens.dart';
