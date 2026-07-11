@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
+import '../models/blocker_settings.dart';
 import '../models/task.dart';
 
 /// MVP용 JSON 파일 저장소.
@@ -47,11 +48,13 @@ class StoreData {
   final List<Task> tasks;
   final List<BrainDumpItem> inbox;
   final List<FocusSession> sessions;
+  final BlockerSettings blockerSettings;
 
   const StoreData({
     required this.tasks,
     required this.inbox,
     required this.sessions,
+    this.blockerSettings = const BlockerSettings(),
   });
 
   factory StoreData.empty() =>
@@ -61,6 +64,7 @@ class StoreData {
         'tasks': tasks.map((t) => t.toJson()).toList(),
         'inbox': inbox.map((i) => i.toJson()).toList(),
         'sessions': sessions.map((s) => s.toJson()).toList(),
+        'blockerSettings': blockerSettings.toJson(),
       };
 
   factory StoreData.fromJson(Map<String, dynamic> json) => StoreData(
@@ -73,5 +77,9 @@ class StoreData {
         sessions: (json['sessions'] as List? ?? [])
             .map((e) => FocusSession.fromJson(e as Map<String, dynamic>))
             .toList(),
+        blockerSettings: json['blockerSettings'] != null
+            ? BlockerSettings.fromJson(
+                json['blockerSettings'] as Map<String, dynamic>)
+            : const BlockerSettings(),
       );
 }

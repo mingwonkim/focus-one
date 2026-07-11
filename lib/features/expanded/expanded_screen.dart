@@ -7,6 +7,7 @@ import '../../core/design_tokens.dart';
 import '../../services/window_service.dart';
 import '../../state/app_state.dart';
 import '../mini/widgets/focus_ring.dart';
+import 'widgets/blocker_settings_view.dart';
 import 'widgets/inbox_list.dart';
 import 'widgets/stats_bar.dart';
 import 'widgets/task_list.dart';
@@ -86,20 +87,27 @@ class ExpandedScreen extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                       Row(
                         children: [
-                          FilledButton.icon(
-                            onPressed: task == null
-                                ? null
-                                : () => state.isRunning
-                                    ? state.pauseTimer()
-                                    : state.startTimer(),
-                            icon: Icon(
-                              state.isRunning
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              size: 18,
+                          if (state.phase == FocusPhase.breakTime)
+                            FilledButton.icon(
+                              onPressed: state.skipBreak,
+                              icon: const Icon(Icons.skip_next, size: 18),
+                              label: const Text('휴식 건너뛰기'),
+                            )
+                          else
+                            FilledButton.icon(
+                              onPressed: task == null
+                                  ? null
+                                  : () => state.isRunning
+                                      ? state.pauseTimer()
+                                      : state.startTimer(),
+                              icon: Icon(
+                                state.isRunning
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                size: 18,
+                              ),
+                              label: Text(state.isRunning ? '일시정지' : '시작'),
                             ),
-                            label: Text(state.isRunning ? '일시정지' : '시작'),
-                          ),
                           const SizedBox(width: AppSpacing.sm),
                           OutlinedButton(
                             onPressed: task == null
@@ -118,10 +126,10 @@ class ExpandedScreen extends StatelessWidget {
 
           Divider(height: 1, color: scheme.outline),
 
-          // 작업 목록 / 인박스 탭
+          // 작업 목록 / 인박스 / 차단 탭
           Expanded(
             child: DefaultTabController(
-              length: 2,
+              length: 3,
               child: Column(
                 children: [
                   TabBar(
@@ -131,6 +139,7 @@ class ExpandedScreen extends StatelessWidget {
                     tabs: [
                       const Tab(text: '할 일'),
                       Tab(text: '인박스 (${state.inbox.length})'),
+                      const Tab(text: '차단'),
                     ],
                   ),
                   const Expanded(
@@ -138,6 +147,7 @@ class ExpandedScreen extends StatelessWidget {
                       children: [
                         TaskList(),
                         InboxList(),
+                        BlockerSettingsView(),
                       ],
                     ),
                   ),

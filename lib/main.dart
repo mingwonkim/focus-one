@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'data/local_store.dart';
 import 'models/task.dart';
+import 'services/blocker_service.dart';
 import 'services/hotkey_service.dart';
 import 'services/tray_service.dart';
 import 'services/window_service.dart';
@@ -14,6 +15,7 @@ import 'state/app_state.dart';
 
 final _hotkeyService = HotkeyService();
 final _trayService = TrayService();
+final _blockerService = BlockerService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,19 +31,49 @@ Future<void> main() async {
   final appState = AppState(LocalStore());
   await appState.init();
 
-  // 세션 완료 → 데스크탑 알림
+  // 세션 완료 → 데스크탑 알림 (자동으로 휴식 시작, 차단 해제)
   appState.onSessionComplete = (Task task, int minutes) {
     LocalNotification(
       title: '집중 완료!',
-      body: '"${task.title}" $minutes분 집중했어요. 잠깐 쉬어가세요.',
+      body: '"${task.title}" $minutes분 집중했어요. 휴식 동안 차단이 풀립니다.',
     ).show();
   };
+
+  // 휴식 종료 → 알림
+  appState.onBreakEnd = () {
+    LocalNotification(
+      title: '휴식 끝',
+      body: '다음 집중을 시작할 준비가 됐어요.',
+    ).show();
+  };
+
+  // 방해 앱/사이트 감지 → 경고 알림
+  _blockerService.onViolation = (String target, bool killed) {
+    LocalNotification(
+      title: killed ? '방해 앱을 닫았어요' : '집중이 흔들리고 있어요',
+      body: killed
+          ? '"$target" 을(를) 종료했습니다. 다시 집중해볼까요?'
+          : '"$target" 이(가) 열려 있어요. 지금 하던 일로 돌아가세요.',
+    ).show();
+  };
+
+  // 집중 시작/중단에 맞춰 차단 on/off 자동 동기화
+  void syncBlocker() {
+    if (appState.shouldBlock) {
+      _blockerService.start(appState.blockerSettings);
+    } else {
+      _blockerService.stop();
+    }
+  }
+
+  appState.addListener(syncBlocker);
 
   // 4. 트레이 상주 (창 닫기 ≠ 종료, 트레이 메뉴에서만 실제 종료)
   await _trayService.init();
   _trayService.onShowRequested = windowService.bringToFront;
   _trayService.onQuitRequested = () async {
     await _hotkeyService.dispose();
+    _blockerService.dispose();
     _trayService.dispose();
     await windowManager.destroy();
   };

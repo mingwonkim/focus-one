@@ -43,14 +43,22 @@ class MiniWidgetScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    task == null ? '지금 할 일을 골라주세요' : '지금 이것만',
+                    switch (state.phase) {
+                      FocusPhase.breakTime => '휴식 중 — 차단 해제됨',
+                      _ when task == null => '지금 할 일을 골라주세요',
+                      _ => '지금 이것만',
+                    },
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                          color: state.phase == FocusPhase.breakTime
+                              ? scheme.primary
+                              : scheme.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    task?.title ?? '—',
+                    state.phase == FocusPhase.breakTime
+                        ? '잠깐 쉬어가세요'
+                        : (task?.title ?? '—'),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -64,16 +72,24 @@ class MiniWidgetScreen extends StatelessWidget {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _RoundIconButton(
-                  icon: state.isRunning ? Icons.pause : Icons.play_arrow,
-                  tooltip: state.isRunning ? '일시정지' : '집중 시작',
-                  isPrimary: true,
-                  onTap: task == null
-                      ? null
-                      : () => state.isRunning
-                          ? state.pauseTimer()
-                          : state.startTimer(),
-                ),
+                if (state.phase == FocusPhase.breakTime)
+                  _RoundIconButton(
+                    icon: Icons.skip_next,
+                    tooltip: '휴식 건너뛰기',
+                    isPrimary: true,
+                    onTap: state.skipBreak,
+                  )
+                else
+                  _RoundIconButton(
+                    icon: state.isRunning ? Icons.pause : Icons.play_arrow,
+                    tooltip: state.isRunning ? '일시정지' : '집중 시작',
+                    isPrimary: true,
+                    onTap: task == null
+                        ? null
+                        : () => state.isRunning
+                            ? state.pauseTimer()
+                            : state.startTimer(),
+                  ),
                 const SizedBox(height: AppSpacing.sm),
                 _RoundIconButton(
                   icon: Icons.unfold_more,

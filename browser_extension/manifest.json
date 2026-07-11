@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "FocusOne Guard",
+  "version": "0.1.0",
+  "description": "유튜브 영상 잠금(끝까지 보기 전 이동 금지), 앞으로 감기 차단, 같은 사이트 중복 탭/창 차단. 상시 동작하며 팝업에서 기능별로 끌 수 있습니다.",
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["youtube-lock.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FocusOne Guard 설정"
+  }
+}

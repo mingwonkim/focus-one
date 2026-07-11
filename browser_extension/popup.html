@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      width: 280px;
+      margin: 0;
+      padding: 16px;
+      font-family: sans-serif;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    h1 {
+      font-size: 15px;
+      margin: 0 0 12px;
+    }
+    label.row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+      cursor: pointer;
+    }
+    label.row span.title {
+      font-weight: 500;
+    }
+    label.row span.desc {
+      display: block;
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+    .sites {
+      margin-top: 12px;
+    }
+    .sites h2 {
+      font-size: 12px;
+      margin: 0 0 6px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      height: 56px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 12px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .hint {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .saved {
+      color: #16a34a;
+      font-size: 11px;
+      margin-top: 6px;
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h1>FocusOne Guard</h1>
+
+  <label class="row">
+    <span>
+      <span class="title">전체 사용</span>
+      <span class="desc">끄면 모든 기능이 즉시 멈춰요</span>
+    </span>
+    <input type="checkbox" id="enabled" />
+  </label>
+
+  <label class="row">
+    <span>
+      <span class="title">영상 잠금</span>
+      <span class="desc">보던 영상이 끝나야 다른 영상으로 이동 가능</span>
+    </span>
+    <input type="checkbox" id="videoLock" />
+  </label>
+
+  <label class="row">
+    <span>
+      <span class="title">앞으로 감기 차단</span>
+      <span class="desc">뒤로 돌려 다시 보는 건 허용</span>
+    </span>
+    <input type="checkbox" id="blockForwardSeek" />
+  </label>
+
+  <label class="row">
+    <span>
+      <span class="title">중복 탭/창 차단</span>
+      <span class="desc">같은 사이트는 한 번에 한 탭만</span>
+    </span>
+    <input type="checkbox" id="blockDuplicates" />
+  </label>
+
+  <div class="sites">
+    <h2>중복 차단 대상 사이트 (한 줄에 하나)</h2>
+    <textarea id="duplicateSites" placeholder="youtube.com"></textarea>
+    <div class="hint">도메인만 입력 (예: youtube.com)</div>
+    <div class="saved" id="saved">저장됨</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
