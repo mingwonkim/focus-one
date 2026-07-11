@@ -9,7 +9,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Flutter 설치
         uses: subosito/flutter-action@v2
@@ -30,7 +30,7 @@ jobs:
         run: flutter build windows --release
 
       - name: 실행 파일 업로드
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: focus-one-windows
           path: build/windows/x64/runner/Release/
@@ -39,7 +39,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Linux 시스템 의존성 설치
         run: |
@@ -66,7 +66,7 @@ jobs:
         run: flutter build linux --release
 
       - name: 실행 파일 업로드
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: focus-one-linux
           path: build/linux/x64/release/bundle/
@@ -75,7 +75,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Flutter 설치
         uses: subosito/flutter-action@v2
@@ -98,7 +98,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent focus_one.app focus-one-macos.zip
 
       - name: 앱 번들 업로드
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: focus-one-macos
           path: build/macos/Build/Products/Release/focus-one-macos.zip
