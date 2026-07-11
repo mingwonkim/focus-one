@@ -1,0 +1,105 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Actions 탭에서 수동 실행 가능
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter 설치
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 플랫폼 폴더 생성 (저장소에는 lib만 있음)
+        run: flutter create --platforms=windows .
+
+      - name: 의존성 설치
+        run: flutter pub get
+
+      - name: 정적 분석 (컴파일 에러를 여기서 잡는다)
+        run: flutter analyze
+
+      - name: Windows 릴리즈 빌드
+        run: flutter build windows --release
+
+      - name: 실행 파일 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-one-windows
+          path: build/windows/x64/runner/Release/
+          retention-days: 14
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux 시스템 의존성 설치
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            libkeybinder-3.0-dev \
+            libnotify-dev
+
+      - name: Flutter 설치
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 플랫폼 폴더 생성
+        run: flutter create --platforms=linux .
+
+      - name: 의존성 설치
+        run: flutter pub get
+
+      - name: Linux 릴리즈 빌드
+        run: flutter build linux --release
+
+      - name: 실행 파일 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-one-linux
+          path: build/linux/x64/release/bundle/
+          retention-days: 14
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flutter 설치
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 플랫폼 폴더 생성
+        run: flutter create --platforms=macos .
+
+      - name: 의존성 설치
+        run: flutter pub get
+
+      - name: macOS 릴리즈 빌드 (서명 없음 — 개인 테스트용)
+        run: flutter build macos --release
+
+      - name: 앱 번들 압축 (zip으로 묶어야 실행 권한이 보존됨)
+        run: |
+          cd build/macos/Build/Products/Release
+          ditto -c -k --sequesterRsrc --keepParent focus_one.app focus-one-macos.zip
+
+      - name: 앱 번들 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-one-macos
+          path: build/macos/Build/Products/Release/focus-one-macos.zip
+          retention-days: 14
