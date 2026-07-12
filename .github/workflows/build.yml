@@ -1,3 +1,4 @@
+
 name: Build
 
 on:
@@ -71,11 +72,44 @@ jobs:
       - name: Linux 릴리즈 빌드
         run: flutter build linux --release
 
-      - name: 실행 파일 업로드
+      - name: .deb 설치 패키지 생성 (더블클릭 설치용, 의존성 자동 설치)
+        run: |
+          mkdir -p deb/DEBIAN deb/opt/focus-one deb/usr/share/applications
+          cp -r build/linux/x64/release/bundle/* deb/opt/focus-one/
+          cat > deb/DEBIAN/control << 'EOF'
+          Package: focus-one
+          Version: 0.1.0
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Depends: libgtk-3-0t64 | libgtk-3-0, libayatana-appindicator3-1, libkeybinder-3.0-0, libnotify4 | libnotify4t64
+          Maintainer: mingwonkim <noreply@github.com>
+          Description: ADHD focus mini widget - one task at a time
+           Single-task always-on-top focus widget for ADHD users.
+          EOF
+          cat > deb/usr/share/applications/focus-one.desktop << 'EOF'
+          [Desktop Entry]
+          Name=FocusOne
+          Comment=One task at a time
+          Exec=/opt/focus-one/focus_one
+          Terminal=false
+          Type=Application
+          Categories=Utility;
+          EOF
+          dpkg-deb --build --root-owner-group deb focus-one_0.1.0_amd64.deb
+
+      - name: 실행 파일 업로드 (zip)
         uses: actions/upload-artifact@v5
         with:
           name: focus-one-linux
           path: build/linux/x64/release/bundle/
+          retention-days: 14
+
+      - name: 설치 파일 업로드 (.deb)
+        uses: actions/upload-artifact@v5
+        with:
+          name: focus-one-linux-deb
+          path: focus-one_0.1.0_amd64.deb
           retention-days: 14
 
   build-macos:
