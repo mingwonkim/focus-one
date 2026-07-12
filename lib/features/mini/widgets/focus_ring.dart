@@ -77,9 +77,9 @@ class _FocusRingPainter extends CustomPainter {
     // 바깥 트랙 (전체 원 테두리)
     final trackPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = 2
       ..color = trackColor;
-    canvas.drawCircle(center, radius - 1.5, trackPaint);
+    canvas.drawCircle(center, radius - 1, trackPaint);
 
     // 남은 시간만큼 채워진 파이 (12시 방향 기준, 시계방향으로 줄어듦)
     final fillPaint = Paint()

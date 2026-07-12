@@ -27,8 +27,9 @@ class ExpandedScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outline),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: scheme.outline, width: 0.5),
+        boxShadow: AppShadow.floating(scheme.onSurface),
       ),
       child: Column(
         children: [
@@ -191,7 +192,6 @@ class _DurationSelector extends StatelessWidget {
           labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
               ),
-          selectedColor: scheme.primary,
           visualDensity: VisualDensity.compact,
         );
       }).toList(),

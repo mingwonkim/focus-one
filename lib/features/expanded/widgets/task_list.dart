@@ -46,10 +46,6 @@ class _TaskListState extends State<TaskList> {
             onSubmitted: (_) => _submit(state),
             decoration: InputDecoration(
               hintText: '할 일 추가 후 Enter',
-              isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.add, size: 20),
                 onPressed: () => _submit(state),

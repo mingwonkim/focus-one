@@ -25,8 +25,9 @@ class MiniWidgetScreen extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: scheme.outline),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: scheme.outline, width: 0.5),
+          boxShadow: AppShadow.floating(scheme.onSurface),
         ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(

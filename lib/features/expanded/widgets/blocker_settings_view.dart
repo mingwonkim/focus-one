@@ -125,10 +125,6 @@ class _BlockItemSectionState extends State<_BlockItemSection> {
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             hintText: widget.hint,
-            isDense: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
             suffixIcon: IconButton(
               icon: const Icon(Icons.add, size: 20),
               onPressed: _submit,

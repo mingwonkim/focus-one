@@ -57,8 +57,9 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: scheme.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: scheme.primary, width: 1),
+          boxShadow: AppShadow.floating(scheme.onSurface),
         ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -76,12 +77,8 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
               controller: _controller,
               focusNode: _focusNode,
               onSubmitted: (_) => _submit(),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Enter로 저장 · Esc로 닫기',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                isDense: true,
               ),
             ),
           ],
