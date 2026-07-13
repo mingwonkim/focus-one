@@ -16,8 +16,9 @@ class BlockerSettingsView extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final settings = state.blockerSettings;
 
+    // 패널 자체에 24px 패딩이 있으므로 여기선 세로 여백만 (가로 공간 확보)
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       children: [
         SwitchListTile(
           dense: true,

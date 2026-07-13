@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
+import '../core/design_tokens.dart';
 import '../models/blocker_settings.dart';
 import '../models/task.dart';
 
@@ -49,12 +50,18 @@ class StoreData {
   final List<BrainDumpItem> inbox;
   final List<FocusSession> sessions;
   final BlockerSettings blockerSettings;
+  final FocusScene scene;
+  final bool soundEnabled;
+  final double soundVolume;
 
   const StoreData({
     required this.tasks,
     required this.inbox,
     required this.sessions,
     this.blockerSettings = const BlockerSettings(),
+    this.scene = FocusScene.forest,
+    this.soundEnabled = true,
+    this.soundVolume = 0.6,
   });
 
   factory StoreData.empty() =>
@@ -65,6 +72,9 @@ class StoreData {
         'inbox': inbox.map((i) => i.toJson()).toList(),
         'sessions': sessions.map((s) => s.toJson()).toList(),
         'blockerSettings': blockerSettings.toJson(),
+        'scene': scene.name,
+        'soundEnabled': soundEnabled,
+        'soundVolume': soundVolume,
       };
 
   factory StoreData.fromJson(Map<String, dynamic> json) => StoreData(
@@ -81,5 +91,9 @@ class StoreData {
             ? BlockerSettings.fromJson(
                 json['blockerSettings'] as Map<String, dynamic>)
             : const BlockerSettings(),
+        scene: FocusScene.values.asNameMap()[json['scene']] ??
+            FocusScene.forest,
+        soundEnabled: json['soundEnabled'] as bool? ?? true,
+        soundVolume: (json['soundVolume'] as num?)?.toDouble() ?? 0.6,
       );
 }

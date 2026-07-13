@@ -49,6 +49,7 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final style = context.watch<AppState>().scene.style;
 
     return CallbackShortcuts(
       bindings: {
@@ -56,10 +57,10 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: scheme.surface,
+          color: style.cardBg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: scheme.primary, width: 1),
-          boxShadow: AppShadow.floating(scheme.onSurface),
+          border: Border.all(color: style.cardBorder),
+          boxShadow: AppShadow.floating(style.shadowColor),
         ),
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

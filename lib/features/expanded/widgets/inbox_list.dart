@@ -32,6 +32,7 @@ class InboxList extends StatelessWidget {
         final item = state.inbox[index];
         return ListTile(
           dense: true,
+          contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.bolt, size: 20, color: scheme.onSurfaceVariant),
           title: Text(
             item.text,

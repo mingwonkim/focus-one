@@ -8,18 +8,19 @@ import 'features/capture/quick_capture_overlay.dart';
 import 'features/expanded/expanded_screen.dart';
 import 'features/mini/mini_widget_screen.dart';
 import 'services/window_service.dart';
+import 'state/app_state.dart';
 
 class FocusOneApp extends StatelessWidget {
   const FocusOneApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 장면(숲/밤/바다)에 따라 테마 전환
+    final scene = context.select((AppState s) => s.scene);
     return MaterialApp(
       title: 'FocusOne',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      theme: AppTheme.of(scene),
       home: const _AppShell(),
     );
   }

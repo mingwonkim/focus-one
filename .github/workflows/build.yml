@@ -55,7 +55,8 @@ jobs:
             ninja-build libgtk-3-dev \
             libayatana-appindicator3-dev \
             libkeybinder-3.0-dev \
-            libnotify-dev
+            libnotify-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
       - name: Flutter 설치
         uses: subosito/flutter-action@v2
@@ -82,7 +83,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: amd64
-          Depends: libgtk-3-0t64 | libgtk-3-0, libayatana-appindicator3-1, libkeybinder-3.0-0, libnotify4 | libnotify4t64
+          Depends: libgtk-3-0t64 | libgtk-3-0, libayatana-appindicator3-1, libkeybinder-3.0-0, libnotify4 | libnotify4t64, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0, gstreamer1.0-plugins-good
           Maintainer: mingwonkim <noreply@github.com>
           Description: ADHD focus mini widget - one task at a time
            Single-task always-on-top focus widget for ADHD users.
@@ -131,6 +132,9 @@ jobs:
 
       - name: macOS 릴리즈 빌드 (서명 없음 — 개인 테스트용)
         run: flutter build macos --release
+
+      - name: Ad-hoc 코드 서명 (서명이 아예 없으면 Apple Silicon에서 실행 불가)
+        run: codesign --force --deep -s - build/macos/Build/Products/Release/focus_one.app
 
       - name: 앱 번들 압축 (zip으로 묶어야 실행 권한이 보존됨)
         run: |

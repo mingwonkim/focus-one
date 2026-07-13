@@ -35,6 +35,18 @@ flutter run -d windows   # Windows
 flutter run -d macos     # macOS
 ```
 
+### macOS: 다운로드한 앱이 "손상됨/확인 불가"로 안 열릴 때
+
+GitHub Actions 빌드는 Apple 공증(notarization)이 없어서 Gatekeeper가 차단한다.
+zip을 푼 뒤 터미널에서 격리 속성을 제거하면 열린다:
+
+```bash
+xattr -cr ~/Downloads/focus_one.app   # 압축 푼 위치에 맞게 경로 수정
+```
+
+공증까지 하려면 Apple Developer Program($99/년) 가입 + 서명·공증 단계가 필요하다.
+소스가 있는 맥에서는 그냥 `flutter build macos --release` 로 직접 빌드하면 격리 자체가 없다.
+
 ### 트레이 아이콘 준비 (필수는 아님)
 
 `assets/` 폴더에 아래 파일을 넣으면 시스템 트레이 아이콘이 표시된다. 없어도 앱은 동작한다.

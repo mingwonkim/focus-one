@@ -4,13 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../core/design_tokens.dart';
+import '../../core/scene_decorations.dart';
 import '../../services/window_service.dart';
 import '../../state/app_state.dart';
 import 'widgets/focus_ring.dart';
 
-/// 미니 위젯: 화면 구석에 항상 떠 있는 앱의 본체.
-/// 구성 = [타이머 링] + [현재 작업 1개] + [시작/일시정지] + [완료]
-/// 목록·통계·설정은 전부 확장 패널로 밀어낸다.
+/// 미니 위젯 (시안 Mini Widget · 320×128):
+/// [장면 다이얼 88] + [라벨/현재 작업] + [재생 버튼 48]
 class MiniWidgetScreen extends StatelessWidget {
   const MiniWidgetScreen({super.key});
 
@@ -18,86 +18,96 @@ class MiniWidgetScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final windowService = context.read<WindowService>();
-    final scheme = Theme.of(context).colorScheme;
+    final style = state.scene.style;
     final task = state.currentTask;
+    final isBreak = state.phase == FocusPhase.breakTime;
 
     return DragToMoveArea(
       child: Container(
+        width: WindowSizes.mini.width,
+        height: WindowSizes.mini.height,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: scheme.surface,
+          color: style.cardBg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: scheme.outline, width: 0.5),
-          boxShadow: AppShadow.floating(scheme.onSurface),
+          border: Border.all(color: style.cardBorder),
+          boxShadow: AppShadow.floating(style.shadowColor),
         ),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
+        child: Stack(
           children: [
-            FocusRing(
-              progress: state.progress,
-              remainingSeconds: state.remainingSeconds,
-              size: 72,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+            Positioned.fill(child: MiniCornerAccents(scene: state.scene)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
                 children: [
-                  Text(
-                    switch (state.phase) {
-                      FocusPhase.breakTime => '휴식 중 — 차단 해제됨',
-                      _ when task == null => '지금 할 일을 골라주세요',
-                      _ => '지금 이것만',
-                    },
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: state.phase == FocusPhase.breakTime
-                              ? scheme.primary
-                              : scheme.onSurfaceVariant,
-                        ),
+                  FocusRing(
+                    progress: state.progress,
+                    remainingSeconds: state.remainingSeconds,
+                    scene: state.scene,
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    state.phase == FocusPhase.breakTime
-                        ? '잠깐 쉬어가세요'
-                        : (task?.title ?? '—'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isBreak ? '휴식 중 — 차단 해제됨' : '지금 집중할 일',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.66, // 0.06em
+                            color: style.textMuted,
+                          ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isBreak
+                              ? '잠깐 쉬어가세요'
+                              : (task?.title ?? '할 일을 골라주세요'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: style.textStrong,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ScenePlayButton(
+                    style: style,
+                    icon: isBreak
+                        ? Icons.skip_next
+                        : (state.isRunning ? Icons.pause : Icons.play_arrow),
+                    tooltip: isBreak
+                        ? '휴식 건너뛰기'
+                        : (state.isRunning ? '일시정지' : '집중 시작'),
+                    onTap: isBreak
+                        ? state.skipBreak
+                        : (task == null
+                            ? null
+                            : () => state.isRunning
+                                ? state.pauseTimer()
+                                : state.startTimer()),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (state.phase == FocusPhase.breakTime)
-                  _RoundIconButton(
-                    icon: Icons.skip_next,
-                    tooltip: '휴식 건너뛰기',
-                    isPrimary: true,
-                    onTap: state.skipBreak,
-                  )
-                else
-                  _RoundIconButton(
-                    icon: state.isRunning ? Icons.pause : Icons.play_arrow,
-                    tooltip: state.isRunning ? '일시정지' : '집중 시작',
-                    isPrimary: true,
-                    onTap: task == null
-                        ? null
-                        : () => state.isRunning
-                            ? state.pauseTimer()
-                            : state.startTimer(),
-                  ),
-                const SizedBox(height: AppSpacing.sm),
-                _RoundIconButton(
-                  icon: Icons.unfold_more,
-                  tooltip: '패널 열기',
-                  onTap: () => windowService.toggleMode(),
-                ),
-              ],
+            // 패널 열기 (시안엔 없지만 기능상 필요 — 우하단에 은은하게)
+            Positioned(
+              right: 6,
+              bottom: 4,
+              child: IconButton(
+                tooltip: '패널 열기',
+                icon: Icon(Icons.unfold_more, size: 14, color: style.textFaint),
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 24, minHeight: 24),
+                onPressed: () => windowService.toggleMode(),
+              ),
             ),
           ],
         ),
@@ -106,46 +116,3 @@ class MiniWidgetScreen extends StatelessWidget {
   }
 }
 
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({
-    required this.icon,
-    required this.tooltip,
-    this.onTap,
-    this.isPrimary = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onTap;
-  final bool isPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final enabled = onTap != null;
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: isPrimary
-            ? (enabled ? scheme.primary : scheme.outline)
-            : scheme.surface,
-        shape: CircleBorder(
-          side: isPrimary ? BorderSide.none : BorderSide(color: scheme.outline),
-        ),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: Icon(
-              icon,
-              size: 18,
-              color: isPrimary ? scheme.onPrimary : scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

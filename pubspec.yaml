@@ -28,6 +28,9 @@ dependencies:
   # 로컬 저장 경로
   path_provider: ^2.1.4
 
+  # 앰비언트 사운드 재생 (숲/밤/바다 모드)
+  audioplayers: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -35,6 +38,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # 트레이 아이콘(assets/tray_icon.ico 등)을 추가하면 아래 주석을 해제한다
-  # assets:
-  #   - assets/
+  assets:
+    - assets/sounds/

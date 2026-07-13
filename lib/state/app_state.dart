@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../core/design_tokens.dart';
 import '../data/local_store.dart';
 import '../models/blocker_settings.dart';
 import '../models/task.dart';
@@ -32,9 +33,41 @@ class AppState extends ChangeNotifier {
   int _breakTotalSeconds = 5 * 60;
   int _breakRemainingSeconds = 5 * 60;
 
+  FocusScene _scene = FocusScene.forest;
+  bool _soundEnabled = true;
+  double _soundVolume = 0.6;
+
   // ---- Getters ----
   List<Task> get pendingTasks =>
       _tasks.where((t) => !t.isDone).toList(growable: false);
+
+  /// 오늘 완료한 작업 (리스트 하단에 취소선으로 표시)
+  List<Task> get todayDoneTasks {
+    final now = DateTime.now();
+    return _tasks
+        .where((t) =>
+            t.isDone &&
+            t.completedAt != null &&
+            t.completedAt!.year == now.year &&
+            t.completedAt!.month == now.month &&
+            t.completedAt!.day == now.day)
+        .toList(growable: false);
+  }
+
+  /// 작업별 완료한 집중 세션 수 (🍅 카운트)
+  int sessionCountFor(String taskId) =>
+      _sessions.where((s) => s.taskId == taskId).length;
+
+  /// 오늘 완료한 집중 세션 수 (푸터: 심은 나무/모은 별/만난 고래)
+  int get todaySessionCount {
+    final now = DateTime.now();
+    return _sessions
+        .where((s) =>
+            s.endedAt.year == now.year &&
+            s.endedAt.month == now.month &&
+            s.endedAt.day == now.day)
+        .length;
+  }
   List<BrainDumpItem> get inbox => List.unmodifiable(_inbox);
   List<FocusSession> get sessions => List.unmodifiable(_sessions);
 
@@ -49,6 +82,30 @@ class AppState extends ChangeNotifier {
   bool get isRunning => _isRunning;
   FocusPhase get phase => _phase;
   BlockerSettings get blockerSettings => _blockerSettings;
+  FocusScene get scene => _scene;
+
+  void setScene(FocusScene scene) {
+    if (_scene == scene) return;
+    _scene = scene;
+    notifyListeners();
+    _persist();
+  }
+
+  bool get soundEnabled => _soundEnabled;
+  double get soundVolume => _soundVolume;
+
+  void setSoundEnabled(bool enabled) {
+    _soundEnabled = enabled;
+    notifyListeners();
+    _persist();
+  }
+
+  /// 슬라이더 드래그 중엔 persist:false로 호출하고 놓을 때 저장한다 (파일 쓰기 폭주 방지)
+  void setSoundVolume(double volume, {bool persist = true}) {
+    _soundVolume = volume.clamp(0.0, 1.0);
+    notifyListeners();
+    if (persist) _persist();
+  }
 
   /// 차단이 실제로 켜져야 하는 상태인가 (집중 중 + 타이머 작동 + 설정 on)
   bool get shouldBlock =>
@@ -110,6 +167,9 @@ class AppState extends ChangeNotifier {
     _inbox = List.of(data.inbox);
     _sessions = List.of(data.sessions);
     _blockerSettings = data.blockerSettings;
+    _scene = data.scene;
+    _soundEnabled = data.soundEnabled;
+    _soundVolume = data.soundVolume;
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
@@ -122,6 +182,9 @@ class AppState extends ChangeNotifier {
           inbox: _inbox,
           sessions: _sessions,
           blockerSettings: _blockerSettings,
+          scene: _scene,
+          soundEnabled: _soundEnabled,
+          soundVolume: _soundVolume,
         ),
       );
 

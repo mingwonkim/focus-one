@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'data/local_store.dart';
 import 'models/task.dart';
+import 'services/ambient_sound_service.dart';
 import 'services/blocker_service.dart';
 import 'services/hotkey_service.dart';
 import 'services/tray_service.dart';
@@ -16,6 +17,7 @@ import 'state/app_state.dart';
 final _hotkeyService = HotkeyService();
 final _trayService = TrayService();
 final _blockerService = BlockerService();
+final _ambientSoundService = AmbientSoundService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,12 +70,27 @@ Future<void> main() async {
 
   appState.addListener(syncBlocker);
 
+  // 집중 중에만 장면(숲/밤/바다) 앰비언트 사운드 루프 재생 (on/off·볼륨 설정 반영)
+  void syncAmbientSound() {
+    _ambientSoundService.setVolume(appState.soundVolume);
+    if (appState.phase == FocusPhase.focus &&
+        appState.isRunning &&
+        appState.soundEnabled) {
+      _ambientSoundService.play(appState.scene);
+    } else {
+      _ambientSoundService.stop();
+    }
+  }
+
+  appState.addListener(syncAmbientSound);
+
   // 4. 트레이 상주 (창 닫기 ≠ 종료, 트레이 메뉴에서만 실제 종료)
   await _trayService.init();
   _trayService.onShowRequested = windowService.bringToFront;
   _trayService.onQuitRequested = () async {
     await _hotkeyService.dispose();
     _blockerService.dispose();
+    _ambientSoundService.dispose();
     _trayService.dispose();
     await windowManager.destroy();
   };

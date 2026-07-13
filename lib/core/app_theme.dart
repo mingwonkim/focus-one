@@ -7,31 +7,28 @@ import 'design_tokens.dart';
 /// Windows/Linux에서는 각 OS 기본 폰트에 SF 스케일(음수 자간)을 입힌다.
 /// 위젯 스타일은 최대한 여기(컴포넌트 테마)에서 처리해 화면 코드를 단순하게 유지한다.
 abstract class AppTheme {
-  static ThemeData get light => _base(
-        colorScheme: const ColorScheme.light(
-          primary: AppColors.primary,
-          onPrimary: AppColors.onPrimary,
-          surface: AppColors.surface,
-          onSurface: AppColors.onSurface,
-          onSurfaceVariant: AppColors.onSurfaceVariant,
-          outline: AppColors.outline,
-          error: AppColors.error,
-        ),
-        fieldFill: AppColors.fieldFill,
-      );
-
-  static ThemeData get dark => _base(
-        colorScheme: const ColorScheme.dark(
-          primary: AppColors.primary,
-          onPrimary: AppColors.onPrimary,
-          surface: AppColors.surfaceDark,
-          onSurface: AppColors.onSurfaceDark,
-          onSurfaceVariant: AppColors.onSurfaceVariantDark,
-          outline: AppColors.outlineDark,
-          error: AppColors.error,
-        ),
-        fieldFill: AppColors.fieldFillDark,
-      );
+  /// 장면(숲/밤/바다)별 테마 — 값은 전부 SceneStyle(시안 추출값)에서 파생
+  static ThemeData of(FocusScene scene) {
+    final s = scene.style;
+    return _base(
+      colorScheme: ColorScheme(
+        brightness: s.brightness,
+        primary: s.accent,
+        onPrimary: s.playFg,
+        secondary: s.accent,
+        onSecondary: s.playFg,
+        surface: s.brightness == Brightness.dark
+            ? const Color(0xFF141A28)
+            : const Color(0xFFFFFFFF),
+        onSurface: s.textStrong,
+        onSurfaceVariant: s.textMuted,
+        outline: s.rowBorder,
+        error: AppColors.error,
+        onError: AppColors.onPrimary,
+      ),
+      fieldFill: s.fieldFill,
+    );
+  }
 
   static ThemeData _base({
     required ColorScheme colorScheme,
