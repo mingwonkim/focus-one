@@ -44,7 +44,7 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull, reason: '$scene expanded');
       expect(find.text('FocusOne'), findsOneWidget);
-      expect(find.text(scene.style.badgeText), findsOneWidget);
+      expect(find.text(scene.style.sceneLabel), findsOneWidget);
       expect(find.text('오늘의 작업'), findsOneWidget);
       expect(find.textContaining(scene.style.footerLabel), findsOneWidget);
 

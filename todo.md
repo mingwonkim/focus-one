@@ -9,6 +9,14 @@
 - [x] 사운드 on/off + 볼륨 조절 — 확장 패널 헤더 스피커 아이콘 → 팝업(토글+슬라이더), 설정 저장됨
 - [x] 커밋 + 푸시 완료 (0cd61d9, main)
 
+## 2026-10-08 — 앱 UI/UX v2 (design-pipeline, design-v2 브랜치)
+- [x] Mobbin 후보 제시 → 사용자 A안(Tiimo) + 링 안 장면 아이콘 선택
+- [x] PRD·레퍼런스·astra 설계서 (docs/v2/)
+- [x] 구현: 토큰·굵은 링+장면 일러스트·미니·확장·소형 타이머·작업 카드(원형 체크)·인박스·퀵 캡처·모션 — analyze 0, test 3/3 통과
+- [x] 미리보기 PNG 3장면×미니/확장 생성 (tool/preview)
+- [ ] 사용자 검토 → 피드백 반영 → 확정 시 main 머지
+- [ ] 실제 macOS 앱 실행 확인 (창 드래그·팝업 메뉴·우클릭 삭제)
+
 ## 다음 세션
 - [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 /// 디자인 토큰. 하드코딩 색상/매직넘버 금지 — 반드시 여기서 참조한다.
-/// 디자인 언어: 바탕화면 시안(FocusOne Forest/Night/Ocean .dc.html)이 원본.
+/// 디자인 언어: v2 — Tiimo 집중 화면 레퍼런스 + 링 안 장면 일러스트 (docs/v2/).
 abstract class AppColors {
   // 장면(FocusScene)과 무관한 공통 시맨틱 컬러
   static const onPrimary = Color(0xFFFFFFFF);
@@ -29,114 +29,75 @@ enum FocusScene {
   String get soundAsset => 'sounds/$name.wav';
 }
 
-/// 장면별 스타일 값 — 전부 시안(.dc.html)에서 그대로 추출한 값이다. 임의 변경 금지.
+/// 장면별 스타일 값 — v2(Tiimo 레퍼런스) 팔레트. 근거: docs/v2/app-design-spec.md §3.
+/// 작은 글자에 투명도 금지 — 전부 불투명 sRGB. 대비는 spec 표 참조(텍스트 ≥5:1).
 class SceneStyle {
   const SceneStyle({
     required this.brightness,
     required this.cardBg,
     required this.cardBorder,
-    required this.shadowColor,
-    required this.heading,
+    required this.rowBg,
+    required this.rowShadow,
     required this.textStrong,
     required this.textMuted,
     required this.textFaint,
     required this.accent,
+    required this.ringProgress,
     required this.ringTrack,
-    required this.timeColor,
-    required this.timeShadow,
     required this.dialColors,
     required this.dialStops,
-    required this.playGradA,
-    required this.playGradB,
-    required this.playFg,
-    required this.playShadow,
-    required this.ghostBg,
-    required this.ghostBorder,
-    required this.ghostFg,
-    required this.badgeBg,
-    required this.badgeBorder,
-    required this.badgeFg,
-    required this.badgeText,
-    required this.rowBg,
-    required this.rowBorder,
-    required this.rowSelBg,
-    required this.rowSelBorder,
-    required this.rowText,
-    required this.rowDone,
+    required this.pillBg,
+    required this.pillFg,
+    required this.checkBg,
+    required this.checkFg,
     required this.divider,
     required this.fieldFill,
+    required this.sceneLabel,
     required this.footerLabel,
-    required this.footerEmoji,
     required this.footerUnit,
   });
 
   final Brightness brightness;
 
-  // 카드 (미니 radius 30 / 확장 radius 36)
-  final Color cardBg;
-  final Color cardBorder;
-  final Color shadowColor;
+  final Color cardBg; // 창 바탕
+  final Color cardBorder; // 창 테두리 1px (창 외부 그림자 없음)
+  final Color rowBg; // 리스트 카드·입력
+  final Color? rowShadow; // 카드 그림자 (밤은 없음)
 
-  // 텍스트
-  final Color heading; // "FocusOne" 타이틀
-  final Color textStrong; // 작업 제목
-  final Color textMuted; // 라벨 (지금 집중할 일, 세션 라벨 …)
-  final Color textFaint; // 보조 (🍅 카운트 …)
+  final Color textStrong; // 제목·시간·작업
+  final Color textMuted; // 라벨
+  final Color textFaint; // 보조·완료
 
-  // 타이머 링/다이얼
-  final Color accent; // 진행 링
+  final Color accent; // 작은 강조 글자·선택 테두리
+  final Color ringProgress;
   final Color ringTrack;
-  final Color timeColor;
-  final Color timeShadow;
-  final List<Color> dialColors; // 다이얼 안 풍경 배경 그라데이션
+  final List<Color> dialColors; // 링 안 풍경 하늘 그라데이션
   final List<double> dialStops;
 
-  // 재생 버튼 (그라데이션 원형)
-  final Color playGradA;
-  final Color playGradB;
-  final Color playFg;
-  final Color playShadow;
-
-  // 고스트 버튼 (↺ ⏭)
-  final Color ghostBg;
-  final Color ghostBorder;
-  final Color ghostFg;
-
-  // 모드 뱃지 필
-  final Color badgeBg;
-  final Color badgeBorder;
-  final Color badgeFg;
-  final String badgeText;
-
-  // 작업 리스트 행
-  final Color rowBg;
-  final Color rowBorder;
-  final Color rowSelBg;
-  final Color rowSelBorder;
-  final Color rowText;
-  final Color rowDone;
+  final Color pillBg; // 주 동작 알약 버튼
+  final Color pillFg;
+  final Color checkBg; // 완료 체크
+  final Color checkFg;
 
   final Color divider;
   final Color fieldFill;
 
-  // 푸터 통계 ("오늘 심은 나무 🌲 2그루")
-  final String footerLabel;
-  final String footerEmoji;
-  final String footerUnit;
+  final String sceneLabel; // 헤더 장면 칩 ("숲")
+  final String footerLabel; // "오늘 심은 나무"
+  final String footerUnit; // "그루"
 
   static const forest = SceneStyle(
     brightness: Brightness.light,
-    cardBg: Color.fromRGBO(255, 255, 255, 0.86),
-    cardBorder: Color.fromRGBO(255, 255, 255, 0.9),
-    shadowColor: Color.fromRGBO(34, 120, 62, 0.18),
-    heading: Color(0xFF14301C),
-    textStrong: Color(0xFF16321E),
-    textMuted: Color.fromRGBO(38, 84, 50, 0.55),
-    textFaint: Color.fromRGBO(38, 84, 50, 0.45),
-    accent: Color(0xFF2EB45C),
-    ringTrack: Color.fromRGBO(46, 158, 80, 0.14),
-    timeColor: Color(0xFFFFFFFF),
-    timeShadow: Color.fromRGBO(16, 80, 38, 0.65),
+    cardBg: Color(0xFFEEF7F1),
+    cardBorder: Color(0xFFDCEEE3),
+    rowBg: Color(0xFFFFFFFF),
+    rowShadow: Color(0x0F000000),
+    textStrong: Color(0xFF162D22),
+    textMuted: Color(0xFF405B4C),
+    textFaint: Color(0xFF596C61),
+    accent: Color(0xFF246B4B),
+    ringProgress: Color(0xFF4F8D6D),
+    ringTrack: Color(0xFFDCEEE3),
     dialColors: [
       Color(0xFFF0FFF4),
       Color(0xFFD2F7DC),
@@ -144,86 +105,59 @@ class SceneStyle {
       Color(0xFF52C47C),
     ],
     dialStops: [0, 0.32, 0.66, 1],
-    playGradA: Color(0xFF3ECB6E),
-    playGradB: Color(0xFF1F9E4C),
-    playFg: Color(0xFFFFFFFF),
-    playShadow: Color.fromRGBO(31, 158, 76, 0.4),
-    ghostBg: Color.fromRGBO(46, 180, 92, 0.08),
-    ghostBorder: Color.fromRGBO(46, 158, 80, 0.22),
-    ghostFg: Color(0xFF2A9152),
-    badgeBg: Color.fromRGBO(46, 180, 92, 0.12),
-    badgeBorder: Color.fromRGBO(46, 180, 92, 0.3),
-    badgeFg: Color(0xFF1F9E4C),
-    badgeText: '🌿 숲 모드',
-    rowBg: Color.fromRGBO(255, 255, 255, 0.7),
-    rowBorder: Color.fromRGBO(46, 158, 80, 0.12),
-    rowSelBg: Color.fromRGBO(46, 180, 92, 0.1),
-    rowSelBorder: Color.fromRGBO(46, 180, 92, 0.45),
-    rowText: Color(0xFF1C3A24),
-    rowDone: Color.fromRGBO(38, 84, 50, 0.38),
-    divider: Color.fromRGBO(46, 158, 80, 0.14),
-    fieldFill: Color.fromRGBO(46, 158, 80, 0.08),
+    pillBg: Color(0xFF191B1A),
+    pillFg: Color(0xFFFFFFFF),
+    checkBg: Color(0xFF246B4B),
+    checkFg: Color(0xFFFFFFFF),
+    divider: Color(0xFFDCEEE3),
+    fieldFill: Color(0xFFFFFFFF),
+    sceneLabel: '숲',
     footerLabel: '오늘 심은 나무',
-    footerEmoji: '🌲',
     footerUnit: '그루',
   );
 
+  // 밤: spec은 라벤더(#C2B4ED)였으나 달·별 일러스트와 맞춰 달빛 골드 유지 — docs/v2/app-deviations.md
   static const night = SceneStyle(
     brightness: Brightness.dark,
-    cardBg: Color.fromRGBO(20, 26, 40, 0.82),
-    cardBorder: Color.fromRGBO(242, 217, 140, 0.22),
-    shadowColor: Color.fromRGBO(0, 0, 0, 0.6),
-    heading: Color(0xFFFDF3D0),
-    textStrong: Color(0xFFF3EFE2),
-    textMuted: Color.fromRGBO(242, 217, 140, 0.5),
-    textFaint: Color.fromRGBO(242, 217, 140, 0.4),
-    accent: Color(0xFFE8CF8E),
-    ringTrack: Color.fromRGBO(242, 217, 140, 0.16),
-    timeColor: Color(0xFFFDF3D0),
-    timeShadow: Color.fromRGBO(0, 0, 0, 0.8),
+    cardBg: Color(0xFF14131A),
+    cardBorder: Color(0xFF2A2833),
+    rowBg: Color(0xFF24222D),
+    rowShadow: null,
+    textStrong: Color(0xFFF6F3FC),
+    textMuted: Color(0xFFCEC8DE),
+    textFaint: Color(0xFFAAA6B8),
+    accent: Color(0xFFE3C77F),
+    ringProgress: Color(0xFFE3C77F),
+    ringTrack: Color(0xFF3A3528),
     dialColors: [
       Color(0xFF232C4A),
       Color(0xFF171F38),
       Color(0xFF0D1222),
     ],
     dialStops: [0, 0.4, 1],
-    playGradA: Color(0xFFF2D98C),
-    playGradB: Color(0xFFCFA84E),
-    playFg: Color(0xFF2A2210),
-    playShadow: Color.fromRGBO(207, 168, 78, 0.35),
-    ghostBg: Color.fromRGBO(242, 217, 140, 0.08),
-    ghostBorder: Color.fromRGBO(242, 217, 140, 0.26),
-    ghostFg: Color(0xFFE8CF8E),
-    badgeBg: Color.fromRGBO(242, 217, 140, 0.1),
-    badgeBorder: Color.fromRGBO(242, 217, 140, 0.32),
-    badgeFg: Color(0xFFF2D98C),
-    badgeText: '🌙 야간 모드',
-    rowBg: Color.fromRGBO(255, 255, 255, 0.04),
-    rowBorder: Color.fromRGBO(242, 217, 140, 0.12),
-    rowSelBg: Color.fromRGBO(242, 217, 140, 0.1),
-    rowSelBorder: Color.fromRGBO(242, 217, 140, 0.4),
-    rowText: Color(0xFFF3EFE2),
-    rowDone: Color.fromRGBO(243, 239, 226, 0.35),
-    divider: Color.fromRGBO(242, 217, 140, 0.16),
-    fieldFill: Color.fromRGBO(255, 255, 255, 0.06),
+    pillBg: Color(0xFF34313F),
+    pillFg: Color(0xFFFFFFFF),
+    checkBg: Color(0xFFE3C77F),
+    checkFg: Color(0xFF14131A),
+    divider: Color(0xFF2A2833),
+    fieldFill: Color(0xFF24222D),
+    sceneLabel: '밤',
     footerLabel: '오늘 모은 별',
-    footerEmoji: '⭐',
     footerUnit: '개',
   );
 
   static const ocean = SceneStyle(
     brightness: Brightness.light,
-    cardBg: Color.fromRGBO(255, 255, 255, 0.86),
-    cardBorder: Color.fromRGBO(255, 255, 255, 0.9),
-    shadowColor: Color.fromRGBO(43, 125, 180, 0.18),
-    heading: Color(0xFF0F2C42),
-    textStrong: Color(0xFF10293C),
-    textMuted: Color.fromRGBO(27, 83, 121, 0.55),
-    textFaint: Color.fromRGBO(27, 83, 121, 0.45),
-    accent: Color(0xFF2E8FCE),
-    ringTrack: Color.fromRGBO(43, 134, 197, 0.14),
-    timeColor: Color(0xFFFFFFFF),
-    timeShadow: Color.fromRGBO(10, 50, 80, 0.7),
+    cardBg: Color(0xFFEFF7FC),
+    cardBorder: Color(0xFFDDEDF7),
+    rowBg: Color(0xFFFFFFFF),
+    rowShadow: Color(0x0F000000),
+    textStrong: Color(0xFF142F40),
+    textMuted: Color(0xFF405E70),
+    textFaint: Color(0xFF536D79),
+    accent: Color(0xFF246587),
+    ringProgress: Color(0xFF568CAD),
+    ringTrack: Color(0xFFDDEDF7),
     dialColors: [
       Color(0xFFEEF9FF),
       Color(0xFFC9E9F8),
@@ -231,27 +165,14 @@ class SceneStyle {
       Color(0xFF3585BD),
     ],
     dialStops: [0, 0.3, 0.64, 1],
-    playGradA: Color(0xFF46A5DD),
-    playGradB: Color(0xFF1F7AB5),
-    playFg: Color(0xFFFFFFFF),
-    playShadow: Color.fromRGBO(31, 122, 181, 0.4),
-    ghostBg: Color.fromRGBO(46, 143, 206, 0.08),
-    ghostBorder: Color.fromRGBO(46, 143, 206, 0.24),
-    ghostFg: Color(0xFF2278B0),
-    badgeBg: Color.fromRGBO(46, 143, 206, 0.1),
-    badgeBorder: Color.fromRGBO(46, 143, 206, 0.3),
-    badgeFg: Color(0xFF1F7AB5),
-    badgeText: '🐋 바다 모드',
-    rowBg: Color.fromRGBO(255, 255, 255, 0.7),
-    rowBorder: Color.fromRGBO(46, 143, 206, 0.12),
-    rowSelBg: Color.fromRGBO(46, 143, 206, 0.1),
-    rowSelBorder: Color.fromRGBO(46, 143, 206, 0.45),
-    rowText: Color(0xFF152F42),
-    rowDone: Color.fromRGBO(27, 83, 121, 0.38),
-    divider: Color.fromRGBO(46, 143, 206, 0.14),
-    fieldFill: Color.fromRGBO(46, 143, 206, 0.08),
+    pillBg: Color(0xFF191B1A),
+    pillFg: Color(0xFFFFFFFF),
+    checkBg: Color(0xFF246587),
+    checkFg: Color(0xFFFFFFFF),
+    divider: Color(0xFFDDEDF7),
+    fieldFill: Color(0xFFFFFFFF),
+    sceneLabel: '바다',
     footerLabel: '오늘 만난 고래',
-    footerEmoji: '🐋',
     footerUnit: '마리',
   );
 }
@@ -268,29 +189,36 @@ abstract class AppSpacing {
 abstract class AppRadius {
   static const double sm = 8;
   static const double md = 10;
-  static const double lg = 16; // 리스트 행
-  static const double xl = 30; // 미니 위젯 카드
-  static const double xxl = 36; // 확장 패널 카드
+  static const double lg = 16; // 리스트 카드·입력
+  static const double xl = 24; // 창 (미니/확장/캡처)
   static const double full = 9999;
 }
 
-/// 떠 있는 카드의 그림자 — 시안: 0 20px 50px + 0 2px 8px
+/// 컴포넌트 치수 (spec §1~2)
+abstract class AppSize {
+  static const double ringMini = 88; // 두께 12, 안쪽 여백 14
+  static const double ringLarge = 160; // 두께 24, 안쪽 여백 28
+  static const double ringCompact = 40; // 두께 6
+  static const double control = 40; // 알약 높이·원형 버튼
+  static const double controlSm = 32;
+  static const double row = 56; // 작업 카드
+  static const double chip = 32; // 카드 왼쪽 장면 칩
+  static const double check = 24;
+}
+
+/// 리스트 카드 그림자 (Tiimo식 아주 옅은 6%) — 밤은 null
 abstract class AppShadow {
-  static List<BoxShadow> floating(Color base) => [
-        BoxShadow(
-          color: base,
-          blurRadius: 50,
-          offset: const Offset(0, 20),
-        ),
-        BoxShadow(
-          color: base.withValues(alpha: base.a * 0.45),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ];
+  static List<BoxShadow>? card(Color? c) => c == null
+      ? null
+      : [BoxShadow(color: c, blurRadius: 8, offset: const Offset(0, 2))];
 }
 
 abstract class AppDuration {
+  static const press = Duration(milliseconds: 80);
+  static const release = Duration(milliseconds: 120);
+  static const tab = Duration(milliseconds: 120);
+  static const check = Duration(milliseconds: 160);
+  static const tick = Duration(milliseconds: 300); // 링 진행 보간
   static const micro = Duration(milliseconds: 150);
   static const enter = Duration(milliseconds: 200);
   static const transition = Duration(milliseconds: 280);

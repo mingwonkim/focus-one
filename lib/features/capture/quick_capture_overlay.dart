@@ -48,7 +48,6 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final style = context.watch<AppState>().scene.style;
 
     return CallbackShortcuts(
@@ -60,27 +59,45 @@ class _QuickCaptureOverlayState extends State<QuickCaptureOverlay> {
           color: style.cardBg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: style.cardBorder),
-          boxShadow: AppShadow.floating(style.shadowColor),
         ),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '떠오른 생각을 던져두고 하던 일로 돌아가세요',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              '떠오른 생각을 던져두세요',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: style.textStrong,
+              ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 12),
             TextField(
               controller: _controller,
               focusNode: _focusNode,
               onSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(
-                hintText: 'Enter로 저장 · Esc로 닫기',
+              style: TextStyle(fontSize: 14, color: style.textStrong),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: style.rowBg,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: BorderSide(color: style.accent, width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: BorderSide(color: style.accent, width: 2),
+                ),
               ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Enter 저장 · Esc 닫기',
+              style: TextStyle(fontSize: 12, color: style.textMuted),
             ),
           ],
         ),

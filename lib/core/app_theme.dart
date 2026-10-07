@@ -14,15 +14,13 @@ abstract class AppTheme {
       colorScheme: ColorScheme(
         brightness: s.brightness,
         primary: s.accent,
-        onPrimary: s.playFg,
+        onPrimary: s.checkFg,
         secondary: s.accent,
-        onSecondary: s.playFg,
-        surface: s.brightness == Brightness.dark
-            ? const Color(0xFF141A28)
-            : const Color(0xFFFFFFFF),
+        onSecondary: s.checkFg,
+        surface: s.rowBg, // 팝업 메뉴·팝오버 바탕
         onSurface: s.textStrong,
         onSurfaceVariant: s.textMuted,
-        outline: s.rowBorder,
+        outline: s.divider,
         error: AppColors.error,
         onError: AppColors.onPrimary,
       ),

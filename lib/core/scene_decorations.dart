@@ -91,15 +91,13 @@ class SceneDialPainter extends CustomPainter {
     canvas.drawOval(_r(d, left: -0.20, bottom: -0.20, w: 0.78, h: 0.62), p);
     p.color = const Color.fromRGBO(36, 148, 72, 0.9);
     canvas.drawOval(_r(d, right: -0.18, bottom: -0.24, w: 0.84, h: 0.66), p);
-    // 글자 가독용 베일
-    _veil(canvas, d, const Color.fromRGBO(10, 60, 28, 0.28));
   }
 
   void _paintNight(Canvas canvas, double d) {
     final p = Paint();
-    // 달 (글로우 → 본체 → 크레이터)
-    final moonC = Offset(0.37 * d, 0.33 * d);
-    final moonR = 0.172 * d;
+    // 달 (글로우 → 본체 → 크레이터) — v2: 작은 링(60px)에서도 보이게 중앙·확대
+    final moonC = Offset(0.5 * d, 0.48 * d);
+    final moonR = 0.2 * d;
     _radial(canvas, moonC, moonR * 1.5,
         const Color.fromRGBO(242, 217, 140, 0.28));
     canvas.drawCircle(
@@ -113,37 +111,34 @@ class SceneDialPainter extends CustomPainter {
         ).createShader(Rect.fromCircle(center: moonC, radius: moonR)),
     );
     p.color = const Color.fromRGBO(190, 158, 90, 0.45);
-    canvas.drawCircle(moonC + Offset(-0.05 * d, 0.05 * d), 0.027 * d, p);
+    canvas.drawCircle(moonC + Offset(-0.06 * d, 0.07 * d), 0.032 * d, p);
     p.color = const Color.fromRGBO(190, 158, 90, 0.4);
-    canvas.drawCircle(moonC + Offset(0.045 * d, -0.02 * d), 0.019 * d, p);
-    // 달 위의 토끼 (귀 2 + 머리 + 몸통)
+    canvas.drawCircle(moonC + Offset(0.07 * d, 0.02 * d), 0.022 * d, p);
+    // 달 위의 토끼 (귀 2 + 머리 + 몸통) — 달 윗변 기준 k배
+    const k = 1.8;
+    final anchor = moonC + Offset(-0.015 * d, -moonR);
+    Offset at(double x, double y) => anchor + Offset(x * d * k, y * d * k);
     final rp = Paint()..color = const Color(0xFFF5F2EA);
-    final earL = _rotRRect(moonC + Offset(-0.035 * d, -moonR - 0.055 * d),
-        0.013 * d, 0.042 * d, -12);
-    final earR = _rotRRect(moonC + Offset(0.0 * d, -moonR - 0.058 * d),
-        0.013 * d, 0.045 * d, 8);
-    canvas.drawPath(earL, rp);
-    canvas.drawPath(earR, rp);
+    canvas.drawPath(
+        _rotRRect(at(-0.02, -0.055), 0.013 * d * k, 0.042 * d * k, -12), rp);
+    canvas.drawPath(
+        _rotRRect(at(0.015, -0.058), 0.013 * d * k, 0.045 * d * k, 8), rp);
     rp.color = const Color(0xFFFAF7EF);
     canvas.drawOval(
         Rect.fromCenter(
-            center: moonC + Offset(-0.015 * d, -moonR - 0.008 * d),
-            width: 0.043 * d,
-            height: 0.035 * d),
+            center: at(0, -0.008), width: 0.043 * d * k, height: 0.035 * d * k),
         rp);
     rp.color = const Color(0xFFF0EBDD);
     canvas.drawOval(
         Rect.fromCenter(
-            center: moonC + Offset(-0.03 * d, -moonR + 0.014 * d),
-            width: 0.07 * d,
-            height: 0.04 * d),
+            center: at(-0.015, 0.014), width: 0.07 * d * k, height: 0.04 * d * k),
         rp);
     // 별
     for (final (x, y, r, a) in [
-      (0.78, 0.22, 0.013, 0.95),
-      (0.70, 0.40, 0.008, 0.8),
-      (0.54, 0.12, 0.011, 0.85),
-      (0.16, 0.56, 0.008, 0.7),
+      (0.80, 0.24, 0.016, 0.95),
+      (0.82, 0.46, 0.01, 0.8),
+      (0.24, 0.20, 0.013, 0.85),
+      (0.16, 0.50, 0.01, 0.7),
     ]) {
       p.color = Color.fromRGBO(255, 244, 208, a);
       canvas.drawCircle(Offset(x * d, y * d), r * d, p);
@@ -217,29 +212,12 @@ class SceneDialPainter extends CustomPainter {
       bubble.color = Color.fromRGBO(255, 255, 255, a);
       canvas.drawCircle(Offset(x * d, y * d), r * d, bubble);
     }
-    // 모랫바닥
+    // 바닥 (청록 틴트)
     p.style = PaintingStyle.fill;
-    p.color = const Color.fromRGBO(232, 217, 184, 0.5);
+    p.color = const Color.fromRGBO(150, 210, 214, 0.55);
     canvas.drawOval(_r(d, left: -0.10, bottom: -0.14, w: 0.70, h: 0.34), p);
-    p.color = const Color.fromRGBO(214, 192, 148, 0.45);
+    p.color = const Color.fromRGBO(112, 186, 196, 0.5);
     canvas.drawOval(_r(d, right: -0.12, bottom: -0.16, w: 0.76, h: 0.36), p);
-    // 글자 가독용 베일
-    _veil(canvas, d, const Color.fromRGBO(10, 45, 70, 0.3));
-  }
-
-  /// 중앙 시간 텍스트 가독용 radial 베일 (시안의 soft veil)
-  void _veil(Canvas canvas, double d, Color color) {
-    final c = Offset(0.5 * d, 0.44 * d);
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, d, d),
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(0, -0.12),
-          radius: 0.9,
-          colors: [color, color.withValues(alpha: 0.03)],
-          stops: const [0, 0.62],
-        ).createShader(Rect.fromCircle(center: c, radius: d)),
-    );
   }
 
   /// 회전된 알약(rrect) 경로 — 토끼 귀, 고래 꼬리 등
@@ -420,151 +398,101 @@ class SceneBullet extends StatelessWidget {
   }
 }
 
-/// 확장 패널 상단 가로 장식 줄 (잎 덩굴 / 별 줄 / 파도 줄)
-class SceneGarland extends StatelessWidget {
-  const SceneGarland({super.key, required this.scene});
+/// 누름 피드백: 0.97 스케일 (80ms 누름 / 120ms 해제). 동작 줄이기 설정이면 즉시.
+class PressScale extends StatefulWidget {
+  const PressScale({super.key, required this.child, this.onTap});
 
-  final FocusScene scene;
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _down = false;
+
+  void _set(bool v) {
+    if (widget.onTap != null && _down != v) setState(() => _down = v);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final items = switch (scene) {
-      FocusScene.forest => const [
-          Leaf(size: 20, angle: 120, colorA: Color(0xFF7FD598), colorB: Color(0xFF3CB865), opacity: 0.7),
-          Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Leaf(size: 14, angle: 60, colorA: Color(0xFFAEE8BF), colorB: Color(0xFF6ECF8D), opacity: 0.55),
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return MouseRegion(
+      cursor: widget.onTap == null
+          ? SystemMouseCursors.basic
+          : SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => _set(true),
+        onTapUp: (_) => _set(false),
+        onTapCancel: () => _set(false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _down ? 0.97 : 1,
+          duration: reduce
+              ? Duration.zero
+              : (_down ? AppDuration.press : AppDuration.release),
+          curve: Curves.easeOut,
+          child: Opacity(
+            opacity: widget.onTap == null ? 0.45 : 1,
+            child: widget.child,
           ),
-          Leaf(size: 22, angle: 160, colorA: Color(0xFF6ECF8D), colorB: Color(0xFF2AA354), opacity: 0.75),
-          Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Leaf(size: 13, angle: 30, colorA: Color(0xFFC4F0D1), colorB: Color(0xFF6ECF8D), opacity: 0.55),
-          ),
-          Leaf(size: 18, angle: 200, colorA: Color(0xFF7FD598), colorB: Color(0xFF35AD5E), opacity: 0.7),
-        ],
-      FocusScene.night => const [
-          StarCross(size: 10, color: Color.fromRGBO(242, 217, 140, 0.7)),
-          _GlowDot(size: 5, color: Color.fromRGBO(255, 244, 208, 0.55)),
-          StarCross(size: 12, color: Color.fromRGBO(242, 217, 140, 0.8)),
-          _GlowDot(size: 4, color: Color.fromRGBO(255, 244, 208, 0.5)),
-          StarCross(size: 9, color: Color.fromRGBO(242, 217, 140, 0.65)),
-        ],
-      FocusScene.ocean => const [
-          WaveArc(width: 22, color: Color.fromRGBO(85, 167, 216, 0.55)),
-          Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: WaveArc(width: 15, color: Color.fromRGBO(140, 205, 240, 0.5)),
-          ),
-          WaveArc(width: 24, color: Color.fromRGBO(70, 165, 221, 0.6)),
-          Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: WaveArc(width: 14, color: Color.fromRGBO(160, 215, 242, 0.5)),
-          ),
-          WaveArc(width: 20, color: Color.fromRGBO(85, 167, 216, 0.55)),
-        ],
-    };
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: items,
+        ),
+      ),
     );
   }
 }
 
-/// 미니 위젯 우상단 코너 장식
-class MiniCornerAccents extends StatelessWidget {
-  const MiniCornerAccents({super.key, required this.scene});
-
-  final FocusScene scene;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (scene) {
-      FocusScene.forest => const Stack(children: [
-          Positioned(
-            top: -6,
-            right: 14,
-            child: Leaf(size: 26, angle: 140, colorA: Color(0xFF7FD598), colorB: Color(0xFF3CB865), opacity: 0.75),
-          ),
-          Positioned(
-            top: 10,
-            right: 34,
-            child: Leaf(size: 16, angle: 200, colorA: Color(0xFFAEE8BF), colorB: Color(0xFF6ECF8D), opacity: 0.6),
-          ),
-        ]),
-      FocusScene.night => const Stack(children: [
-          Positioned(
-            top: 12,
-            right: 18,
-            child: StarCross(size: 12, color: Color.fromRGBO(242, 217, 140, 0.8)),
-          ),
-          Positioned(
-            top: 26,
-            right: 38,
-            child: _GlowDot(size: 7, color: Color.fromRGBO(255, 244, 208, 0.6)),
-          ),
-        ]),
-      FocusScene.ocean => const Stack(children: [
-          Positioned(
-            top: 10,
-            right: 16,
-            child: WaveArc(width: 26, color: Color.fromRGBO(85, 167, 216, 0.6)),
-          ),
-          Positioned(
-            top: 10,
-            right: 39,
-            child: WaveArc(width: 18, color: Color.fromRGBO(140, 205, 240, 0.6)),
-          ),
-        ]),
-    };
-  }
-}
-
-/// 시안의 그라데이션 원형 재생 버튼 (미니 48 / 확장 62)
-class ScenePlayButton extends StatelessWidget {
-  const ScenePlayButton({
+/// 주 동작 알약 버튼 (Tiimo의 검은 알약): 아이콘 + 라벨
+class PillButton extends StatelessWidget {
+  const PillButton({
     super.key,
     required this.style,
     required this.icon,
-    required this.tooltip,
-    this.size = 48,
+    required this.label,
+    this.width = 144,
+    this.height = AppSize.control,
     this.onTap,
   });
 
   final SceneStyle style;
   final IconData icon;
-  final String tooltip;
-  final double size;
+  final String label;
+  final double width;
+  final double height;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return Tooltip(
-      message: tooltip,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.45,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [style.playGradA, style.playGradB],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: style.playShadow,
-                  blurRadius: size * 0.45,
-                  offset: Offset(0, size * 0.2),
+    return Semantics(
+      button: true,
+      label: label,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: style.pillBg,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: height * 0.5, color: style.pillFg),
+              if (width >= 96) ...[
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: style.pillFg,
+                  ),
                 ),
               ],
-            ),
-            child: Icon(icon, size: size * 0.46, color: style.playFg),
+            ],
           ),
         ),
       ),
@@ -572,14 +500,14 @@ class ScenePlayButton extends StatelessWidget {
   }
 }
 
-/// 시안의 고스트 원형 버튼 (↺ ⏭, 46px)
-class SceneGhostButton extends StatelessWidget {
-  const SceneGhostButton({
+/// 보조 원형 버튼 (리셋·완료·패널 열기): 카드색 원 + 아이콘
+class RoundIconButton extends StatelessWidget {
+  const RoundIconButton({
     super.key,
     required this.style,
     required this.icon,
     required this.tooltip,
-    this.size = 46,
+    this.size = AppSize.control,
     this.onTap,
   });
 
@@ -591,44 +519,20 @@ class SceneGhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onTap != null;
     return Tooltip(
       message: tooltip,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.45,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: style.ghostBg,
-              border: Border.all(color: style.ghostBorder),
-            ),
-            child: Icon(icon, size: size * 0.42, color: style.ghostFg),
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: style.rowBg,
+            boxShadow: AppShadow.card(style.rowShadow),
           ),
+          child: Icon(icon, size: size * 0.45, color: style.textStrong),
         ),
-      ),
-    );
-  }
-}
-
-class _GlowDot extends StatelessWidget {
-  const _GlowDot({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        boxShadow: [BoxShadow(color: color, blurRadius: size)],
       ),
     );
   }

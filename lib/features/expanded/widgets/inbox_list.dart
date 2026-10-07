@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/design_tokens.dart';
 import '../../../state/app_state.dart';
 
 /// 브레인덤프 인박스.
@@ -12,47 +13,52 @@ class InboxList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final scheme = Theme.of(context).colorScheme;
+    final style = state.scene.style;
 
     if (state.inbox.isEmpty) {
       return Center(
         child: Text(
           '작업 중 떠오른 생각은\nCtrl+Shift+Space로 여기에 쌓여요.',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+          style: TextStyle(fontSize: 14, height: 1.5, color: style.textMuted),
         ),
       );
     }
 
     return ListView.builder(
+      padding: EdgeInsets.zero,
       itemCount: state.inbox.length,
       itemBuilder: (context, index) {
         final item = state.inbox[index];
-        return ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.bolt, size: 20, color: scheme.onSurfaceVariant),
-          title: Text(
-            item.text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium,
+        return Container(
+          constraints: const BoxConstraints(minHeight: 64),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(left: 16, right: 4),
+          decoration: BoxDecoration(
+            color: style.rowBg,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: AppShadow.card(style.rowShadow),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
+              Expanded(
+                child: Text(
+                  item.text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14, color: style.textStrong),
+                ),
+              ),
               IconButton(
                 tooltip: '할 일로 올리기',
-                icon: Icon(Icons.arrow_upward,
-                    size: 16, color: scheme.primary),
+                icon: Icon(Icons.arrow_upward_rounded,
+                    size: 18, color: style.accent),
                 onPressed: () => state.promoteInboxItem(item.id),
               ),
               IconButton(
                 tooltip: '버리기',
-                icon: Icon(Icons.close,
-                    size: 16, color: scheme.onSurfaceVariant),
+                icon: Icon(Icons.close_rounded,
+                    size: 18, color: style.textFaint),
                 onPressed: () => state.deleteInboxItem(item.id),
               ),
             ],

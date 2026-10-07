@@ -232,6 +232,18 @@ class AppState extends ChangeNotifier {
     _persist();
   }
 
+  /// 리스트 체크로 완료. 현재 작업이 아니면 타이머·선택을 건드리지 않는다.
+  void completeTask(String id) {
+    if (id == _currentTaskId) return completeCurrentTask();
+    _tasks = _tasks
+        .map((t) => t.id == id
+            ? t.copyWith(isDone: true, completedAt: DateTime.now())
+            : t)
+        .toList();
+    notifyListeners();
+    _persist();
+  }
+
   void deleteTask(String id) {
     _tasks.removeWhere((t) => t.id == id);
     if (_currentTaskId == id) {

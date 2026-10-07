@@ -14,8 +14,8 @@ import 'widgets/task_list.dart';
 
 enum _PanelView { tasks, inbox, blocker }
 
-/// 확장 패널 (시안 Expanded Panel · 400×560):
-/// 헤더(타이틀+모드 뱃지) → 장면 다이얼 216 → 컨트롤(↺ ▶ ⏭) → 오늘의 작업 → 푸터 통계
+/// 확장 패널 (400×560, spec §1 표):
+/// 헤더 → 현재 작업·세션 칩 → 링 160 → 시간 → 컨트롤 → 탭 → 목록 → 푸터
 class ExpandedScreen extends StatefulWidget {
   const ExpandedScreen({super.key});
 
@@ -34,7 +34,8 @@ class _ExpandedScreenState extends State<ExpandedScreen> {
     final windowService = context.read<WindowService>();
     final style = state.scene.style;
     final task = state.currentTask;
-    final isBreak = state.phase == FocusPhase.breakTime;
+    final view = TimerView(state);
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
     return Container(
       width: WindowSizes.expanded.width,
@@ -42,200 +43,205 @@ class _ExpandedScreenState extends State<ExpandedScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: style.cardBg,
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: style.cardBorder),
-        boxShadow: AppShadow.floating(style.shadowColor),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+      padding: const EdgeInsets.all(AppSpacing.md),
       // 카드가 배경색을 직접 칠하므로, 내부 잉크/리스트타일용 투명 Material을 깐다
       child: Material(
         type: MaterialType.transparency,
-        child: Stack(
+        child: Column(
           children: [
-            // 상단 장식 줄 (잎 덩굴 / 별 줄 / 파도 줄)
-            Positioned(
-              top: -14,
-              left: -2,
-              right: -2,
-              child: SceneGarland(scene: state.scene),
+            // ── 헤더: 타이틀 · 사운드 · 장면 · 접기 ──
+            SizedBox(
+              height: 32,
+              child: DragToMoveArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'FocusOne',
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: style.textStrong,
+                        ),
+                      ),
+                    ),
+                    _SoundControl(state: state, style: style),
+                    const SizedBox(width: 8),
+                    _SceneChip(state: state, style: style),
+                    const SizedBox(width: 8),
+                    RoundIconButton(
+                      style: style,
+                      size: AppSize.controlSm,
+                      icon: Icons.close_fullscreen_rounded,
+                      tooltip: '미니 위젯으로',
+                      onTap: windowService.collapse,
+                    ),
+                  ],
+                ),
+              ),
             ),
-            Column(
-              children: [
-                // ── 헤더 ──
-                DragToMoveArea(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'FocusOne',
-                              maxLines: 1,
-                              overflow: TextOverflow.fade,
-                              softWrap: false,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.2,
-                                color: style.heading,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            _SessionLabel(state: state, style: style),
-                          ],
-                        ),
-                      ),
-                      _SoundControl(state: state, style: style),
-                      IconButton(
-                        tooltip: '미니 위젯으로',
-                        icon: Icon(Icons.unfold_less,
-                            size: 18, color: style.textFaint),
-                        onPressed: () => windowService.collapse(),
-                      ),
-                      Tooltip(
-                        message: '모드 전환',
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                          onTap: () => state.setScene(state.scene.next),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 13, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: style.badgeBg,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.full),
-                              border: Border.all(color: style.badgeBorder),
-                            ),
-                            child: Text(
-                              style.badgeText,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: style.badgeFg,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            const SizedBox(height: 8),
 
-                // ── 장면 다이얼 + 컨트롤 (작업 뷰) / 소형 타이머 줄 (인박스·차단 뷰) ──
-                // 인박스·차단은 내용이 많아서 다이얼을 접어 공간을 내어준다.
-                if (_view == _PanelView.tasks) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 10),
-                    child: FocusRing(
-                      progress: state.progress,
-                      remainingSeconds: state.remainingSeconds,
-                      scene: state.scene,
-                      size: 216,
-                      stroke: 8,
-                      inset: 15,
-                      stateLabel: state.isRunning
-                          ? '집중하는 중'
-                          : (isBreak ? '휴식 중' : '준비됨'),
+            // ── 현재 작업 · 세션 길이 ──
+            SizedBox(
+              height: 32,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      state.phase == FocusPhase.breakTime
+                          ? '잠깐 쉬어가세요'
+                          : (task?.title ?? view.status),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: task == null ? style.textMuted : style.textStrong,
+                      ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SceneGhostButton(
-                          style: style,
-                          icon: Icons.replay,
-                          tooltip: '리셋',
-                          onTap: state.stopTimer,
-                        ),
-                        const SizedBox(width: 14),
-                        Transform.translate(
-                          offset: const Offset(0, -4),
-                          child: ScenePlayButton(
-                            style: style,
-                            size: 62,
-                            icon: isBreak
-                                ? Icons.skip_next
-                                : (state.isRunning
-                                    ? Icons.pause
-                                    : Icons.play_arrow),
-                            tooltip: isBreak
-                                ? '휴식 건너뛰기'
-                                : (state.isRunning ? '일시정지' : '집중 시작'),
-                            onTap: isBreak
-                                ? state.skipBreak
-                                : (task == null
-                                    ? null
-                                    : () => state.isRunning
-                                        ? state.pauseTimer()
-                                        : state.startTimer()),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        SceneGhostButton(
-                          style: style,
-                          icon: Icons.check,
-                          tooltip: '완료',
-                          onTap:
-                              task == null ? null : state.completeCurrentTask,
-                        ),
-                      ],
+                  const SizedBox(width: 8),
+                  _SessionChip(state: state, style: style),
+                ],
+              ),
+            ),
+
+            // ── 링 + 시간 + 컨트롤 (작업 뷰) / 소형 타이머 줄 (인박스·차단) ──
+            if (_view == _PanelView.tasks) ...[
+              const SizedBox(height: 8),
+              FocusRing(
+                progress: state.progress,
+                scene: state.scene,
+                size: AppSize.ringLarge,
+                stroke: 24,
+                inset: 28,
+              ),
+              SizedBox(
+                height: 48,
+                child: Center(
+                  child: Text(
+                    formatClock(state.remainingSeconds),
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                      color: style.textStrong,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                ] else
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 14),
-                    child: _CompactTimerStrip(state: state, style: style),
-                  ),
-
-                // ── 오늘의 작업 / 인박스 / 차단 ──
-                _SectionHeader(
-                  style: style,
-                  view: _view,
-                  inboxCount: state.inbox.length,
-                  onSelect: (v) => setState(() => _view = v),
                 ),
-                const SizedBox(height: 8),
-                Expanded(
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  RoundIconButton(
+                    style: style,
+                    icon: Icons.replay_rounded,
+                    tooltip: '리셋',
+                    onTap: state.stopTimer,
+                  ),
+                  const SizedBox(width: 12),
+                  PillButton(
+                    style: style,
+                    icon: view.icon,
+                    label: view.label,
+                    onTap: view.onTap,
+                  ),
+                  const SizedBox(width: 12),
+                  RoundIconButton(
+                    style: style,
+                    icon: Icons.check_rounded,
+                    tooltip: '완료',
+                    onTap: task == null ? null : state.completeCurrentTask,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ] else ...[
+              const SizedBox(height: 8),
+              _CompactTimerStrip(state: state, style: style),
+              const SizedBox(height: 12),
+            ],
+
+            // ── 오늘의 작업 / 인박스 / 차단 ──
+            _SectionTabs(
+              style: style,
+              view: _view,
+              inboxCount: state.inbox.length,
+              onSelect: (v) => setState(() => _view = v),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: reduce ? Duration.zero : AppDuration.tab,
+                switchInCurve: Curves.easeOut,
+                child: KeyedSubtree(
+                  key: ValueKey(_view),
                   child: switch (_view) {
                     _PanelView.tasks => const TaskList(),
                     _PanelView.inbox => const InboxList(),
                     _PanelView.blocker => const BlockerSettingsView(),
                   },
                 ),
+              ),
+            ),
 
-                // ── 푸터 통계 ──
-                Container(
-                  padding: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: style.divider)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        style.footerLabel,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: style.textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${style.footerEmoji * state.todaySessionCount.clamp(0, 8)}'
-                        ' ${state.todaySessionCount}${style.footerUnit}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // ── 푸터 통계 ──
+            const SizedBox(height: 8),
+            Text(
+              '${style.footerLabel} · ${state.todaySessionCount}${style.footerUnit}',
+              style: TextStyle(fontSize: 12, color: style.textMuted),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 헤더 장면 칩: [장면 불릿] 숲 — 탭하면 숲→밤→바다 순환
+class _SceneChip extends StatelessWidget {
+  const _SceneChip({required this.state, required this.style});
+
+  final AppState state;
+  final SceneStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '장면 전환 (사운드도 바뀜)',
+      child: PressScale(
+        onTap: () => state.setScene(state.scene.next),
+        child: Container(
+          height: AppSize.controlSm,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: style.rowBg,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            boxShadow: AppShadow.card(style.rowShadow),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SceneBullet(scene: state.scene, selected: true),
+              const SizedBox(width: 6),
+              Text(
+                style.sceneLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: style.textStrong,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -251,17 +257,21 @@ class _SoundControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 기본 PopupMenuButton은 헤더 Row를 키운다 — IconButton과 같은 48px로 고정
+    // 기본 PopupMenuButton은 헤더 Row를 키운다 — 32px 원형으로 고정
     return SizedBox(
-      width: 48,
-      height: 48,
+      width: AppSize.controlSm,
+      height: AppSize.controlSm,
       child: PopupMenuButton<void>(
         tooltip: '사운드 설정',
         position: PopupMenuPosition.under,
-        icon: Icon(
-          state.soundEnabled ? Icons.volume_up : Icons.volume_off,
-          size: 18,
-          color: style.textFaint,
+        padding: EdgeInsets.zero,
+        child: RoundIconButton(
+          style: style,
+          size: AppSize.controlSm,
+          icon: state.soundEnabled
+              ? Icons.volume_up_rounded
+              : Icons.volume_off_rounded,
+          tooltip: '사운드 설정',
         ),
         itemBuilder: (_) => [
           PopupMenuItem<void>(
@@ -278,17 +288,17 @@ class _SoundControl extends StatelessWidget {
                       icon: Icon(
                         s.soundEnabled ? Icons.volume_up : Icons.volume_off,
                         size: 20,
-                        color: s.soundEnabled ? style.badgeFg : style.textFaint,
+                        color: s.soundEnabled ? style.accent : style.textFaint,
                       ),
                       onPressed: () => s.setSoundEnabled(!s.soundEnabled),
                     ),
                     Expanded(
                       child: SliderTheme(
                         data: SliderThemeData(
-                          activeTrackColor: style.badgeFg,
+                          activeTrackColor: style.accent,
                           inactiveTrackColor: style.ringTrack,
-                          thumbColor: style.badgeFg,
-                          overlayColor: style.badgeBg,
+                          thumbColor: style.accent,
+                          overlayColor: style.ringTrack,
                           trackHeight: 3,
                           thumbShape: const RoundSliderThumbShape(
                               enabledThumbRadius: 7),
@@ -313,8 +323,8 @@ class _SoundControl extends StatelessWidget {
   }
 }
 
-/// 인박스·차단 뷰용 소형 타이머 줄: 작은 다이얼 + 시간 + 재생 버튼.
-/// 큰 다이얼을 접어도 타이머 확인·조작은 계속 가능하게.
+/// 인박스·차단 뷰용 소형 타이머 줄 (spec §2):
+/// 링 40 → 시간·상태 → 리셋 32 · 알약 80 · 완료 32
 class _CompactTimerStrip extends StatelessWidget {
   const _CompactTimerStrip({required this.state, required this.style});
 
@@ -323,66 +333,75 @@ class _CompactTimerStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final task = state.currentTask;
-    final isBreak = state.phase == FocusPhase.breakTime;
-    final m = state.remainingSeconds ~/ 60;
-    final s = state.remainingSeconds % 60;
-
+    final view = TimerView(state);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: style.rowBg,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: style.rowBorder),
+        boxShadow: AppShadow.card(style.rowShadow),
       ),
       child: Row(
         children: [
           FocusRing(
             progress: state.progress,
-            remainingSeconds: state.remainingSeconds,
             scene: state.scene,
-            size: 40,
-            stroke: 4,
-            inset: 4,
-            showLabel: false,
+            size: AppSize.ringCompact,
+            stroke: 6,
+            inset: 6,
           ),
-          const SizedBox(width: 12),
-          Text(
-            '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              color: style.textStrong,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              state.isRunning ? '집중하는 중' : (isBreak ? '휴식 중' : '준비됨'),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: style.textMuted,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formatClock(state.remainingSeconds),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                    color: style.textStrong,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                Text(
+                  view.status,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: style.textMuted),
+                ),
+              ],
             ),
           ),
-          ScenePlayButton(
+          RoundIconButton(
             style: style,
-            size: 34,
-            icon: isBreak
-                ? Icons.skip_next
-                : (state.isRunning ? Icons.pause : Icons.play_arrow),
-            tooltip: isBreak ? '휴식 건너뛰기' : (state.isRunning ? '일시정지' : '집중 시작'),
-            onTap: isBreak
-                ? state.skipBreak
-                : (task == null
-                    ? null
-                    : () => state.isRunning
-                        ? state.pauseTimer()
-                        : state.startTimer()),
+            size: AppSize.controlSm,
+            icon: Icons.replay_rounded,
+            tooltip: '리셋',
+            onTap: state.stopTimer,
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: view.label,
+            child: PillButton(
+              style: style,
+              width: 80,
+              height: AppSize.controlSm,
+              icon: view.icon,
+              label: view.label,
+              onTap: view.onTap,
+            ),
+          ),
+          const SizedBox(width: 8),
+          RoundIconButton(
+            style: style,
+            size: AppSize.controlSm,
+            icon: Icons.check_rounded,
+            tooltip: '완료',
+            onTap: state.currentTask == null ? null : state.completeCurrentTask,
           ),
         ],
       ),
@@ -390,9 +409,9 @@ class _CompactTimerStrip extends StatelessWidget {
   }
 }
 
-/// "집중 세션 · 25분" — 탭하면 길이 선택 메뉴 (타이머 정지 중에만)
-class _SessionLabel extends StatelessWidget {
-  const _SessionLabel({required this.state, required this.style});
+/// 세션 길이 칩 "25분 ▾" — 대기·일시정지 중 탭하면 5/15/25/45분 메뉴
+class _SessionChip extends StatelessWidget {
+  const _SessionChip({required this.state, required this.style});
 
   final AppState state;
   final SceneStyle style;
@@ -401,20 +420,33 @@ class _SessionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBreak = state.phase == FocusPhase.breakTime;
     final minutes = state.totalSeconds ~/ 60;
-    final label = isBreak ? '휴식 · $minutes분' : '집중 세션 · $minutes분';
     final canEdit = !state.isRunning && !isBreak;
 
-    final text = Text(
-      label,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: style.textMuted,
+    final chip = Container(
+      height: AppSize.controlSm,
+      padding: EdgeInsets.only(left: 12, right: canEdit ? 8 : 12),
+      decoration: BoxDecoration(
+        color: style.rowBg,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        boxShadow: AppShadow.card(style.rowShadow),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            isBreak ? '휴식 $minutes분' : '$minutes분',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: style.textStrong,
+            ),
+          ),
+          if (canEdit)
+            Icon(Icons.expand_more_rounded, size: 16, color: style.textMuted),
+        ],
       ),
     );
-    if (!canEdit) return text;
+    if (!canEdit) return chip;
 
     return PopupMenuButton<int>(
       tooltip: '세션 길이 변경',
@@ -423,20 +455,14 @@ class _SessionLabel extends StatelessWidget {
       itemBuilder: (_) => _ExpandedScreenState._durations
           .map((m) => PopupMenuItem(value: m, child: Text('$m분')))
           .toList(),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(child: text),
-          Icon(Icons.arrow_drop_down, size: 14, color: style.textFaint),
-        ],
-      ),
+      child: chip,
     );
   }
 }
 
-/// 섹션 헤더: "오늘의 작업" + 인박스/차단 전환 (시안 라벨 스타일)
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
+/// 탭: 오늘의 작업 · 인박스 n · 차단 — 선택은 카드색 알약 (Tiimo 섹션 칩)
+class _SectionTabs extends StatelessWidget {
+  const _SectionTabs({
     required this.style,
     required this.view,
     required this.inboxCount,
@@ -452,39 +478,43 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget item(String label, _PanelView v) {
       final selected = view == v;
-      return InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        onTap: () => onSelect(v),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2, // 0.1em
-              color: selected ? style.badgeFg : style.textFaint,
+      return Expanded(
+        child: PressScale(
+          onTap: () => onSelect(v),
+          child: Container(
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? style.rowBg : null,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              boxShadow: selected ? AppShadow.card(style.rowShadow) : null,
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? style.textStrong : style.textMuted,
+              ),
             ),
           ),
         ),
       );
     }
 
-    return Row(
-      children: [
-        // 좌우 -8: 텍스트 정렬은 유지하면서 터치 영역만 넓힌다
-        Transform.translate(
-          offset: const Offset(-8, 0),
-          child: item('오늘의 작업', _PanelView.tasks),
-        ),
-        const Spacer(),
-        item('인박스 $inboxCount', _PanelView.inbox),
-        const SizedBox(width: 2),
-        Transform.translate(
-          offset: const Offset(8, 0),
-          child: item('차단', _PanelView.blocker),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: style.divider,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        children: [
+          item('오늘의 작업', _PanelView.tasks),
+          item(inboxCount > 0 ? '인박스 $inboxCount' : '인박스', _PanelView.inbox),
+          item('차단', _PanelView.blocker),
+        ],
+      ),
     );
   }
 }

@@ -9,8 +9,8 @@ import '../../services/window_service.dart';
 import '../../state/app_state.dart';
 import 'widgets/focus_ring.dart';
 
-/// 미니 위젯 (시안 Mini Widget · 320×128):
-/// [장면 다이얼 88] + [라벨/현재 작업] + [재생 버튼 48]
+/// 미니 위젯 (320×128, spec §1):
+/// [링 88 + 시간] | [상태 · 현재 작업 · (알약 + 패널 열기 40)]
 class MiniWidgetScreen extends StatelessWidget {
   const MiniWidgetScreen({super.key});
 
@@ -19,8 +19,10 @@ class MiniWidgetScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     final windowService = context.read<WindowService>();
     final style = state.scene.style;
-    final task = state.currentTask;
+    final view = TimerView(state);
     final isBreak = state.phase == FocusPhase.breakTime;
+    final idleWithTask =
+        state.currentTask != null && !isBreak && !state.isRunning;
 
     return DragToMoveArea(
       child: Container(
@@ -31,82 +33,77 @@ class MiniWidgetScreen extends StatelessWidget {
           color: style.cardBg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: style.cardBorder),
-          boxShadow: AppShadow.floating(style.shadowColor),
         ),
-        child: Stack(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: Row(
           children: [
-            Positioned.fill(child: MiniCornerAccents(scene: state.scene)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  FocusRing(
-                    progress: state.progress,
-                    remainingSeconds: state.remainingSeconds,
-                    scene: state.scene,
+            Column(
+              children: [
+                FocusRing(progress: state.progress, scene: state.scene),
+                Text(
+                  formatClock(state.remainingSeconds),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1, // 128 - 테두리2 - 패딩16 = 110 = 링88 + 22
+                    color: style.textStrong,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      idleWithTask && view.status == '준비됨'
+                          ? '지금 집중할 일'
+                          : view.status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: style.textMuted),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isBreak
+                          ? '잠깐 쉬어가세요'
+                          : (state.currentTask?.title ?? ''),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                        color: style.textStrong,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
                       children: [
-                        Text(
-                          isBreak ? '휴식 중 — 차단 해제됨' : '지금 집중할 일',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.66, // 0.06em
-                            color: style.textMuted,
+                        Expanded(
+                          child: PillButton(
+                            style: style,
+                            icon: view.icon,
+                            label: view.label,
+                            width: double.infinity,
+                            onTap: view.onTap,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isBreak
-                              ? '잠깐 쉬어가세요'
-                              : (task?.title ?? '할 일을 골라주세요'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: style.textStrong,
-                          ),
+                        const SizedBox(width: 12),
+                        RoundIconButton(
+                          style: style,
+                          icon: Icons.open_in_full_rounded,
+                          tooltip: '패널 열기',
+                          onTap: windowService.toggleMode,
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ScenePlayButton(
-                    style: style,
-                    icon: isBreak
-                        ? Icons.skip_next
-                        : (state.isRunning ? Icons.pause : Icons.play_arrow),
-                    tooltip: isBreak
-                        ? '휴식 건너뛰기'
-                        : (state.isRunning ? '일시정지' : '집중 시작'),
-                    onTap: isBreak
-                        ? state.skipBreak
-                        : (task == null
-                            ? null
-                            : () => state.isRunning
-                                ? state.pauseTimer()
-                                : state.startTimer()),
-                  ),
-                ],
-              ),
-            ),
-            // 패널 열기 (시안엔 없지만 기능상 필요 — 우하단에 은은하게)
-            Positioned(
-              right: 6,
-              bottom: 4,
-              child: IconButton(
-                tooltip: '패널 열기',
-                icon: Icon(Icons.unfold_more, size: 14, color: style.textFaint),
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 24, minHeight: 24),
-                onPressed: () => windowService.toggleMode(),
+                  ],
+                ),
               ),
             ),
           ],
@@ -115,4 +112,3 @@ class MiniWidgetScreen extends StatelessWidget {
     );
   }
 }
-
