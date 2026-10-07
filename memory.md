@@ -4,9 +4,9 @@
 - GitHub Actions 산출물은 서명·공증이 없어 macOS Gatekeeper가 차단 → CI에서 ad-hoc 서명(`codesign -s -`)만 하고, 사용자는 `xattr -cr` 로 격리 해제. 공증은 Apple Developer $99/년이라 보류.
 - 이 맥에는 소스가 있으므로 로컬 빌드(`flutter build macos --release`)가 정답 — 격리 속성이 아예 안 붙음.
 
-## 디자인 v2 (2026-10-08, design-v2 브랜치 · 사용자 검토 대기)
+## 디자인 v2 (2026-10-08 사용자 확정 → main 머지) — 현재 디자인 원본
 - 주 레퍼런스 Tiimo 집중 화면(Mobbin) — 사용자가 A안 선택. **링 안에 장면 일러스트**(숲/달토끼/고래)를 넣는 게 사용자 요구 — 사운드 장면이 강점.
-- 설계서: astra(`docs/v2/app-design-spec.md`), 변경 근거 `docs/v2/app-deviations.md`. 바탕화면 시안 3종(.dc.html)은 v1 원본 — 확정되면 v2가 대체.
+- 설계서: astra(`docs/v2/app-design-spec.md`), 변경 근거 `docs/v2/app-deviations.md`. 바탕화면 시안 3종(.dc.html)은 v1 원본 — v2가 대체함.
 - 시간 글자는 링 밖(아래). 링 안 글자 없으니 SceneDialPainter 베일 제거.
 - 미리보기 PNG: `flutter test tool/preview --dart-define=OUT=<dir>` (macOS AppleGothic·MaterialIcons 로드). 탭 전환 캡처는 AnimatedSwitcher 첫 프레임이 opacity 0이라 pump 2번 더 필요.
 - 비선택 작업 체크 = `completeTask(id)` — 타이머·현재 작업 보존(selectTask 경유 금지).
