@@ -17,6 +17,10 @@
 - [x] 사용자 확정 → main 머지·푸시
 - [ ] 실제 macOS 앱 실행 확인 (창 드래그·팝업 메뉴·우클릭 삭제)
 
+## 2026-10-08 — 포트폴리오 미디어
+- [x] 스크린샷 2장(미니·확장, 투명 PNG 3x) + 데모 영상 1920×1080 13.7초 → ~/Desktop/focusone-portfolio/
+- [x] 렌더러 tool/media/media_test.dart (타임랩스·사운드 재생 표시, 소리 없음)
+
 ## 다음 세션
 - [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
