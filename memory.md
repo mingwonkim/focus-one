@@ -11,6 +11,11 @@
 - 미리보기 PNG: `flutter test tool/preview --dart-define=OUT=<dir>` (macOS AppleGothic·MaterialIcons 로드). 탭 전환 캡처는 AnimatedSwitcher 첫 프레임이 opacity 0이라 pump 2번 더 필요.
 - 비선택 작업 체크 = `completeTask(id)` — 타이머·현재 작업 보존(selectTask 경유 금지).
 
+## 앱 아이콘 (2026-10-08)
+- 사용자 선택: Higgsfield 시안 H3(바다·고래, gpt_image_2_5, job 7dc1b3a0…). 기록 `docs/v2/higgsfield-log.md`.
+- 생성 이미지의 회색 배경은 크레딧 대신 PIL로 스퀘어클(n=5) 마스크 처리 → macOS 1024(본체 824+여백 100+그림자), Windows .ico·Linux 256·트레이는 여백 없는 타일.
+- 플랫폼 폴더는 커밋 안 하므로 `flutter create` 후 `bash tool/apply_icons.sh` 필수 (CI에도 단계 추가). 트레이 아이콘은 pubspec assets 등록 필요.
+
 ## 디자인 원본 v1 (2026-07-14)
 - **디자인의 단일 원본은 바탕화면의 시안 3종**: `~/Desktop/FocusOne Forest v3.dc.html`, `FocusOne Night.dc.html`, `FocusOne Ocean.dc.html`. 색·크기·문구 전부 여기서 추출해 `SceneStyle`(design_tokens.dart)에 옮겼다 — 임의 변경 금지.
 - 다이얼 안 풍경(숲/달토끼/고래)은 `SceneDialPainter`(core/scene_decorations.dart)가 지름 비율 좌표로 그린다 (88px 미니/216px 확장 공용).

@@ -21,6 +21,10 @@ jobs:
       - name: 플랫폼 폴더 생성 (저장소에는 lib만 있음)
         run: flutter create --platforms=windows .
 
+      - name: 앱 아이콘 적용
+        shell: bash
+        run: bash tool/apply_icons.sh
+
       - name: 의존성 설치
         run: flutter pub get
 
@@ -75,7 +79,8 @@ jobs:
 
       - name: .deb 설치 패키지 생성 (더블클릭 설치용, 의존성 자동 설치)
         run: |
-          mkdir -p deb/DEBIAN deb/opt/focus-one deb/usr/share/applications
+          mkdir -p deb/DEBIAN deb/opt/focus-one deb/usr/share/applications deb/usr/share/icons/hicolor/256x256/apps
+          cp assets/icon/app_icon_256.png deb/usr/share/icons/hicolor/256x256/apps/focus-one.png
           cp -r build/linux/x64/release/bundle/* deb/opt/focus-one/
           cat > deb/DEBIAN/control << 'EOF'
           Package: focus-one
@@ -93,6 +98,7 @@ jobs:
           Name=FocusOne
           Comment=One task at a time
           Exec=/opt/focus-one/focus_one
+          Icon=focus-one
           Terminal=false
           Type=Application
           Categories=Utility;
@@ -126,6 +132,9 @@ jobs:
 
       - name: 플랫폼 폴더 생성
         run: flutter create --platforms=macos .
+
+      - name: 앱 아이콘 적용
+        run: bash tool/apply_icons.sh
 
       - name: 의존성 설치
         run: flutter pub get

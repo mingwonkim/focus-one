@@ -21,7 +21,12 @@
 - [x] 스크린샷 2장(미니·확장, 투명 PNG 3x) + 데모 영상 1920×1080 13.7초 → ~/Desktop/focusone-portfolio/
 - [x] 렌더러 tool/media/media_test.dart (타임랩스·사운드 재생 표시, 소리 없음)
 
+## 2026-10-08 — 앱 아이콘
+- [x] 코드 렌더 4안 + Higgsfield 시안 8장 비교 → 사용자 H3(바다·고래) 선택 (크레딧 6.5 사용, 잔액 30.18)
+- [x] macOS/Windows/Linux(.deb)/트레이 아이콘 생성 + tool/apply_icons.sh + CI 적용, 로컬 macOS 릴리즈 빌드에서 AppIcon 확인
+
 ## 다음 세션
 - [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
+- [ ] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인
 - [ ] (보류) Apple Developer 공증 — 경고 없는 배포가 필요해지면

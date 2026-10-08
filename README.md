@@ -26,6 +26,7 @@ Flutter SDK 3.27+ 필요 (`Color.withValues` 사용).
 ```bash
 # 1. 저장소 클론 후 플랫폼 폴더 생성 (최초 1회)
 flutter create --platforms=windows,macos .
+bash tool/apply_icons.sh   # 앱 아이콘 덮어쓰기 (flutter create 할 때마다)
 
 # 2. 의존성 설치
 flutter pub get
