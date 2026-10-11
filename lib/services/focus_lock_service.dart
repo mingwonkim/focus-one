@@ -5,7 +5,8 @@ import 'package:flutter/services.dart';
 /// iOS는 세션 종료 시각 예약 최소 15분 → 그보다 짧으면 잠그지 않는다.
 class FocusLockService {
   static const _ch = MethodChannel('focusone/lock');
-  static const minLock = Duration(minutes: 15);
+  /// 15분 — 호출 지연으로 정확히 15분 세션이 거절되지 않게 10초 허용 (FocusLock.swift minLockSec과 같게)
+  static const minLock = Duration(seconds: 15 * 60 - 10);
 
   Future<({bool authorized, int selectedCount})> status() async {
     final m = await _ch.invokeMapMethod<String, dynamic>('status') ?? {};

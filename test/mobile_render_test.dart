@@ -20,7 +20,7 @@ void main() {
       final dir = Directory.systemTemp.createTempSync('fo');
       addTearDown(() => dir.deleteSync(recursive: true));
       final state = AppState(LocalStore(File('${dir.path}/d.json')));
-      state.addTask('디자인 시안 마무리하고 팀에 공유하기', setAsCurrent: true, tagId: 'study');
+      state.addTask('디자인 시안 마무리하고 팀에 공유하기', setAsCurrent: true, tagId: 'general');
       state.addTask('운동');
       state.addToInbox('치과 예약');
 

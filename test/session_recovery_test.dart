@@ -48,7 +48,7 @@ void main() {
       a.addTask('보고서', setAsCurrent: true);
       a.startTimer();
     });
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await a.flush();
     a.dispose();
 
     final b = await boot(t0.add(const Duration(minutes: 5)));
@@ -66,7 +66,7 @@ void main() {
       a.addTask('보고서', setAsCurrent: true);
       a.startTimer();
     });
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await a.flush();
     a.dispose();
 
     final later = t0.add(const Duration(hours: 1));
@@ -75,7 +75,7 @@ void main() {
     expect(b.sessions.single.outcome, SessionOutcome.completed);
     expect(b.sessions.single.focusedSec, 25 * 60);
     expect(b.activeSession, isNull);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await b.flush();
     b.dispose();
 
     // 같은 파일로 또 켜도 중복 없음
@@ -91,7 +91,7 @@ void main() {
       a.startTimer();
     });
     withClock(Clock.fixed(t0.add(const Duration(minutes: 10))), a.pauseTimer);
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await a.flush();
     a.dispose();
 
     final b = await boot(t0.add(const Duration(hours: 3)));
@@ -123,5 +123,23 @@ void main() {
     file.writeAsStringSync('{깨진 json');
     final data = await LocalStore(file).load();
     expect(data.soundVolume, 0.6); // .bak = 첫 번째 저장본
+  });
+
+  test('손상 → 복구본 로드 → 다시 저장해도 좋은 복구본이 남음', () async {
+    final store = LocalStore(file);
+    await store.save(const StoreData(tasks: [], inbox: [], sessions: [], soundVolume: 0.2));
+    await store.save(const StoreData(tasks: [], inbox: [], sessions: [], soundVolume: 0.3));
+    file.writeAsStringSync('{깨진 json');
+    expect((await LocalStore(file).load()).soundVolume, 0.2); // .bak
+    final again = LocalStore(file);
+    await again.save(const StoreData(tasks: [], inbox: [], sessions: [], soundVolume: 0.4));
+    // 손상 본 파일이 .bak로 올라가지 않았어야 함 → .bak는 여전히 읽을 수 있는 0.2
+    expect((await LocalStore(File('${file.path}.bak')).load()).soundVolume, 0.2);
+    expect((await LocalStore(file).load()).soundVolume, 0.4);
+  });
+
+  test('저장 실패는 false로 알려준다 (재시도는 AppState가)', () async {
+    final asDir = Directory('${dir.path}/blocked')..createSync();
+    expect(await LocalStore(File(asDir.path)).save(StoreData.empty()), isFalse);
   });
 }

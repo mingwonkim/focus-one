@@ -33,7 +33,7 @@ class _NoopStore extends LocalStore {
   @override
   Future<StoreData> load() async => StoreData.empty();
   @override
-  Future<void> save(StoreData data) async {}
+  Future<bool> save(StoreData data) async => true;
 }
 
 /// window_manager 없이 모드만 바꾸는 창 서비스

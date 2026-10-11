@@ -19,6 +19,7 @@ FocusSession s(DateTime end, int sec,
       minutes: sec ~/ 60,
       endedAt: end,
       focusedSec: legacy ? null : sec,
+      segments: legacy ? const [] : [(end.subtract(Duration(seconds: sec)), end)],
       tagId: tag,
       outcome: o,
       scene: 'forest',
@@ -40,15 +41,15 @@ void main() {
     final a = await boot(t0);
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     expect(a.activeSession!.companionId, 'fawn');
-    expect(a.activeSession!.tagId, 'study');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(a.activeSession!.tagId, 'general');
+    await a.flush();
     a.dispose();
 
     final b = await boot(t0.add(const Duration(hours: 1)));
     expect(b.ownedCount('fawn'), 1);
     expect(b.drops, 25);
     expect(b.sessions.single.companionId, 'fawn');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await b.flush();
     b.dispose();
     final c = await boot(t0.add(const Duration(hours: 2)));
     expect(c.ownedCount('fawn'), 1);
@@ -89,11 +90,53 @@ void main() {
     a.addTask('스쿼트');
     a.setTaskTag(a.pendingTasks.single.id, gym);
     a.deleteTag(gym);
-    expect(a.tags.map((t) => t.name), ['공부']);
+    expect(a.tags.map((t) => t.name), ['미분류']);
     expect(a.pendingTasks.single.tagId, isNull);
-    a.deleteTag('study');
+    a.deleteTag('general');
     expect(a.tags, isNotEmpty);
     a.dispose();
+  });
+
+  test('태그 삭제 후에도 그 태그 기록은 남고 재실행해도 유지', () async {
+    final t0 = DateTime(2026, 10, 11, 9);
+    final a = await boot(t0);
+    a.addTag('운동');
+    final gym = a.tags.last.id;
+    withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
+    // 완료는 재실행 때 시각으로 확정된다
+    await a.flush();
+    a.dispose();
+    final b = await boot(t0.add(const Duration(hours: 1)));
+    expect(b.sessions.single.tagId, gym);
+    b.deleteTag(gym);
+    await b.flush();
+    b.dispose();
+    final c = await boot(t0.add(const Duration(hours: 2)));
+    expect(c.tags.any((t) => t.id == gym), isFalse);
+    expect(c.sessions.single.tagId, gym);
+    expect(FocusStats(c.sessions).byTag(DateTime(2026, 10, 11), DateTime(2026, 10, 12)),
+        {gym: 25 * 60});
+    c.dispose();
+  });
+
+  test('일시정지로 나뉜 구간은 실제 시각대로 집계, 완료 시각은 예정 종료', () async {
+    final t0 = DateTime(2026, 10, 10, 23, 50);
+    final a = await boot(t0);
+    withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
+    withClock(Clock.fixed(DateTime(2026, 10, 11, 0, 0)), a.pauseTimer);
+    withClock(Clock.fixed(DateTime(2026, 10, 11, 1, 0)), () => a.startTimer(allowNoTask: true));
+    await a.flush();
+    a.dispose();
+    // 다음 날 아침에 열어도 기록은 01:15 완료
+    final b = await boot(DateTime(2026, 10, 11, 9));
+    final x = b.sessions.single;
+    expect(x.endedAt, DateTime(2026, 10, 11, 1, 15));
+    final st = FocusStats(b.sessions);
+    expect(st.daily()[DateTime(2026, 10, 10)], 10 * 60);
+    expect(st.daily()[DateTime(2026, 10, 11)], 15 * 60);
+    expect(st.hours(DateTime(2026, 10, 11))[1], 15 * 60);
+    expect(st.hours(DateTime(2026, 10, 11))[0], 0); // 일시정지 시간은 집중 아님
+    b.dispose();
   });
 
   group('FocusStats', () {

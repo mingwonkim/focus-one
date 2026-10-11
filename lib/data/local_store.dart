@@ -17,7 +17,7 @@ class LocalStore {
 
   static const _fileName = 'focus_one_data.json';
   File? _file;
-  Future<void> _queue = Future.value();
+  Future<bool> _queue = Future.value(true);
 
   Future<File> _getFile() async {
     if (_file != null) return _file!;
@@ -30,7 +30,8 @@ class LocalStore {
   Future<StoreData> load() async {
     try {
       final file = await _getFile();
-      for (final f in [file, File('${file.path}.bak')]) {
+      // 본 파일 → 교체 직전 임시 파일 → 복구본 순서
+      for (final f in [file, File('${file.path}.tmp'), File('${file.path}.bak')]) {
         final data = await _read(f);
         if (data != null) return data;
       }
@@ -47,25 +48,36 @@ class LocalStore {
       if (raw.trim().isEmpty) return null;
       return StoreData.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
-      return null; // 손상 → 다음 후보(복구본)
+      return null; // 손상 → 다음 후보
     }
   }
 
-  /// 저장 요청은 순서대로 하나씩 처리된다. 반환 Future는 이 저장이 끝날 때 완료.
-  Future<void> save(StoreData data) {
+  /// 저장 요청은 순서대로 하나씩 처리된다. 성공하면 true — 실패는 호출자가 재시도.
+  Future<bool> save(StoreData data) {
     final json = jsonEncode(data.toJson()); // 호출 시점 상태를 고정
-    return _queue = _queue.then((_) => _write(json));
+    final done = _queue.then((_) => _write(json));
+    _queue = done;
+    return done;
   }
 
-  Future<void> _write(String json) async {
+  /// 대기 중인 저장이 모두 끝날 때까지 (테스트·종료 직전용)
+  Future<void> flush() => _queue;
+
+  Future<bool> _write(String json) async {
     try {
       final file = await _getFile();
       final tmp = File('${file.path}.tmp');
       await tmp.writeAsString(json, flush: true);
-      if (await file.exists()) await file.rename('${file.path}.bak');
+      // 본 파일이 정상일 때만 복구본으로 올린다 — 손상 파일이 좋은 복구본을 덮지 않게
+      if (await _read(file) != null) {
+        await file.rename('${file.path}.bak');
+      } else if (await file.exists()) {
+        await file.delete();
+      }
       await tmp.rename(file.path);
+      return true;
     } catch (_) {
-      // 저장 실패는 다음 저장에서 재시도 (앱이 죽지 않는 것이 우선)
+      return false;
     }
   }
 }

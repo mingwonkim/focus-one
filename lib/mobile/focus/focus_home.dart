@@ -57,69 +57,95 @@ class _FocusHomeState extends State<FocusHome> {
     // 대기: 데려올 친구를 또렷하게 보여 주고, 시작하면 흐려졌다가 집중할수록 선명해짐
     final reveal = idle ? 1.0 : 0.25 + 0.75 * (1 - s.progress);
 
+    // 본문은 스크롤(작은 화면·큰 글자에서도 넘침 없게), 버튼 행은 아래 고정.
+    // 대기/진행의 윗부분 높이를 같게 둬서 시작해도 링 위치가 그대로다.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MobileSize.gutter),
       child: Column(
         children: [
-          const SizedBox(height: 8),
-          _TaskCard(state: s, enabled: idle),
-          const SizedBox(height: 8),
-          if (idle) _ToolRow(state: s) else _RunningBadge(state: s),
-          const Spacer(),
-          MobileRing(
-            scene: s.scene,
-            companion: companion,
-            progress: progress,
-            reveal: reveal,
-            size: ringSize,
-            onMinutes: idle ? (m) => _setMinutes(s, m) : null,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            formatClock(idle ? _minutes * 60 : s.remainingSeconds),
-            style: TextStyle(
-              fontSize: 56,
-              fontWeight: FontWeight.w600,
-              height: 64 / 56,
-              color: style.textStrong,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (idle)
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _Chip(
-                  state: s,
-                  label: companion.name,
-                  onTap: () => showCompanionSheet(context)),
-              const SizedBox(width: 8),
-              _Chip(
-                  state: s,
-                  dot: tagColor(style, s.currentTag?.colorIndex ?? 0),
-                  label: s.currentTask?.tagId != null
-                      ? (s.tags
-                              .where((t) => t.id == s.currentTask!.tagId)
-                              .firstOrNull
-                              ?.name ??
-                          '태그')
-                      : (s.currentTag?.name ?? '태그'),
-                  onTap: () => showTagSheet(context)),
-            ])
-          else
-            SizedBox(
-              height: MobileSize.row,
-              child: Center(
-                child: Text(
-                  s.phase == FocusPhase.breakTime
-                      ? '잠깐 쉬어가요'
-                      : (s.isRunning
-                          ? '집중할수록 ${companion.name}이(가) 선명해져요'
-                          : '잠시 멈춤'),
-                  style: TextStyle(fontSize: 13, color: style.textMuted),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (_, box) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: box.maxHeight),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(children: [
+                        const SizedBox(height: 8),
+                        _TaskCard(state: s, enabled: idle),
+                        const SizedBox(height: 8),
+                        if (idle)
+                          _ToolRow(state: s)
+                        else
+                          _RunningBadge(state: s),
+                      ]),
+                      Column(children: [
+                        const SizedBox(height: 12),
+                        MobileRing(
+                          scene: s.scene,
+                          companion: companion,
+                          progress: progress,
+                          reveal: reveal,
+                          size: ringSize,
+                          minutes: _minutes,
+                          onMinutes: idle ? (m) => _setMinutes(s, m) : null,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          formatClock(
+                              idle ? _minutes * 60 : s.remainingSeconds),
+                          style: TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w600,
+                            height: 64 / 56,
+                            color: style.textStrong,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (idle)
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _Chip(
+                                  state: s,
+                                  label: companion.name,
+                                  onTap: () => showCompanionSheet(context)),
+                              _Chip(
+                                  state: s,
+                                  dot: tagColor(
+                                      style, s.currentTag?.colorIndex ?? 0),
+                                  label: s.currentTag?.name ?? '태그',
+                                  onTap: () => showTagSheet(context)),
+                            ],
+                          )
+                        else
+                          SizedBox(
+                            height: MobileSize.row,
+                            child: Center(
+                              child: Text(
+                                s.phase == FocusPhase.breakTime
+                                    ? '잠깐 쉬어가요'
+                                    : (s.isRunning
+                                        ? '집중할수록 ${companion.name}이(가) 선명해져요'
+                                        : '잠시 멈춤'),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 13, color: style.textMuted),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                      ]),
+                    ],
+                  ),
                 ),
               ),
             ),
-          const Spacer(),
+          ),
           _Controls(state: s),
           // 탭바 자리 (진행 중엔 탭바 숨김)
           SizedBox(height: idle ? MobileSize.tabBar + (h < 700 ? 12 : 24) : 24),
@@ -137,14 +163,19 @@ class _TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = state.scene.style;
-    final title = state.currentTask?.title ?? state.activeSession?.taskTitle;
+    final a = state.activeSession;
+    final title = a != null
+        ? (a.taskTitle.isEmpty
+            ? '${state.currentTag?.name ?? '태그'}로 집중 중'
+            : a.taskTitle)
+        : state.currentTask?.title;
     return PressScale(
       onTap: enabled ? () => showTaskSheet(context) : null,
       child: Opacity(
         opacity: 1,
         child: Container(
-          height: MobileSize.taskCard,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          constraints: const BoxConstraints(minHeight: MobileSize.taskCard),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: style.rowBg,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -161,7 +192,7 @@ class _TaskCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     (title == null || title.isEmpty) ? '하나만 골라볼까요?' : title,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         fontSize: 16,
@@ -261,7 +292,7 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = state.scene.style;
     final chip = Container(
-      height: 40,
+      constraints: const BoxConstraints(minHeight: MobileSize.row),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: style.rowBg,
@@ -319,12 +350,31 @@ class _Controls extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = state;
     final style = s.scene.style;
-    final memo = RoundIconButton(
-      style: style,
-      size: MobileSize.cta,
-      icon: Icons.edit_note_rounded,
-      tooltip: '딴생각 메모',
-      onTap: () => showMemoSheet(context),
+    // 핵심 기능이라 아이콘만 두지 않고 라벨을 붙인다
+    final memo = Semantics(
+      button: true,
+      label: '딴생각 메모',
+      child: PressScale(
+        onTap: () => showMemoSheet(context),
+        child: Container(
+          height: MobileSize.cta,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: style.rowBg,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            boxShadow: AppShadow.card(style.rowShadow),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.edit_note_rounded, size: 22, color: style.textStrong),
+            const SizedBox(width: 4),
+            Text('메모',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: style.textStrong)),
+          ]),
+        ),
+      ),
     );
     if (s.phase == FocusPhase.breakTime) {
       return Row(children: [

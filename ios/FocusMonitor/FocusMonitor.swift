@@ -14,5 +14,6 @@ final class FocusMonitor: DeviceActivityMonitor {
     guard active == nil || activity.rawValue == "focus.\(active!)" else { return }
     store.clearAllSettings()
     defaults?.removeObject(forKey: "activeSessionId")
+    defaults?.removeObject(forKey: "endsAt")
   }
 }

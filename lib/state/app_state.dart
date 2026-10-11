@@ -29,6 +29,9 @@ class AppState extends ChangeNotifier {
   Timer? _ticker;
   int _totalSeconds = 25 * 60; // 다음 세션 길이 설정
   ActiveSession? _active; // 진행/일시정지 중인 세션 (저장됨)
+
+  /// 완료 후 자동 휴식 — 데스크탑 true, 폰은 보상 시트에서 선택(false)
+  bool autoBreak = true;
   Progress _progress = const Progress(); // 폰: 태그·친구·풍경·물방울
   FocusSession? _lastReward; // 방금 완료한 세션 (보상 시트 표시용, 저장 안 함)
 
@@ -185,9 +188,9 @@ class AppState extends ChangeNotifier {
     // 꺼지기 전 진행 중이던 세션 복구: 이미 끝났으면 완료 처리(휴식 없이), 아니면 이어서
     _active = data.activeSession;
     if (_active != null) {
-      if (pending.any((t) => t.id == _active!.taskId)) {
-        _currentTaskId = _active!.taskId;
-      }
+      _currentTaskId = pending.any((t) => t.id == _active!.taskId)
+          ? _active!.taskId
+          : null; // 할 일 없이 시작한 세션 → 다른 할 일을 띄우지 않음
       if (_active!.remainingSec(clock.now()) <= 0) {
         _finishSession(startBreak: false);
       } else if (_active!.isRunning) {
@@ -197,7 +200,23 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _persist() => _store.save(
+  Timer? _retry;
+
+  /// 저장 실패 시 2초 뒤 최신 상태로 다시 저장 (성공할 때까지)
+  Future<void> _persist() async {
+    final ok = await _store.save(_snapshot());
+    if (!ok && _retry == null) {
+      _retry = Timer(const Duration(seconds: 2), () {
+        _retry = null;
+        _persist();
+      });
+    }
+  }
+
+  /// 대기 중인 저장 완료까지 (테스트용)
+  Future<void> flush() => _store.flush();
+
+  StoreData _snapshot() =>
         StoreData(
           tasks: _tasks,
           inbox: _inbox,
@@ -208,8 +227,7 @@ class AppState extends ChangeNotifier {
           soundVolume: _soundVolume,
           activeSession: _active,
           progress: _progress,
-        ),
-      );
+        );
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -231,7 +249,13 @@ class AppState extends ChangeNotifier {
     if (_currentTaskId == id) return;
     stopTimer(); // 작업 전환 시 타이머 리셋 — "하나만" 원칙
     _currentTaskId = id;
+    // 태그는 하나의 값(currentTagId)만 쓴다 — 할 일에 태그가 있으면 그걸로 맞춤
+    final tag = _tasks.where((t) => t.id == id).firstOrNull?.tagId;
+    if (tag != null && _progress.tags.any((t) => t.id == tag)) {
+      _progress = _progress.copyWith(currentTagId: () => tag);
+    }
     notifyListeners();
+    _persist();
   }
 
   /// 폰: 할 일 없이 태그만으로 집중
@@ -333,7 +357,7 @@ class AppState extends ChangeNotifier {
           startedAt: now,
           plannedSec: _totalSeconds,
           resumedAt: now,
-          tagId: task?.tagId ?? _progress.currentTagId,
+          tagId: _progress.currentTagId,
           companionId: selectedCompanion.id,
         );
     _startTicker();
@@ -391,12 +415,18 @@ class AppState extends ChangeNotifier {
     _cancelSession();
     final task = _tasks.where((t) => t.id == active.taskId).firstOrNull;
     if (task != null) onSessionComplete?.call(task, active.plannedSec ~/ 60);
-    if (startBreak) {
+    if (startBreak && autoBreak) {
       _startBreak(); // 집중이 끝나면 자동으로 휴식 — 차단도 이때 풀린다
     } else {
       notifyListeners();
     }
     _persist();
+  }
+
+  /// 폰: 보상 시트의 "5분 휴식"
+  void startBreak() {
+    if (_active != null || _breakEndsAt != null) return;
+    _startBreak();
   }
 
   /// 휴식 시작. 이 동안 차단은 비활성 (shouldBlock == false).
@@ -480,7 +510,10 @@ class AppState extends ChangeNotifier {
   void _recordSession(SessionOutcome outcome) {
     final a = _active;
     if (a == null || _sessions.any((s) => s.id == a.id)) return;
-    final now = clock.now();
+    // 완료는 예정 종료 시각으로 확정 — 다음 날 앱을 열어도 기록 날짜가 밀리지 않게
+    final now = outcome == SessionOutcome.completed
+        ? (a.plannedEnd ?? clock.now())
+        : clock.now();
     final focused = outcome == SessionOutcome.completed
         ? a.plannedSec
         : a.focusedSec(now);
@@ -496,6 +529,7 @@ class AppState extends ChangeNotifier {
       outcome: outcome,
       tagId: a.tagId,
       companionId: outcome == SessionOutcome.completed ? a.companionId : null,
+      segments: a.segmentsUntil(now),
     ));
     // 보상: 끝까지 완료한 세션만 — 친구 1 + 물방울(실집중 분). 기록과 같은 저장으로 확정.
     if (outcome == SessionOutcome.completed) {
@@ -624,6 +658,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _ticker?.cancel();
+    _retry?.cancel();
     super.dispose();
   }
 }

@@ -14,15 +14,27 @@ final class FocusLock: NSObject, FlutterPlugin {
   private let center = DeviceActivityCenter()
   private var defaults: UserDefaults { UserDefaults(suiteName: Self.group)! }
 
+  /// 15분 제한 비교 허용 오차 (Dart FocusLockService.minLock과 같게)
+  static let minLockSec: TimeInterval = 15 * 60 - 10
+
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "focusone/lock", binaryMessenger: registrar.messenger())
-    registrar.addMethodCallDelegate(FocusLock(), channel: channel)
+    let lock = FocusLock()
+    lock.cleanupExpired()
+    registrar.addMethodCallDelegate(lock, channel: channel)
+  }
+
+  /// 종료 시각이 지났는데 잠금이 남아 있으면 정리 (확장 콜백이 누락된 경우 대비)
+  func cleanupExpired() {
+    let endsAt = defaults.double(forKey: "endsAt")
+    if endsAt > 0 && endsAt <= Date().timeIntervalSince1970 { stop() }
   }
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     let args = call.arguments as? [String: Any] ?? [:]
     switch call.method {
     case "status":
+      cleanupExpired()
       result([
         "authorized": AuthorizationCenter.shared.authorizationStatus == .approved,
         "selectedCount": selectionCount(loadSelection()),
@@ -84,28 +96,30 @@ final class FocusLock: NSObject, FlutterPlugin {
   // MARK: 잠금 시작/해제
   private func start(sessionId: String, endsAt: Date) -> Bool {
     let sel = loadSelection()
-    guard selectionCount(sel) > 0, endsAt.timeIntervalSinceNow >= 15 * 60 - 5 else { return false }
+    guard selectionCount(sel) > 0, endsAt.timeIntervalSinceNow >= Self.minLockSec else { return false }
     center.stopMonitoring() // 이전 세션 예약 제거 → 오래된 콜백이 새 잠금을 풀지 못함
-    defaults.set(sessionId, forKey: "activeSessionId")
-    Self.applyShield(sel)
     let cal = Calendar.current
     let comps: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
     let schedule = DeviceActivitySchedule(
       intervalStart: cal.dateComponents(comps, from: Date()),
       intervalEnd: cal.dateComponents(comps, from: endsAt),
       repeats: false)
+    // 해제 예약이 먼저 — 예약이 성공한 뒤에만 잠근다(그 사이 앱이 죽어도 '잠금만 남는' 상태가 없게)
     do {
       try center.startMonitoring(.init("focus.\(sessionId)"), during: schedule)
-      return true
     } catch {
-      stop() // 예약 실패 시 잠금을 남겨두지 않는다
       return false
     }
+    defaults.set(sessionId, forKey: "activeSessionId")
+    defaults.set(endsAt.timeIntervalSince1970, forKey: "endsAt")
+    Self.applyShield(sel)
+    return true
   }
 
   private func stop() {
     center.stopMonitoring()
     defaults.removeObject(forKey: "activeSessionId")
+    defaults.removeObject(forKey: "endsAt")
     Self.store.clearAllSettings()
   }
 

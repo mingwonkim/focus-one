@@ -11,7 +11,8 @@ import 'mobile_shell.dart';
 
 /// 폰(iOS/Android) 진입점. 데스크탑 전용 서비스는 만들지 않는다.
 Future<void> runMobile() async {
-  final appState = AppState(LocalStore());
+  final appState = AppState(LocalStore())
+    ..autoBreak = false; // 폰: 휴식은 보상 시트에서 선택
   await appState.init();
 
   // 집중 중에만 장면 사운드 (데스크탑과 같은 규칙)

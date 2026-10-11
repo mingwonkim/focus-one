@@ -19,6 +19,7 @@ class MobileRing extends StatelessWidget {
     required this.progress, // 진행: 남은 비율 1→0 / 대기: 설정 위치 0~1
     required this.reveal, // 친구 불투명도 0~1
     this.onMinutes, // null이면 드래그 불가(진행 중)
+    this.minutes = 25, // 대기 중 현재 설정 (12시 경계 넘김 방지·스크린리더 값)
     this.size = MobileSize.ring,
   });
 
@@ -27,6 +28,7 @@ class MobileRing extends StatelessWidget {
   final double progress;
   final double reveal;
   final ValueChanged<int>? onMinutes;
+  final int minutes;
   final double size;
 
   static double fractionOf(int minutes) =>
@@ -41,11 +43,20 @@ class MobileRing extends StatelessWidget {
     if (a < 0) a += 2 * math.pi;
     const span = MobileSize.maxMinutes - MobileSize.minMinutes;
     final raw = MobileSize.minMinutes + a / (2 * math.pi) * span;
-    final snapped =
+    var snapped =
         ((raw / MobileSize.stepMinutes).round() * MobileSize.stepMinutes)
             .clamp(MobileSize.minMinutes, MobileSize.maxMinutes);
+    // 12시를 가로질러 180↔10으로 튀지 않게: 반 바퀴 이상 점프면 가까운 끝에 멈춘다
+    if ((snapped - minutes).abs() > span / 2) {
+      snapped = minutes > MobileSize.minMinutes + span / 2
+          ? MobileSize.maxMinutes
+          : MobileSize.minMinutes;
+    }
     onMinutes!(snapped);
   }
+
+  void _step(int d) => onMinutes!((minutes + d * MobileSize.stepMinutes)
+      .clamp(MobileSize.minMinutes, MobileSize.maxMinutes));
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +77,8 @@ class MobileRing extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CustomPaint(painter: SceneDialPainter(scene)),
+                  CustomPaint(
+                      painter: SceneDialPainter(scene, withCreatures: false)),
                   Padding(
                     padding: EdgeInsets.all(size * 0.08),
                     child: AnimatedOpacity(
@@ -94,7 +106,14 @@ class MobileRing extends StatelessWidget {
     );
     if (onMinutes == null) return ring;
     return Semantics(
-      label: '집중 시간 조절',
+      label: '집중 시간',
+      value: '$minutes분',
+      increasedValue:
+          '${(minutes + MobileSize.stepMinutes).clamp(MobileSize.minMinutes, MobileSize.maxMinutes)}분',
+      decreasedValue:
+          '${(minutes - MobileSize.stepMinutes).clamp(MobileSize.minMinutes, MobileSize.maxMinutes)}분',
+      onIncrease: () => _step(1),
+      onDecrease: () => _step(-1),
       child: GestureDetector(
         onPanStart: (d) => _drag(d.localPosition),
         onPanUpdate: (d) => _drag(d.localPosition),

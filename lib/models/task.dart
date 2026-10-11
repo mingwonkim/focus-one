@@ -73,6 +73,18 @@ class BrainDumpItem {
       );
 }
 
+/// 실제 집중 구간 (일시정지로 나뉜 조각)
+typedef Segment = (DateTime, DateTime);
+
+List<Map<String, String>> _segToJson(List<Segment> l) => [
+      for (final (a, b) in l) {'s': a.toIso8601String(), 'e': b.toIso8601String()}
+    ];
+
+List<Segment> _segFromJson(Object? j) => [
+      for (final m in (j as List? ?? const []))
+        (DateTime.parse((m as Map)['s'] as String), DateTime.parse(m['e'] as String))
+    ];
+
 /// 세션 결과: 끝까지 완료 / 작업 완료로 조기 종료 / 그만두기
 enum SessionOutcome { completed, early, abandoned }
 
@@ -90,6 +102,7 @@ class FocusSession {
   final SessionOutcome outcome;
   final String? tagId;
   final String? companionId; // 완료로 얻은 친구 (보상 기록)
+  final List<Segment> segments; // 실집중 구간 — 없으면(구기록) 시간대 분할 불가
 
   const FocusSession({
     required this.id,
@@ -103,10 +116,12 @@ class FocusSession {
     this.outcome = SessionOutcome.completed,
     this.tagId,
     this.companionId,
+    this.segments = const [],
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'segments': _segToJson(segments),
         'tagId': tagId,
         'companionId': companionId,
         'taskId': taskId,
@@ -134,6 +149,7 @@ class FocusSession {
             SessionOutcome.completed,
         tagId: json['tagId'] as String?,
         companionId: json['companionId'] as String?,
+        segments: _segFromJson(json['segments']),
       );
 }
 
@@ -150,6 +166,7 @@ class ActiveSession {
   final DateTime? resumedAt; // null = 일시정지 중
   final String? tagId;
   final String? companionId;
+  final List<Segment> segments; // 닫힌 집중 구간 (일시정지 전까지)
 
   const ActiveSession({
     required this.id,
@@ -162,9 +179,21 @@ class ActiveSession {
     this.resumedAt,
     this.tagId,
     this.companionId,
+    this.segments = const [],
   });
 
   bool get isRunning => resumedAt != null;
+
+  /// 진행 중이라면 예정 종료 시각 (일시정지 중이면 null)
+  DateTime? get plannedEnd => resumedAt?.add(Duration(seconds: plannedSec - accumulatedSec));
+
+  /// [end]까지의 집중 구간 (진행 중인 마지막 조각 포함, 계획 시간을 넘지 않게)
+  List<Segment> segmentsUntil(DateTime end) {
+    if (resumedAt == null) return segments;
+    final cap = plannedEnd!;
+    final e = end.isAfter(cap) ? cap : end;
+    return e.isAfter(resumedAt!) ? [...segments, (resumedAt!, e)] : segments;
+  }
 
   /// 실제 집중 초. 시계가 뒤로 가도 0~계획 시간 안으로 자른다.
   int focusedSec(DateTime now) => (accumulatedSec +
@@ -183,6 +212,7 @@ class ActiveSession {
         accumulatedSec: focusedSec(now),
         tagId: tagId,
         companionId: companionId,
+        segments: segmentsUntil(now),
       );
 
   ActiveSession resumed(DateTime now) => ActiveSession(
@@ -196,6 +226,7 @@ class ActiveSession {
         resumedAt: now,
         tagId: tagId,
         companionId: companionId,
+        segments: segments,
       );
 
   Map<String, dynamic> toJson() => {
@@ -209,6 +240,7 @@ class ActiveSession {
         'resumedAt': resumedAt?.toIso8601String(),
         'tagId': tagId,
         'companionId': companionId,
+        'segments': _segToJson(segments),
       };
 
   factory ActiveSession.fromJson(Map<String, dynamic> json) => ActiveSession(
@@ -224,5 +256,6 @@ class ActiveSession {
             : null,
         tagId: json['tagId'] as String?,
         companionId: json['companionId'] as String?,
+        segments: _segFromJson(json['segments']),
       );
 }

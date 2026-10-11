@@ -105,8 +105,8 @@ class Progress {
   final int drops;
 
   const Progress({
-    this.tags = const [Tag(id: 'study', name: '공부')],
-    this.currentTagId = 'study',
+    this.tags = const [Tag(id: 'general', name: '미분류')],
+    this.currentTagId = 'general',
     this.selectedCompanionId,
     this.owned = const {},
     this.placements = const {},
@@ -143,10 +143,10 @@ class Progress {
       };
 
   factory Progress.fromJson(Map<String, dynamic> j) => Progress(
-        tags: (j['tags'] as List? ?? const [{'id': 'study', 'name': '공부'}])
+        tags: (j['tags'] as List? ?? const [{'id': 'general', 'name': '미분류'}])
             .map((e) => Tag.fromJson(e as Map<String, dynamic>))
             .toList(),
-        currentTagId: j['currentTagId'] as String?,
+        currentTagId: j['currentTagId'] as String? ?? 'general',
         selectedCompanionId: j['selectedCompanionId'] as String?,
         owned: (j['owned'] as Map? ?? {})
             .map((k, v) => MapEntry(k as String, v as int)),

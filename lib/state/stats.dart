@@ -1,6 +1,5 @@
 // lib/state/stats.dart
-// 기록 탭 계산. 실집중 구간 = [끝난 시각 - 실집중초, 끝난 시각] 을 현지 시각으로 날·시간 경계에서 나눈다.
-// ponytail: 일시정지 구간은 무시하고 끝 시각 기준으로 몰아 계산 — 일시정지 타임라인을 저장하면 정밀화.
+// 기록 탭 계산. 저장된 실집중 구간(일시정지로 나뉜 조각)을 현지 시각으로 날·시간 경계에서 나눈다.
 import '../models/task.dart';
 
 DateTime _day(DateTime t) => DateTime(t.year, t.month, t.day);
@@ -10,25 +9,26 @@ class FocusStats {
 
   final List<FocusSession> sessions;
 
-  /// 실집중 구간을 [unit] 경계로 잘라 (구간 시작, 초) 목록으로. 구기록(실집중초 없음)은 끝 시각에 통째로.
+  /// 실집중 구간을 날/시간 경계로 잘라 (구간 시작, 초) 목록으로.
+  /// 구간 기록이 없는 세션(구기록)은 끝난 날에 통째로 넣고, 시간대 분할에선 제외한다.
   Iterable<(DateTime, int)> _pieces(FocusSession s, {required bool hourly}) sync* {
-    final sec = s.focusedSec ?? s.minutes * 60;
-    if (sec <= 0) return;
-    if (s.focusedSec == null) {
-      if (!hourly) yield (_day(s.endedAt), sec);
-      return; // 시간대 분할 불가 → 골든타임에서 제외
+    if (s.segments.isEmpty) {
+      final sec = s.focusedSec ?? s.minutes * 60;
+      if (!hourly && sec > 0) yield (_day(s.endedAt), sec);
+      return;
     }
-    var cur = s.endedAt.subtract(Duration(seconds: sec));
-    while (cur.isBefore(s.endedAt)) {
-      final bucket = hourly
-          ? DateTime(cur.year, cur.month, cur.day, cur.hour)
-          : _day(cur);
-      final next = hourly
-          ? bucket.add(const Duration(hours: 1))
-          : DateTime(bucket.year, bucket.month, bucket.day + 1);
-      final end = next.isBefore(s.endedAt) ? next : s.endedAt;
-      yield (bucket, end.difference(cur).inSeconds);
-      cur = end;
+    for (final (start, end) in s.segments) {
+      var cur = start;
+      while (cur.isBefore(end)) {
+        final bucket =
+            hourly ? DateTime(cur.year, cur.month, cur.day, cur.hour) : _day(cur);
+        final next = hourly
+            ? DateTime(bucket.year, bucket.month, bucket.day, bucket.hour + 1)
+            : DateTime(bucket.year, bucket.month, bucket.day + 1);
+        final stop = next.isBefore(end) ? next : end;
+        yield (bucket, stop.difference(cur).inSeconds);
+        cur = stop;
+      }
     }
   }
 

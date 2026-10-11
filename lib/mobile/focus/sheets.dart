@@ -284,22 +284,46 @@ Future<void> showCompanionSheet(BuildContext context) =>
 
 /// 딴생각 메모: 저장하면 바로 닫히고 타이머는 그대로
 Future<void> showMemoSheet(BuildContext context) =>
-    showFocusSheet(context, '딴생각 메모', (ctx) {
-      final s = context.read<AppState>();
-      final style = s.scene.style;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-            MobileSize.gutter, 4, MobileSize.gutter, 24),
-        child: TextField(
+    showFocusSheet(context, '딴생각 메모', (ctx) => const _MemoBody());
+
+class _MemoBody extends StatefulWidget {
+  const _MemoBody();
+
+  @override
+  State<_MemoBody> createState() => _MemoBodyState();
+}
+
+class _MemoBodyState extends State<_MemoBody> {
+  final _c = TextEditingController();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (_c.text.trim().isEmpty) return;
+    context.read<AppState>().addToInbox(_c.text);
+    HapticFeedback.lightImpact();
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = context.watch<AppState>().scene.style;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          MobileSize.gutter, 4, MobileSize.gutter, 24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(
+          controller: _c,
           autofocus: true,
+          minLines: 1,
+          maxLines: 3,
           textInputAction: TextInputAction.done,
-          onSubmitted: (v) {
-            if (v.trim().isNotEmpty) {
-              s.addToInbox(v);
-              HapticFeedback.lightImpact();
-            }
-            Navigator.pop(ctx);
-          },
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) => _save(),
           style: TextStyle(fontSize: 16, color: style.textStrong),
           decoration: InputDecoration(
             hintText: '떠오른 생각을 적고 다시 집중',
@@ -310,8 +334,19 @@ Future<void> showMemoSheet(BuildContext context) =>
                 borderSide: BorderSide.none),
           ),
         ),
-      );
-    });
+        const SizedBox(height: 12),
+        PillButton(
+          style: style,
+          width: double.infinity,
+          height: MobileSize.cta,
+          icon: Icons.check_rounded,
+          label: '저장하고 돌아가기',
+          onTap: _c.text.trim().isEmpty ? null : _save,
+        ),
+      ]),
+    );
+  }
+}
 
 /// 보상: 친구 팝(.85→1 easeOutBack) + 햅틱, 물방울
 Future<void> showRewardSheet(BuildContext context) {
@@ -356,15 +391,45 @@ Future<void> showRewardSheet(BuildContext context) {
           child: Text('💧 물방울 +$drops',
               style: TextStyle(fontSize: 16, color: style.textStrong)),
         ),
+        if (r.taskId.isNotEmpty &&
+            s.pendingTasks.any((t) => t.id == r.taskId)) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () {
+              s.completeTask(r.taskId);
+              HapticFeedback.lightImpact();
+            },
+            icon: Icon(Icons.check_circle_outline_rounded, color: style.accent),
+            label: Text('"${r.taskTitle}" 끝냈어요',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: style.accent)),
+          ),
+        ],
         const SizedBox(height: 16),
-        PillButton(
-          style: style,
-          width: double.infinity,
-          height: MobileSize.cta,
-          icon: Icons.check_rounded,
-          label: '좋아요',
-          onTap: () => Navigator.pop(ctx),
-        ),
+        Row(children: [
+          Expanded(
+            child: PillButton(
+              style: style,
+              width: double.infinity,
+              height: MobileSize.cta,
+              icon: Icons.local_cafe_rounded,
+              label: '5분 휴식',
+              onTap: () {
+                s.startBreak();
+                Navigator.pop(ctx);
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          RoundIconButton(
+            style: style,
+            size: MobileSize.cta,
+            icon: Icons.close_rounded,
+            tooltip: '닫기',
+            onTap: () => Navigator.pop(ctx),
+          ),
+        ]),
       ]),
     );
   }).whenComplete(s.clearLastReward);
