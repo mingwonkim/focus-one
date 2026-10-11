@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../data/local_store.dart';
 import '../services/ambient_sound_service.dart';
+import '../services/session_notifier.dart';
 import '../state/app_state.dart';
 import 'mobile_shell.dart';
 
@@ -25,6 +26,13 @@ Future<void> runMobile() async {
       sound.stop();
     }
   });
+
+  // 세션 종료 알림 (거부돼도 앱은 정상 동작)
+  final notifier = SessionNotifier();
+  try {
+    await notifier.init();
+    appState.addListener(() => notifier.sync(appState));
+  } catch (_) {}
 
   runApp(
       ChangeNotifierProvider.value(value: appState, child: const MobileApp()));
