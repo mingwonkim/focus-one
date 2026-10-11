@@ -50,7 +50,10 @@
 - [x] 소리 시트 장면별 정리: 빗소리→숲, 바람→밤, 백색·갈색만 '집중 소음' 공통. 폰 밤 아이콘 별(+) → 달
 - [ ] 아이폰에 최신 빌드 설치 (랭킹·꾸미기 탭 포함) → 실기기 랭킹 참여 확인
 - [x] 앱 이름 FocusOne → Tocko (보이는 이름만, 번들 ID 유지)
-- [ ] 개인정보 처리방침·지원 페이지 Tocko로 (looinlabs.com/tocko) — 로컬 커밋만 있고 미배포, origin/master가 41커밋 앞서 있어 리베이스 필요
+- [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
+- [ ] App Store Connect 앱 등록 (사용자): 이름 Tocko, 번들 com.looinlabs.focusone
+- [ ] 스토어 스크린샷 6.9" 5장 + 문구(docs/mobile/store.md) + 심사 메모
+- [ ] Xcode로 TestFlight 업로드 → 심사 제출
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: release AAB → Play Console 업로드 (접근성 선언·시연 영상과 함께)
 - [ ] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사
