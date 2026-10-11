@@ -440,15 +440,19 @@ Future<void> showSoundSheet(BuildContext context) =>
     showFocusSheet(context, '집중 소리', (ctx) {
       return Consumer<AppState>(builder: (_, s, __) {
         final style = s.scene.style;
-        // 장면 소리(지금 장면) · 상황 소리 · 소음 — 아이디는 assets/sounds/<id>.m4a
+        // 지금 장면의 소리 · 날씨 · 소음 — 아이디는 assets/sounds/<id>.m4a ('scene' = 장면 기본)
+        final sceneSounds = s.scene == FocusScene.daily
+            ? [
+                ('scene', '카페', Icons.local_cafe_outlined),
+                ('library', '도서관', Icons.menu_book_outlined),
+                ('train', '기차 안', Icons.train_outlined),
+                ('fire', '모닥불', Icons.local_fire_department_outlined),
+              ]
+            : [('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined)];
         final groups = [
-          ('장면', [('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined)]),
-          ('상황', [
-            ('cafe', '카페', Icons.local_cafe_outlined),
-            ('library', '도서관', Icons.menu_book_outlined),
-            ('rain', '비 오는 날', Icons.water_drop_outlined),
-            ('fire', '모닥불', Icons.local_fire_department_outlined),
-            ('train', '기차 안', Icons.train_outlined),
+          (style.sceneLabel, sceneSounds),
+          ('날씨', [
+            ('rain', '빗소리', Icons.water_drop_outlined),
             ('wind', '바람', Icons.air_rounded),
           ]),
           ('소음', [

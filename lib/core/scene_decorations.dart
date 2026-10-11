@@ -40,6 +40,8 @@ class SceneDialPainter extends CustomPainter {
         _paintNight(canvas, d);
       case FocusScene.ocean:
         _paintOcean(canvas, d);
+      case FocusScene.daily:
+        _paintDaily(canvas, d);
     }
     canvas.restore();
   }
@@ -159,6 +161,54 @@ class SceneDialPainter extends CustomPainter {
     canvas.drawOval(_r(d, left: -0.16, bottom: -0.18, w: 0.74, h: 0.46), p);
     p.color = const Color(0xFF070A13);
     canvas.drawOval(_r(d, right: -0.14, bottom: -0.22, w: 0.80, h: 0.50), p);
+  }
+
+  /// 일상: 창가 햇살 + 테이블 + 김 나는 머그 (작은 링 60px에서도 머그 실루엣이 보이게 크게)
+  void _paintDaily(Canvas canvas, double d) {
+    final p = Paint();
+    // 창문 빛
+    _radial(canvas, Offset(0.68 * d, 0.22 * d), 0.3 * d,
+        const Color.fromRGBO(255, 244, 222, 0.9));
+    p.color = const Color.fromRGBO(255, 255, 255, 0.35);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(0.52 * d, 0.08 * d, 0.3 * d, 0.36 * d),
+            Radius.circular(0.04 * d)),
+        p);
+    // 테이블
+    p.color = const Color(0xFFD9826A);
+    canvas.drawRect(Rect.fromLTWH(0, 0.7 * d, d, 0.3 * d), p);
+    p.color = const Color(0xFFE99B82);
+    canvas.drawRect(Rect.fromLTWH(0, 0.68 * d, d, 0.04 * d), p);
+    if (!withCreatures) return; // 폰은 친구 그림을 따로 올림 — 머그는 생략
+    // 머그
+    final mug = RRect.fromRectAndRadius(
+        Rect.fromLTWH(0.33 * d, 0.46 * d, 0.3 * d, 0.26 * d),
+        Radius.circular(0.06 * d));
+    p.color = const Color(0xFFFFFBF8);
+    canvas.drawRRect(mug, p);
+    canvas.drawArc(
+        Rect.fromLTWH(0.56 * d, 0.5 * d, 0.14 * d, 0.14 * d),
+        -1.4,
+        2.8,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.035 * d
+          ..color = const Color(0xFFFFFBF8));
+    // 김
+    final steam = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.022 * d
+      ..strokeCap = StrokeCap.round
+      ..color = const Color.fromRGBO(255, 255, 255, 0.8);
+    for (final x in [0.42, 0.52]) {
+      final path = Path()
+        ..moveTo(x * d, 0.42 * d)
+        ..quadraticBezierTo((x - 0.04) * d, 0.36 * d, x * d, 0.31 * d)
+        ..quadraticBezierTo((x + 0.04) * d, 0.26 * d, x * d, 0.21 * d);
+      canvas.drawPath(path, steam);
+    }
   }
 
   void _paintOcean(Canvas canvas, double d) {
@@ -409,8 +459,49 @@ class SceneBullet extends StatelessWidget {
               ? const Color.fromRGBO(31, 122, 181, 0.85)
               : const Color.fromRGBO(120, 190, 228, 0.8),
         ),
+      FocusScene.daily => _MugBullet(
+          color: selected ? const Color(0xFFE08A6E) : const Color(0xFFF2B9A6),
+        ),
     };
   }
+}
+
+/// 일상 불릿: 작은 머그
+class _MugBullet extends StatelessWidget {
+  const _MugBullet({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 13,
+        height: 11,
+        child: Stack(children: [
+          Positioned(
+            left: 0,
+            top: 1,
+            child: Container(
+              width: 9,
+              height: 10,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(3)),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 3,
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 1.5),
+              ),
+            ),
+          ),
+        ]),
+      );
 }
 
 /// 누름 피드백: 0.97 스케일 (80ms 누름 / 120ms 해제). 동작 줄이기 설정이면 즉시.

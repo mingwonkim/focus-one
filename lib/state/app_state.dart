@@ -205,11 +205,12 @@ class AppState extends ChangeNotifier {
   }
 
   Timer? _retry;
+  bool _disposed = false;
 
   /// 저장 실패 시 2초 뒤 최신 상태로 다시 저장 (성공할 때까지)
   Future<void> _persist() async {
     final ok = await _store.save(_snapshot());
-    if (!ok && _retry == null) {
+    if (!ok && _retry == null && !_disposed) {
       _retry = Timer(const Duration(seconds: 2), () {
         _retry = null;
         _persist();
@@ -555,8 +556,13 @@ class AppState extends ChangeNotifier {
   /// 폰 소리 선택. 'scene'이면 장면을 따라간다.
   String get soundId => _progress.soundId;
   void setSoundId(String id) => _setProgress(_progress.copyWith(soundId: id));
-  String get soundAsset =>
-      soundId == 'scene' ? _scene.soundAsset : 'sounds/$soundId.m4a';
+  String get soundAsset {
+    const dailyOnly = {'library', 'train', 'fire'};
+    final id = (dailyOnly.contains(soundId) && _scene != FocusScene.daily)
+        ? 'scene'
+        : soundId;
+    return id == 'scene' ? _scene.soundAsset : 'sounds/$id.m4a';
+  }
   void setLockEnabled(bool v) =>
       _setProgress(_progress.copyWith(lockEnabled: v));
   int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
@@ -707,6 +713,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _ticker?.cancel();
     _retry?.cancel();
     super.dispose();

@@ -1,3 +1,11 @@
+import java.util.Properties
+
+// 출시 서명: android/key.properties (저장소 밖 ~/.config/focusone 의 키를 가리킴, 커밋 금지)
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -26,11 +34,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (keyProps.isNotEmpty()) {
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // 키가 없으면(CI 등) 디버그 키로 — 스토어 업로드용은 key.properties 필요
+            signingConfig = if (keyProps.isNotEmpty()) signingConfigs.getByName("release")
+                            else signingConfigs.getByName("debug")
         }
     }
 }

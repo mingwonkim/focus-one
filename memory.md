@@ -11,6 +11,15 @@
 - 미리보기 PNG: `flutter test tool/preview --dart-define=OUT=<dir>` (macOS AppleGothic·MaterialIcons 로드). 탭 전환 캡처는 AnimatedSwitcher 첫 프레임이 opacity 0이라 pump 2번 더 필요.
 - 비선택 작업 체크 = `completeTask(id)` — 타이머·현재 작업 보존(selectTask 경유 금지).
 
+## 모바일 v1 (2026-10-11, mobile-v1 브랜치)
+- 레퍼런스: App Store "Arctic Habit"(iPhone 미러링 실측, docs/mobile/refs). 레이아웃 패턴만 참고, 콘셉트·문구·그림은 자체 — 심사 4.1(카피캣) 대응. 사용자 지적으로 GitHub식 잔디 → 장면색 집중 달력으로 교체.
+- 구조: `lib/mobile/`(셸·탭 4개), `main.dart`에서 iOS/Android 분기. 데스크탑 전용 서비스 호출 금지. 폰은 `autoBreak=false`(휴식은 보상 시트에서 선택).
+- 타이머는 시각 기준(package:clock) + 진행 세션(ActiveSession) 저장 → 재실행 이어가기, 세션 ID로 기록·보상 1회. 실집중 구간(segments) 저장해 통계가 일시정지·복구에 왜곡되지 않음.
+- 앱 잠금: iOS Family Controls(FocusLock.swift + FocusMonitor 확장, App Group group.com.looinlabs.focusone, DeviceActivity 최소 15분 → 15분 이상 세션만), Android 접근성 서비스(패키지명만, 만료 후 미차단). 배포용 Family Controls 권한 신청 2026-10-11 — 승인 전엔 App Store/TestFlight 서명 불가.
+- 그림: Higgsfield 크레딧 소진 → codex 내장 이미지 생성(무료)으로 친구 12·장식 9. 소리: tool/gen_sounds.py 합성(장면 3 + 상황 5 + 소음 3).
+- 리뷰: astra 리뷰 1(12건) 반영 기록 docs/mobile/review-1.md.
+- Android 업로드 키: `~/.config/focusone/upload-keystore.jks` + key.properties (저장소 밖, 분실 시 Play 업로드 키 재설정 필요 → 백업 필수).
+
 ## 앱 아이콘 (2026-10-08)
 - 사용자 선택: Higgsfield 시안 H3(바다·고래, gpt_image_2_5, job 7dc1b3a0…). 기록 `docs/v2/higgsfield-log.md`.
 - 생성 이미지의 회색 배경은 크레딧 대신 PIL로 스퀘어클(n=5) 마스크 처리 → macOS 1024(본체 824+여백 100+그림자), Windows .ico·Linux 256·트레이는 여백 없는 타일.

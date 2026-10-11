@@ -374,6 +374,11 @@ class _GroundPainter extends CustomPainter {
           const Color(0xFF8CC8E6),
           const Color(0xFFFFFFFF)
         ),
+      FocusScene.daily => (
+          const Color(0xFFFFEDE6),
+          const Color(0xFFF7C7B5),
+          const Color(0xFFE59478)
+        ),
     };
     canvas.drawRect(
         r,

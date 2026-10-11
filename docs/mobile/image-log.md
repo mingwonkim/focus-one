@@ -26,3 +26,6 @@ Higgsfield 새 계정 크레딧 부족(0.03) → 사용자 요청으로 무료 �
 ## 장식 9종 (2026-10-11, codex image_generation, 1회 일괄, 버림 0)
 공통: "Matte 3D toy diorama object, soft pastel colors, rounded chunky shapes, three-quarter top view, centered filling 75% of frame, soft light from upper left, transparent background, no text, no characters, no ground plate." + ref_fawn.png로 톤 통일.
 숲: grass(풀숲)·tree(나무)·bench(벤치) / 밤: starstone(별돌)·moonlamp(달등)·telescope(망원경) / 바다: coral(산호)·seaweed(해초)·shellhouse(조개집). 512 webp 합계 232KB → assets/mobile/decor/.
+
+## 일상 장면 (2026-10-11, codex, 1회 일괄, 버림 0)
+친구: puppy(라떼멍)·hamster(책햄찌)·raccoon(기차너구리)·hedgehog(캠프도치) / 장식: mug(머그잔)·books(책 더미)·lamp(스탠드). ref_fawn·ref_tree로 톤 통일, 피치·코랄 파스텔.

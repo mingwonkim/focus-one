@@ -49,6 +49,10 @@ class Companion {
     Companion('turtle', FocusScene.ocean, '파도거북', 60),
     Companion('octopus', FocusScene.ocean, '방울문어', 180),
     Companion('ray', FocusScene.ocean, '구름가오리', 360),
+    Companion('puppy', FocusScene.daily, '라떼멍', 0),
+    Companion('hamster', FocusScene.daily, '책햄찌', 60),
+    Companion('raccoon', FocusScene.daily, '기차너구리', 180),
+    Companion('hedgehog', FocusScene.daily, '캠프도치', 360),
   ];
 
   static Companion? byId(String? id) =>
@@ -79,6 +83,9 @@ class Decor {
     Decor('coral', FocusScene.ocean, '산호', 20),
     Decor('seaweed', FocusScene.ocean, '해초', 40),
     Decor('shellhouse', FocusScene.ocean, '조개집', 60),
+    Decor('mug', FocusScene.daily, '머그잔', 20),
+    Decor('books', FocusScene.daily, '책 더미', 40),
+    Decor('lamp', FocusScene.daily, '스탠드', 60),
   ];
 
   static Decor? byId(String? id) => all.where((d) => d.id == id).firstOrNull;

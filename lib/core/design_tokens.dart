@@ -10,23 +10,25 @@ abstract class AppColors {
   static const success = Color(0xFF34C759); // iOS 그린
 }
 
-/// 화면 분위기 모드: 숲 / 밤 / 바다. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
+/// 화면 분위기 모드: 숲 / 밤 / 바다 / 일상. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
 enum FocusScene {
   forest,
   night,
-  ocean;
+  ocean,
+  daily; // 카페·도서관·기차·모닥불 같은 일상 장소
 
   SceneStyle get style => switch (this) {
         forest => SceneStyle.forest,
         night => SceneStyle.night,
         ocean => SceneStyle.ocean,
+        daily => SceneStyle.daily,
       };
 
   FocusScene get next =>
       FocusScene.values[(index + 1) % FocusScene.values.length];
 
-  /// 앰비언트 사운드 애셋 경로 (forest.wav / night.wav / ocean.wav)
-  String get soundAsset => 'sounds/$name.wav';
+  /// 앰비언트 사운드 애셋 경로 (forest.wav / night.wav / ocean.wav, 일상은 카페)
+  String get soundAsset => this == daily ? 'sounds/cafe.m4a' : 'sounds/$name.wav';
 }
 
 /// 장면별 스타일 값 — v2(Tiimo 레퍼런스) 팔레트. 근거: docs/v2/app-design-spec.md §3.
@@ -174,6 +176,37 @@ class SceneStyle {
     sceneLabel: '바다',
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
+  );
+
+  // 일상: 피치·코랄 파스텔 (베이지 금지). 대비: accent #A3452F / cardBg ≈ 5.9:1
+  static const daily = SceneStyle(
+    brightness: Brightness.light,
+    cardBg: Color(0xFFFFF2EE),
+    cardBorder: Color(0xFFFBDDD4),
+    rowBg: Color(0xFFFFFFFF),
+    rowShadow: Color(0x0F000000),
+    textStrong: Color(0xFF3A1F18),
+    textMuted: Color(0xFF6B4A41),
+    textFaint: Color(0xFF7D5E55),
+    accent: Color(0xFFA3452F),
+    ringProgress: Color(0xFFE08A6E),
+    ringTrack: Color(0xFFFBE0D8),
+    dialColors: [
+      Color(0xFFFFF6EC),
+      Color(0xFFFFE1D3),
+      Color(0xFFF7B9A2),
+      Color(0xFFE59478),
+    ],
+    dialStops: [0, 0.35, 0.7, 1],
+    pillBg: Color(0xFF2B1D1A),
+    pillFg: Color(0xFFFFFFFF),
+    checkBg: Color(0xFFA3452F),
+    checkFg: Color(0xFFFFFFFF),
+    divider: Color(0xFFFBE0D8),
+    fieldFill: Color(0xFFFFFFFF),
+    sceneLabel: '일상',
+    footerLabel: '오늘 마신 커피',
+    footerUnit: '잔',
   );
 }
 
