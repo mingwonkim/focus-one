@@ -1,4 +1,6 @@
 // lib/main.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'data/local_store.dart';
+import 'mobile/mobile_main.dart';
 import 'models/task.dart';
 import 'services/ambient_sound_service.dart';
 import 'services/blocker_service.dart';
@@ -21,6 +24,9 @@ final _ambientSoundService = AmbientSoundService();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 폰은 별도 셸 — 아래 데스크탑 전용 초기화(창·트레이·단축키·알림)를 타지 않는다
+  if (Platform.isIOS || Platform.isAndroid) return runMobile();
 
   // 1. 창 초기화 (미니 위젯, always-on-top, frameless)
   final windowService = WindowService();
