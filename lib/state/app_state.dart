@@ -394,6 +394,18 @@ class AppState extends ChangeNotifier {
     stopTimer();
   }
 
+  /// 비상 탈출 비용: 남은 1분마다 물방울 2 (올림). 실수로 길게 시작했을 때의 출구.
+  int get escapeCost => (remainingSeconds / 60).ceil() * 2;
+
+  /// 물방울을 내고 지금 끝낸다. 결과는 그만두기와 같다(기록만, 보상 없음).
+  bool escapeSession() {
+    final cost = escapeCost;
+    if (_active == null || _progress.drops < cost) return false;
+    _setProgress(_progress.copyWith(drops: _progress.drops - cost));
+    abandonSession();
+    return true;
+  }
+
   void _cancelSession() {
     _ticker?.cancel();
     _active = null;

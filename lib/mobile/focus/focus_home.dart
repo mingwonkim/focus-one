@@ -1,5 +1,6 @@
 // lib/mobile/focus/focus_home.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/design_tokens.dart';
@@ -348,6 +349,32 @@ class _Controls extends StatelessWidget {
     if (ok == true) state.abandonSession();
   }
 
+  Future<void> _confirmEscape(BuildContext context) async {
+    final cost = state.escapeCost;
+    final short = cost - state.drops;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(short > 0
+            ? '물방울이 $short개 부족해요'
+            : '물방울 $cost개로 지금 끝낼까요?'),
+        content: Text(short > 0
+            ? '남은 1분마다 2개가 필요해요. 지금 ${state.drops}개 있어요.'
+            : '남은 1분마다 2개예요. 집중한 시간은 기록되지만 친구는 오지 않아요.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('계속하기')),
+          if (short <= 0)
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('끝내기')),
+        ],
+      ),
+    );
+    if (ok == true && state.escapeSession()) HapticFeedback.mediumImpact();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = state;
@@ -407,21 +434,21 @@ class _Controls extends StatelessWidget {
         memo,
       ]);
     }
-    // 그만두기도 막는다(사용자 결정 2026-10-11) — 잘못 누른 시작만 10초 안에 취소.
+    // 그만두기도 막는다(사용자 결정 2026-10-11) — 10초 안엔 취소, 그 뒤엔 물방울로 비상 탈출.
     // 예전 버전에서 일시정지해 둔 세션은 갇히지 않게 그대로 그만둘 수 있다.
     final canCancel =
         !s.isRunning || s.totalSeconds - s.remainingSeconds < 10;
     return Row(children: [
-      if (canCancel) ...[
-        RoundIconButton(
-          style: style,
-          size: MobileSize.cta,
-          icon: Icons.close_rounded,
-          tooltip: '시작 취소',
-          onTap: () => _confirmAbandon(context),
-        ),
-        const SizedBox(width: 12),
-      ],
+      RoundIconButton(
+        style: style,
+        size: MobileSize.cta,
+        icon: canCancel ? Icons.close_rounded : Icons.water_drop_outlined,
+        tooltip: canCancel ? '시작 취소' : '물방울로 끝내기',
+        onTap: () => canCancel
+            ? _confirmAbandon(context)
+            : _confirmEscape(context),
+      ),
+      const SizedBox(width: 12),
       // 폰은 일시정지 없음(집중 강제, 사용자 결정 2026-10-11) — 딴생각은 메모로 던지고 계속.
       // 예전 버전에서 일시정지해 둔 세션만 '계속'으로 이어갈 수 있다.
       Expanded(

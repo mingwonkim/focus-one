@@ -93,6 +93,29 @@ void main() {
     a.dispose();
   });
 
+  test('비상 탈출: 남은 1분당 물방울 2, 모자라면 못 끝냄', () async {
+    final t0 = DateTime(2026, 10, 11, 9);
+    final a = await boot(t0);
+    withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
+    await a.flush();
+    a.dispose();
+    final b = await boot(t0.add(const Duration(hours: 1))); // 25분 완료 → 25개
+    final t1 = t0.add(const Duration(hours: 1));
+    withClock(Clock.fixed(t1), () => b.startTimer(allowNoTask: true));
+    withClock(Clock.fixed(t1.add(const Duration(minutes: 5))), () {
+      expect(b.escapeCost, 40); // 20분 남음
+      expect(b.escapeSession(), isFalse);
+    });
+    withClock(Clock.fixed(t1.add(const Duration(minutes: 15, seconds: 30))), () {
+      expect(b.escapeCost, 20); // 9분 30초 남음 → 10분
+      expect(b.escapeSession(), isTrue);
+    });
+    expect(b.activeSession, isNull);
+    expect(b.drops, 5);
+    expect(b.ownedCount('fawn'), 1);
+    b.dispose();
+  });
+
   test('친구 해금은 장면 누적 완료 분, 잠긴 친구는 선택 불가', () async {
     final a = await boot(DateTime(2026, 10, 11));
     final squirrel = Companion.byId('squirrel')!;
