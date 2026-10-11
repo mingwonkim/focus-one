@@ -39,7 +39,7 @@
 - [ ] P6 Deep Focus 본구현
   - [x] 정식 잠금 화면(안내·동의·권한·앱 선택·설정), 세션 연동(재생=잠금, 일시정지·종료=해제)
   - [x] Android 접근성 잠금 — 에뮬레이터에서 차단·만료 후 미차단 확인
-  - [ ] 아이폰 실기기: 정식 화면으로 잠금 → 앱 종료 → 종료 시각 자동 해제 재확인
+  - [x] 아이폰 실기기: 정식 화면 잠금·앱 종료 후에도 유지 확인(10/11), 자동 해제는 사용자 확인 완료
   - [ ] Android 실기기 확인, Play 접근성 선언·시연 영상(출시 전)
 - [x] 실사용 피드백 1 (2026-10-11): 폰 일시정지 제거, 화면 꺼져도 소리(just_audio·백그라운드 오디오), Mixkit 원음 11개로 교체 + 장면별 상황 소리 (docs/mobile/sounds.md)
   - [ ] 아이폰에서 화면 끔·반복 이음새 확인
@@ -47,7 +47,7 @@
 - [ ] P7 모션·다듬기·TestFlight·AAB → 사용자 확정 → main 머지
 
 ## 다음 세션
-- [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
+- [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
-- [ ] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인
+- [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
 - [ ] (보류) Apple Developer 공증 — 경고 없는 배포가 필요해지면
