@@ -29,12 +29,13 @@
 - [x] P0 레퍼런스: Arctic Habit 실측(iPhone 미러링, 10분 세션 완료까지) + Mobbin + PRD + astra 설계서 → docs/mobile/
 - [ ] P1 플랫폼 추가·셸 분리 + 차단 기술 시험(iOS 15분 shield, Android 접근성) + Family Controls 배포 권한 신청
   - [x] ios/android 추가 + 폰 셸(탭 4개) — iOS 시뮬(iPhone 17 Pro)·Android 에뮬(focusone-design) 실행 확인
-  - [ ] 차단 기술 시험: 아이폰 실기기 연결·Xcode 서명 필요(사용자)
-  - [ ] Family Controls 배포 권한 신청(사용자, Apple 폼)
-- [ ] P2 저장 안전성 + 세션 복구·보상 1회 확정
-- [ ] P3 데이터 모델(태그·친구·배치·재화) + 통계
+  - [x] 아이폰 실기기 등록·서명·설치 (팀 QZ366AK4NB), FocusLock+FocusMonitor 확장 탑재
+  - [ ] 차단 기술 시험: 사용자가 아이폰에서 권한→앱 선택→15분 잠금→앱 종료→자동 해제 확인
+  - [x] Family Controls 배포 권한 신청 제출 (2026-10-11, Apple 회신 대기)
+- [x] P2 저장 안전성 + 세션 복구·보상 1회 확정 — 시각 기준 타이머, 진행 세션 저장, .bak 복구, 테스트 6개
+- [x] P3 데이터 모델(태그·친구·배치·재화) + 통계 — Progress 묶음 저장(schema 3), FocusStats(자정 분할·잔디·골든타임), 테스트 9개
 - [ ] P4 집중 홈 1장 → 사용자 검토 → 할 일·기록·인박스·소리·알림
-- [ ] P5 수집 도감·풍경 + Higgsfield 친구 12종
+- [ ] P5 수집 도감·풍경 (친구 12종 그림은 완료 — codex 이미지 생성, assets/mobile/companions)
 - [ ] P6 Deep Focus 본구현
 - [ ] P7 모션·다듬기·TestFlight·AAB → 사용자 확정 → main 머지
 

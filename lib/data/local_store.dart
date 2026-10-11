@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/design_tokens.dart';
 import '../models/blocker_settings.dart';
+import '../models/collection.dart';
 import '../models/task.dart';
 
 /// JSON 파일 저장소.
@@ -78,6 +79,7 @@ class StoreData {
   final bool soundEnabled;
   final double soundVolume;
   final ActiveSession? activeSession;
+  final Progress progress;
 
   const StoreData({
     required this.tasks,
@@ -88,10 +90,11 @@ class StoreData {
     this.soundEnabled = true,
     this.soundVolume = 0.6,
     this.activeSession,
+    this.progress = const Progress(),
   });
 
-  /// 1 = 데스크탑 v1, 2 = 진행 세션·세션 결과 필드 추가
-  static const schemaVersion = 2;
+  /// 1 = 데스크탑 v1, 2 = 진행 세션·세션 결과, 3 = 폰 진행(태그·친구·풍경·물방울)
+  static const schemaVersion = 3;
 
   factory StoreData.empty() =>
       const StoreData(tasks: [], inbox: [], sessions: []);
@@ -99,6 +102,7 @@ class StoreData {
   Map<String, dynamic> toJson() => {
         'schema': schemaVersion,
         'activeSession': activeSession?.toJson(),
+        'progress': progress.toJson(),
         'tasks': tasks.map((t) => t.toJson()).toList(),
         'inbox': inbox.map((i) => i.toJson()).toList(),
         'sessions': sessions.map((s) => s.toJson()).toList(),
@@ -126,6 +130,9 @@ class StoreData {
             FocusScene.forest,
         soundEnabled: json['soundEnabled'] as bool? ?? true,
         soundVolume: (json['soundVolume'] as num?)?.toDouble() ?? 0.6,
+        progress: json['progress'] != null
+            ? Progress.fromJson(json['progress'] as Map<String, dynamic>)
+            : const Progress(),
         activeSession: json['activeSession'] != null
             ? ActiveSession.fromJson(
                 json['activeSession'] as Map<String, dynamic>)

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../core/design_tokens.dart';
 import '../data/local_store.dart';
 import '../models/blocker_settings.dart';
+import '../models/collection.dart';
 import '../models/task.dart';
 
 /// 타이머 사이클: 대기 → 집중 → 휴식 → 대기
@@ -28,6 +29,8 @@ class AppState extends ChangeNotifier {
   Timer? _ticker;
   int _totalSeconds = 25 * 60; // 다음 세션 길이 설정
   ActiveSession? _active; // 진행/일시정지 중인 세션 (저장됨)
+  Progress _progress = const Progress(); // 폰: 태그·친구·풍경·물방울
+  FocusSession? _lastReward; // 방금 완료한 세션 (보상 시트 표시용, 저장 안 함)
 
   int _breakTotalSeconds = 5 * 60;
   DateTime? _breakEndsAt; // 휴식 중일 때만 (저장 안 함 — 꺼지면 휴식은 버린다)
@@ -175,6 +178,7 @@ class AppState extends ChangeNotifier {
     _scene = data.scene;
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
+    _progress = data.progress;
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
@@ -203,6 +207,7 @@ class AppState extends ChangeNotifier {
           soundEnabled: _soundEnabled,
           soundVolume: _soundVolume,
           activeSession: _active,
+          progress: _progress,
         ),
       );
 
@@ -304,19 +309,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startTimer() {
+  /// [allowNoTask] 폰: 할 일 없이 태그만으로 시작 허용 (데스크탑은 할 일 필수)
+  void startTimer({bool allowNoTask = false}) {
     final task = currentTask;
-    if (task == null || isRunning || _breakEndsAt != null) return;
+    if ((task == null && !allowNoTask) || isRunning || _breakEndsAt != null) {
+      return;
+    }
     final now = clock.now();
     _active = _active?.resumed(now) ??
         ActiveSession(
           id: _newId(),
-          taskId: task.id,
-          taskTitle: task.title,
+          taskId: task?.id ?? '',
+          taskTitle: task?.title ?? '',
           scene: _scene.name,
           startedAt: now,
           plannedSec: _totalSeconds,
           resumedAt: now,
+          tagId: task?.tagId ?? _progress.currentTagId,
+          companionId: selectedCompanion.id,
         );
     _startTicker();
     notifyListeners();
@@ -476,7 +486,131 @@ class AppState extends ChangeNotifier {
       focusedSec: focused,
       scene: a.scene,
       outcome: outcome,
+      tagId: a.tagId,
+      companionId: outcome == SessionOutcome.completed ? a.companionId : null,
     ));
+    // 보상: 끝까지 완료한 세션만 — 친구 1 + 물방울(실집중 분). 기록과 같은 저장으로 확정.
+    if (outcome == SessionOutcome.completed) {
+      final owned = Map.of(_progress.owned);
+      if (a.companionId != null) {
+        owned[a.companionId!] = (owned[a.companionId!] ?? 0) + 1;
+      }
+      _progress = _progress.copyWith(
+          owned: owned, drops: _progress.drops + focused ~/ 60);
+      _lastReward = _sessions.last;
+    }
+  }
+
+  // ---- 폰: 태그 · 친구 · 풍경 · 상점 ----
+  List<Tag> get tags => _progress.tags;
+  Tag? get currentTag =>
+      _progress.tags.where((t) => t.id == _progress.currentTagId).firstOrNull;
+  int get drops => _progress.drops;
+  int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
+  FocusSession? get lastReward => _lastReward;
+  void clearLastReward() {
+    _lastReward = null;
+    notifyListeners();
+  }
+
+  void _setProgress(Progress p) {
+    _progress = p;
+    notifyListeners();
+    _persist();
+  }
+
+  void addTag(String name) {
+    final n = name.trim();
+    if (n.isEmpty) return;
+    final tag = Tag(id: _newId(), name: n, colorIndex: _progress.tags.length);
+    _setProgress(_progress.copyWith(
+        tags: [..._progress.tags, tag], currentTagId: () => tag.id));
+  }
+
+  void renameTag(String id, String name) {
+    final n = name.trim();
+    if (n.isEmpty) return;
+    _setProgress(_progress.copyWith(
+        tags: [for (final t in _progress.tags) t.id == id ? t.copyWith(name: n) : t]));
+  }
+
+  /// 태그 삭제: 지난 기록의 tagId는 그대로 둔다(통계에서 "삭제된 태그"로 묶음)
+  void deleteTag(String id) {
+    final rest = _progress.tags.where((t) => t.id != id).toList();
+    if (rest.isEmpty) return; // 마지막 태그는 지우지 않는다
+    _tasks = [
+      for (final t in _tasks) t.tagId == id ? Task(id: t.id, title: t.title, isDone: t.isDone, createdAt: t.createdAt, completedAt: t.completedAt) : t
+    ];
+    _setProgress(_progress.copyWith(
+        tags: rest,
+        currentTagId: () =>
+            _progress.currentTagId == id ? rest.first.id : _progress.currentTagId));
+  }
+
+  void selectTag(String id) =>
+      _setProgress(_progress.copyWith(currentTagId: () => id));
+
+  void setTaskTag(String taskId, String tagId) {
+    _tasks = [for (final t in _tasks) t.id == taskId ? t.copyWith(tagId: tagId) : t];
+    notifyListeners();
+    _persist();
+  }
+
+  /// 장면별 누적 완료 집중 분 (친구 해금 기준)
+  int sceneMinutes(FocusScene s) => _sessions
+      .where((x) => x.outcome == SessionOutcome.completed && x.scene == s.name)
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  bool isUnlocked(Companion c) => sceneMinutes(c.scene) >= c.unlockMinutes;
+
+  /// 이번 세션에 데려올 친구 — 선택이 현재 장면과 다르거나 잠겨 있으면 장면 첫 친구
+  Companion get selectedCompanion {
+    final c = Companion.byId(_progress.selectedCompanionId);
+    if (c != null && c.scene == _scene && isUnlocked(c)) return c;
+    return Companion.of(_scene).first;
+  }
+
+  void selectCompanion(String id) {
+    final c = Companion.byId(id);
+    if (c == null || !isUnlocked(c) || _active != null) return;
+    _setProgress(_progress.copyWith(selectedCompanionId: () => id));
+  }
+
+  bool buyDecor(String id) {
+    final d = Decor.byId(id);
+    if (d == null || _progress.drops < d.price) return false;
+    final owned = Map.of(_progress.owned)..[id] = (_progress.owned[id] ?? 0) + 1;
+    _setProgress(_progress.copyWith(owned: owned, drops: _progress.drops - d.price));
+    return true;
+  }
+
+  List<Placement> placementsOf(FocusScene s) =>
+      _progress.placements[s.name] ?? const [];
+
+  int placedCount(String itemId) => _progress.placements.values
+      .expand((l) => l)
+      .where((p) => p.itemId == itemId)
+      .length;
+
+  /// 빈 칸에만, 보유 수를 넘지 않게 배치
+  bool place(FocusScene s, String itemId, int x, int y) {
+    final list = placementsOf(s);
+    final inGrid = x >= 0 && y >= 0 && x < Placement.grid && y < Placement.grid;
+    if (!inGrid || list.any((p) => p.x == x && p.y == y)) return false;
+    if (placedCount(itemId) >= ownedCount(itemId)) return false;
+    _setProgress(_progress.copyWith(placements: {
+      ..._progress.placements,
+      s.name: [...list, Placement(itemId, x, y)],
+    }));
+    return true;
+  }
+
+  /// 회수: 보관함으로 돌아갈 뿐 재지급·삭제 없음
+  void unplace(FocusScene s, int x, int y) {
+    _setProgress(_progress.copyWith(placements: {
+      ..._progress.placements,
+      s.name: placementsOf(s).where((p) => p.x != x || p.y != y).toList(),
+    }));
   }
 
   @override

@@ -7,6 +7,7 @@ class Task {
   final bool isDone;
   final DateTime createdAt;
   final DateTime? completedAt;
+  final String? tagId; // 폰: 태그 섹션
 
   const Task({
     required this.id,
@@ -14,14 +15,16 @@ class Task {
     this.isDone = false,
     required this.createdAt,
     this.completedAt,
+    this.tagId,
   });
 
-  Task copyWith({String? title, bool? isDone, DateTime? completedAt}) => Task(
+  Task copyWith({String? title, bool? isDone, DateTime? completedAt, String? tagId}) => Task(
         id: id,
         title: title ?? this.title,
         isDone: isDone ?? this.isDone,
         createdAt: createdAt,
         completedAt: completedAt ?? this.completedAt,
+        tagId: tagId ?? this.tagId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -30,6 +33,7 @@ class Task {
         'isDone': isDone,
         'createdAt': createdAt.toIso8601String(),
         'completedAt': completedAt?.toIso8601String(),
+        'tagId': tagId,
       };
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
@@ -40,6 +44,7 @@ class Task {
         completedAt: json['completedAt'] != null
             ? DateTime.parse(json['completedAt'] as String)
             : null,
+        tagId: json['tagId'] as String?,
       );
 }
 
@@ -83,6 +88,8 @@ class FocusSession {
   final int? focusedSec;
   final String? scene;
   final SessionOutcome outcome;
+  final String? tagId;
+  final String? companionId; // 완료로 얻은 친구 (보상 기록)
 
   const FocusSession({
     required this.id,
@@ -94,10 +101,14 @@ class FocusSession {
     this.focusedSec,
     this.scene,
     this.outcome = SessionOutcome.completed,
+    this.tagId,
+    this.companionId,
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'tagId': tagId,
+        'companionId': companionId,
         'taskId': taskId,
         'taskTitle': taskTitle,
         'minutes': minutes,
@@ -121,6 +132,8 @@ class FocusSession {
         scene: json['scene'] as String?,
         outcome: SessionOutcome.values.asNameMap()[json['outcome']] ??
             SessionOutcome.completed,
+        tagId: json['tagId'] as String?,
+        companionId: json['companionId'] as String?,
       );
 }
 
@@ -135,6 +148,8 @@ class ActiveSession {
   final int plannedSec;
   final int accumulatedSec; // 마지막 일시정지까지 쌓인 집중 초
   final DateTime? resumedAt; // null = 일시정지 중
+  final String? tagId;
+  final String? companionId;
 
   const ActiveSession({
     required this.id,
@@ -145,6 +160,8 @@ class ActiveSession {
     required this.plannedSec,
     this.accumulatedSec = 0,
     this.resumedAt,
+    this.tagId,
+    this.companionId,
   });
 
   bool get isRunning => resumedAt != null;
@@ -164,6 +181,8 @@ class ActiveSession {
         startedAt: startedAt,
         plannedSec: plannedSec,
         accumulatedSec: focusedSec(now),
+        tagId: tagId,
+        companionId: companionId,
       );
 
   ActiveSession resumed(DateTime now) => ActiveSession(
@@ -175,6 +194,8 @@ class ActiveSession {
         plannedSec: plannedSec,
         accumulatedSec: accumulatedSec,
         resumedAt: now,
+        tagId: tagId,
+        companionId: companionId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -186,6 +207,8 @@ class ActiveSession {
         'plannedSec': plannedSec,
         'accumulatedSec': accumulatedSec,
         'resumedAt': resumedAt?.toIso8601String(),
+        'tagId': tagId,
+        'companionId': companionId,
       };
 
   factory ActiveSession.fromJson(Map<String, dynamic> json) => ActiveSession(
@@ -199,5 +222,7 @@ class ActiveSession {
         resumedAt: json['resumedAt'] != null
             ? DateTime.parse(json['resumedAt'] as String)
             : null,
+        tagId: json['tagId'] as String?,
+        companionId: json['companionId'] as String?,
       );
 }
