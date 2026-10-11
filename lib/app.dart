@@ -18,7 +18,7 @@ class FocusOneApp extends StatelessWidget {
     // 장면(숲/밤/바다)에 따라 테마 전환
     final scene = context.select((AppState s) => s.scene);
     return MaterialApp(
-      title: 'FocusOne',
+      title: 'Tocko',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.of(scene),
       home: const _AppShell(),

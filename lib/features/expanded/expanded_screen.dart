@@ -60,7 +60,7 @@ class _ExpandedScreenState extends State<ExpandedScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'FocusOne',
+                        'Tocko',
                         maxLines: 1,
                         overflow: TextOverflow.fade,
                         softWrap: false,

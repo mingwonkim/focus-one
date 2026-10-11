@@ -33,7 +33,7 @@ Future<void> main() async {
   await windowService.initMiniWindow();
 
   // 2. 데스크탑 알림 초기화
-  await localNotifier.setup(appName: 'FocusOne');
+  await localNotifier.setup(appName: 'Tocko');
 
   // 3. 앱 상태 로드
   final appState = AppState(LocalStore());

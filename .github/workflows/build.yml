@@ -95,7 +95,7 @@ jobs:
           EOF
           cat > deb/usr/share/applications/focus-one.desktop << 'EOF'
           [Desktop Entry]
-          Name=FocusOne
+          Name=Tocko
           Comment=One task at a time
           Exec=/opt/focus-one/focus_one
           Icon=focus-one

@@ -21,7 +21,7 @@ class TrayService with TrayListener {
         MenuItem.separator(),
         MenuItem(key: 'quit', label: '종료'),
       ]));
-      await trayManager.setToolTip('FocusOne — 지금 이거 하나만');
+      await trayManager.setToolTip('Tocko — 지금 이거 하나만');
     } catch (_) {
       // 아이콘 파일이 없어도 앱 자체는 동작해야 한다
     }

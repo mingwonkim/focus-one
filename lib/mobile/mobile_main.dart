@@ -107,7 +107,7 @@ class MobileApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final scene = context.select((AppState s) => s.scene);
     return MaterialApp(
-      title: 'FocusOne',
+      title: 'Tocko',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.of(scene),
       home: const MobileShell(),
