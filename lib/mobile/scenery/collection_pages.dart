@@ -296,7 +296,7 @@ class ShopPage extends StatelessWidget {
                         Text(
                           s.drops >= d.price
                               ? '💧 ${d.price}'
-                              : '💧 ${d.price} · ${d.price - s.drops} 부족',
+                              : '💧 ${d.price} · ${d.price - s.drops}개 부족',
                           style:
                               TextStyle(fontSize: 12, color: style.textMuted),
                         ),

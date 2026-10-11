@@ -115,7 +115,7 @@ class _SceneryTabState extends State<SceneryTab> {
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(
-                        '집중을 끝내면 친구가 와요.\n편집을 눌러 이곳에 데려다 두세요.',
+                        '집중을 끝내면 친구가 와요.\n꾸미기를 눌러 이곳에 데려다 두세요.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, height: 1.5, color: style.textMuted),
