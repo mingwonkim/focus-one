@@ -1,4 +1,4 @@
-package com.looinlabs.tocko
+package com.looinlabs.fokko
 
 import android.content.ComponentName
 import android.content.Intent

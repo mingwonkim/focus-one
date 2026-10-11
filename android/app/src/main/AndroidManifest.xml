@@ -2,7 +2,7 @@
     <!-- 랭킹(Supabase) — 릴리스 빌드는 기본으로 안 들어가서 명시 -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Tocko"
+        android:label="Fokko"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -31,7 +31,7 @@
         <service
             android:name=".FocusLockAccessibility"
             android:exported="false"
-            android:label="Tocko 집중 잠금"
+            android:label="Fokko 집중 잠금"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

@@ -10,7 +10,7 @@ import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
 import 'package:focus_one/state/app_state.dart';
 
-const out = String.fromEnvironment('OUT', defaultValue: '/tmp/tocko_seed.json');
+const out = String.fromEnvironment('OUT', defaultValue: '/tmp/fokko_seed.json');
 
 void main() {
   test('seed', () async {

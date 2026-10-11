@@ -260,7 +260,7 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
           Text(
             Platform.isIOS
                 ? '15분 이상 집중할 때 잠기고, 끝나면 바로 풀려요.'
-                : '집중하는 동안 고른 앱을 열면 Tocko로 돌아와요. 끝나면 풀려요.',
+                : '집중하는 동안 고른 앱을 열면 Fokko로 돌아와요. 끝나면 풀려요.',
             style: TextStyle(fontSize: 13, height: 1.4, color: style.textMuted),
           ),
         ],

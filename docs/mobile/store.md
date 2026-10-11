@@ -1,16 +1,16 @@
-# Tocko 스토어 문구 (App Store / Google Play 공용)
+# Fokko 스토어 문구 (App Store / Google Play 공용)
 
 의학적 효과(치료·증상 개선) 표현 금지 — "ADHD인 사람을 위해 만든"까지만.
 
 ## 이름 · 부제
-- 이름 (30자): Tocko: ADHD 집중 타이머 & 앱 잠금
+- 이름 (30자): Fokko: ADHD 집중 타이머 & 앱 잠금
 - 부제 (30자): 딱 하나만, 친구들과 끝까지
 
 ## 프로모션 텍스트 (170자)
 할 일 딱 하나만 고르고 시작하세요. 집중하는 동안 딴짓 앱은 잠기고, 숲·밤·바다·카페 소리가 곁을 지켜요. 끝까지 해내면 귀여운 친구가 찾아와요.
 
 ## 설명 (4000자)
-Tocko는 산만해지기 쉬운 사람, 특히 ADHD인 사람을 위해 만든 집중 타이머예요.
+Fokko는 산만해지기 쉬운 사람, 특히 ADHD인 사람을 위해 만든 집중 타이머예요.
 할 일을 여러 개 늘어놓지 않고, 지금 할 일 딱 하나에만 머물게 도와요.
 
 ■ 딱 하나만
@@ -52,21 +52,21 @@ Tocko는 산만해지기 쉬운 사람, 특히 ADHD인 사람을 위해 만든 �
 뽀모도로,공부,할일,포커스,백색소음,빗소리,카페소음,디지털디톡스,스터디,몰입,습관,루틴,캐릭터,수집,딴짓
 
 ## URL
-- 지원 URL: https://looinlabs.com/tocko/
+- 지원 URL: https://looinlabs.com/fokko/
 - 마케팅 URL: (비워 둠)
-- 개인정보 처리방침 URL: https://looinlabs.com/tocko/privacy
+- 개인정보 처리방침 URL: https://looinlabs.com/fokko/privacy
 
 ## 저작권
 2026 looin labs
 
 ## 심사 메모 (App Review Information → Notes)
-Tocko is a single-task focus timer. No account or login is required.
+Fokko is a single-task focus timer. No account or login is required.
 
 App lock (Screen Time / Family Controls):
 1. Tap the lock icon (top right of the Focus tab) → "잠금 켜기" (Turn on).
 2. Allow Screen Time access, then pick apps to block and tap "완료" (Done).
 3. Back on the Focus tab, tap "시작" (Start). Lock applies only to sessions of 15 minutes or longer (default is 25 minutes).
-4. Opening a selected app shows the Screen Time shield. It is released automatically when the session ends, even if Tocko is closed.
+4. Opening a selected app shows the Screen Time shield. It is released automatically when the session ends, even if Fokko is closed.
 
 Ranking (optional): Records tab → 랭킹 → enter any nickname → 참여하기. Uses anonymous sign-in; "랭킹에서 나가기" deletes the data.
 

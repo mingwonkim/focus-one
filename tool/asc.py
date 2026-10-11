@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""App Store Connect API 최소 클라이언트. 키는 ~/.config/tocko/asc.env (저장소 밖).
+"""App Store Connect API 최소 클라이언트. 키는 ~/.config/fokko/asc.env (저장소 밖).
 사용: python3 tool/asc.py GET /v1/apps?filter[bundleId]=com.looinlabs.focusone
       python3 tool/asc.py PATCH /v1/... '{"data":...}'
 """
 import json, os, sys, time, urllib.request
 import jwt  # pip install pyjwt cryptography
 
-ENV = dict(l.strip().split("=", 1) for l in open(os.path.expanduser("~/.config/tocko/asc.env")) if "=" in l)
+ENV = dict(l.strip().split("=", 1) for l in open(os.path.expanduser("~/.config/fokko/asc.env")) if "=" in l)
 
 
 def token():

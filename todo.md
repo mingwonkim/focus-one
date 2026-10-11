@@ -49,11 +49,11 @@
 - [x] 풍경 탭 → '꾸미기' (탭 안 버튼은 '배치 바꾸기')
 - [x] 소리 시트 장면별 정리: 빗소리→숲, 바람→밤, 백색·갈색만 '집중 소음' 공통. 폰 밤 아이콘 별(+) → 달
 - [ ] 아이폰에 최신 빌드 설치 (랭킹·꾸미기 탭 포함) → 실기기 랭킹 참여 확인
-- [x] 앱 이름 FocusOne → Tocko (보이는 이름만, iOS 번들 ID 유지)
+- [x] 앱 이름 FocusOne → Tocko → **Fokko** (2026-10-12, 보이는 이름·Android ID com.looinlabs.fokko·사이트 /fokko·ASC 이름. iOS 번들 ID 유지)
 - [x] Android applicationId·패키지 → com.looinlabs.tocko (debug APK 빌드 확인)
 - [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
 - [x] App Store Connect 앱 등록 (사용자) — app id 6821653231
-- [x] ASC API 키 (~/.config/tocko/asc.env, 저장소 밖) + tool/asc*.py: 문구·카테고리·연령등급·무료·175개국·저작권·버전 1.0.0 반영
+- [x] ASC API 키 (~/.config/fokko/asc.env, 저장소 밖) + tool/asc*.py: 문구·카테고리·연령등급·무료·175개국·저작권·버전 1.0.0 반영
 - [ ] 심사 연락처 전화번호 (사용자) → appStoreReviewDetail + 메모
 - [ ] 앱 개인정보 항목·'Mac에서 사용 가능' 끄기 (웹)
 - [x] 스토어 스크린샷 6.9" 5장 업로드 (tool/media/seed_test.dart 예시 데이터 → Pro Max 시뮬)

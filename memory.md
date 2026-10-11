@@ -49,3 +49,4 @@
 - 2026-10-11 랭킹: Supabase 프로젝트 focusone(ref bvnwdbbjkrjdqgqyidhp, 서울, DB 비번 ~/.config/focusone/). 익명 로그인 + 닉네임 옵트인. 테이블 RLS 정책 없음 → security definer 함수(submit_score/ranking/leave_ranking)로만. 점수는 앱 rankScore(모은 물방울 − 비상 탈출, 상점 구매는 유지)를 보내고 서버가 차이만 반영: 하루(KST) +720(사용자 결정 12시간), 직전 제출 뒤 경과 분 이상 못 오름. 주간 = 월요일 KST 시작.
 
 - 2026-10-12 앱 이름 FocusOne → **Tocko** (같은 분야 'Focus One' 앱 다수, 스토어 검색·상표 충돌 회피). 보이는 이름만 변경 — 번들 ID com.looinlabs.focusone·패키지·저장소·Supabase 프로젝트명은 유지(Family Controls 승인이 번들 ID에 묶임). 후보 비교: Focusling(길다), Onlee(타이머 느낌 없음), Fokko.
+- 2026-10-12 앱 이름 최종 **Fokko** (Tocko에서 변경, 사용자 결정). 스토어 'Fokko: ADHD 집중 타이머 & 앱 잠금', 사이트 looinlabs.com/fokko, Android com.looinlabs.fokko, ASC 키 ~/.config/fokko/.
