@@ -120,7 +120,7 @@ class Progress {
   final Map<String, List<Placement>> placements; // 장면 이름 → 배치
   final int drops;
   final bool lockEnabled; // 집중 중 앱 잠금 (권한·선택은 OS 쪽)
-  final String soundId; // 'scene'(장면 소리) | 'rain' | 'white' | 'brown'
+  final String soundId; // 'scene'(장면 기본) | 장면별 상황 소리 id | 'white' | 'brown'
   final int escapeSpent; // 비상 탈출에 쓴 물방울 누계 — 랭킹 점수에서 뺀다
   final String? rankNickname; // 랭킹 참여 닉네임 (null = 참여 안 함)
 

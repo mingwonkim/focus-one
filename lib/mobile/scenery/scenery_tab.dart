@@ -84,7 +84,7 @@ class _SceneryTabState extends State<SceneryTab> {
               style: style,
               onTap: () => setState(() => _viewing = scene.next),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                SceneBullet(scene: scene, selected: true),
+                SceneBullet(scene: scene, selected: true, moon: true),
                 const SizedBox(width: 6),
                 Text(scene.style.sceneLabel,
                     style: TextStyle(

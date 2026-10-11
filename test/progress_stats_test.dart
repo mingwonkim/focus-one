@@ -44,9 +44,13 @@ void main() {
     expect(st.soundAsset, 'sounds/birds.m4a');
     st.setScene(FocusScene.daily);
     expect(st.soundAsset, 'sounds/cafe.m4a');
+    st.setSoundId('brown');
+    st.setScene(FocusScene.ocean);
+    expect(st.soundAsset, 'sounds/brown.m4a'); // 집중 소음은 공통
+    st.setScene(FocusScene.forest);
     st.setSoundId('rain');
     st.setScene(FocusScene.ocean);
-    expect(st.soundAsset, 'sounds/rain.m4a');
+    expect(st.soundAsset, 'sounds/ocean.m4a'); // 빗소리는 숲 전용
     for (final sc in FocusScene.values) {
       for (final id in [
         sc.phoneSound,

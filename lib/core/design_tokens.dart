@@ -33,10 +33,10 @@ enum FocusScene {
   /// 폰 장면 기본 소리 id (assets/sounds/<id>.m4a, Mixkit 원음)
   String get phoneSound => this == daily ? 'cafe' : name;
 
-  /// 폰 소리 시트의 장면별 상황 소리 id
+  /// 폰 소리 시트의 장면별 상황 소리 id (백색·갈색소음만 모든 장면 공통)
   List<String> get situationSounds => switch (this) {
-        forest => const ['birds', 'stream'],
-        night => const ['crickets'],
+        forest => const ['birds', 'stream', 'rain'],
+        night => const ['crickets', 'wind'],
         ocean => const ['harbor', 'rocky'],
         daily => const ['library', 'train', 'fire'],
       };

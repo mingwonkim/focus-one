@@ -438,16 +438,18 @@ Future<void> showRewardSheet(BuildContext context) {
   }).whenComplete(s.clearLastReward);
 }
 
-/// 소리: 장면 소리·빗소리·백색·갈색·끄기 + 볼륨. 즉시 적용, 다음 집중에도 기억.
+/// 소리: 장면별 소리·백색·갈색·끄기 + 볼륨. 즉시 적용, 다음 집중에도 기억.
 Future<void> showSoundSheet(BuildContext context) =>
     showFocusSheet(context, '집중 소리', (ctx) {
       return Consumer<AppState>(builder: (_, s, __) {
         final style = s.scene.style;
-        // 지금 장면의 소리 · 날씨 · 소음 — 아이디는 assets/sounds/<id>.m4a ('scene' = 장면 기본)
+        // 지금 장면의 소리 · 집중 소음(공통) — 아이디는 assets/sounds/<id>.m4a ('scene' = 장면 기본)
         const labels = {
           'birds': ('새소리', Icons.flutter_dash_rounded),
           'stream': ('시냇물', Icons.waves_rounded),
+          'rain': ('빗소리', Icons.water_drop_outlined),
           'crickets': ('풀벌레', Icons.bug_report_outlined),
+          'wind': ('바람', Icons.air_rounded),
           'harbor': ('항구', Icons.sailing_outlined),
           'rocky': ('바위 해변', Icons.landscape_outlined),
           'library': ('도서관', Icons.menu_book_outlined),
@@ -455,19 +457,18 @@ Future<void> showSoundSheet(BuildContext context) =>
           'fire': ('모닥불', Icons.local_fire_department_outlined),
         };
         final sceneSounds = [
-          s.scene == FocusScene.daily
-              ? ('scene', '카페', Icons.local_cafe_outlined)
-              : ('scene', '${style.sceneLabel} 소리', Icons.park_outlined),
+          switch (s.scene) {
+            FocusScene.forest => ('scene', '숲 소리', Icons.park_outlined),
+            FocusScene.night => ('scene', '밤 소리', Icons.nightlight_round),
+            FocusScene.ocean => ('scene', '파도 소리', Icons.water),
+            FocusScene.daily => ('scene', '카페', Icons.local_cafe_outlined),
+          },
           for (final id in s.scene.situationSounds)
             (id, labels[id]!.$1, labels[id]!.$2),
         ];
         final groups = [
           (style.sceneLabel, sceneSounds),
-          ('날씨', [
-            ('rain', '빗소리', Icons.water_drop_outlined),
-            ('wind', '바람', Icons.air_rounded),
-          ]),
-          ('소음', [
+          ('집중 소음', [
             ('white', '백색소음', Icons.blur_on_rounded),
             ('brown', '갈색소음', Icons.graphic_eq_rounded),
           ]),

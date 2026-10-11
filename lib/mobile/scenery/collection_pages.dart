@@ -150,7 +150,7 @@ class DexPage extends StatelessWidget {
       ListView(padding: const EdgeInsets.all(MobileSize.gutter), children: [
         for (final scene in FocusScene.values) ...[
           Row(children: [
-            SceneBullet(scene: scene, selected: true),
+            SceneBullet(scene: scene, selected: true, moon: true),
             const SizedBox(width: 8),
             Text(scene.style.sceneLabel,
                 style: TextStyle(

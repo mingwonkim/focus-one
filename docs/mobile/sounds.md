@@ -14,8 +14,8 @@ Mixkit Sound Effects Free License (상업 이용 가능, 표기 의무 없음, �
 | harbor | 바다 · 항구 | 1208 |
 | rocky | 바다 · 바위 해변 | 1190 |
 | cafe | 일상 기본(카페) | 444 |
-| rain | 날씨 · 빗소리 | 1247 |
-| wind | 날씨 · 바람 | 2658 |
+| rain | 숲 · 빗소리 | 1247 |
+| wind | 밤 · 바람 | 2658 |
 
 Freesound, CC0(퍼블릭 도메인):
 

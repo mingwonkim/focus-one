@@ -227,7 +227,7 @@ class _ToolRow extends StatelessWidget {
       child: Row(children: [
         _Chip(
           state: s,
-          leading: SceneBullet(scene: s.scene, selected: true),
+          leading: SceneBullet(scene: s.scene, selected: true, moon: true),
           label: style.sceneLabel,
           onTap: () => s.setScene(s.scene.next),
         ),

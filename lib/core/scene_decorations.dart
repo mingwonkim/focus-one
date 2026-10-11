@@ -432,13 +432,25 @@ class _WaveArcPainter extends CustomPainter {
 
 /// 작업 리스트 행의 불릿 — 잎 / 별 / 파도
 class SceneBullet extends StatelessWidget {
-  const SceneBullet({super.key, required this.scene, required this.selected});
+  const SceneBullet(
+      {super.key,
+      required this.scene,
+      required this.selected,
+      this.moon = false});
 
   final FocusScene scene;
   final bool selected;
+  final bool moon; // 폰: 밤을 별(+처럼 보임) 대신 달로
 
   @override
   Widget build(BuildContext context) {
+    if (moon && scene == FocusScene.night) {
+      return Icon(Icons.nightlight_round,
+          size: 14,
+          color: selected
+              ? const Color(0xFFE6C766)
+              : const Color.fromRGBO(230, 199, 102, 0.5));
+    }
     return switch (scene) {
       FocusScene.forest => Leaf(
           size: 10,
