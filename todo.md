@@ -54,4 +54,5 @@
 - [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
 - [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
+- [ ] (보류) 주간 랭킹 상위 5명 커피 쿠폰 — 사용자 50명 이상일 때. 필요: Apple/Google 로그인 자격, 동점 = 먼저 도달, 상위 기록 수동 확인, 당첨자 연락처 동의, 앱 내 공식 규칙
 - [ ] (보류) Apple Developer 공증 — 경고 없는 배포가 필요해지면
