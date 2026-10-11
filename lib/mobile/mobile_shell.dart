@@ -31,7 +31,7 @@ class _MobileShellState extends State<MobileShell> {
 
   static const _labels = {
     MobileTab.focus: ('집중', Icons.timer_outlined),
-    MobileTab.scenery: ('풍경', Icons.park_outlined),
+    MobileTab.scenery: ('꾸미기', Icons.park_outlined),
     MobileTab.records: ('기록', Icons.bar_chart_rounded),
     MobileTab.tasks: ('할 일', Icons.check_circle_outline),
   };

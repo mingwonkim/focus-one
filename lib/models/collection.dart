@@ -122,6 +122,7 @@ class Progress {
   final bool lockEnabled; // 집중 중 앱 잠금 (권한·선택은 OS 쪽)
   final String soundId; // 'scene'(장면 소리) | 'rain' | 'white' | 'brown'
   final int escapeSpent; // 비상 탈출에 쓴 물방울 누계 — 랭킹 점수에서 뺀다
+  final String? rankNickname; // 랭킹 참여 닉네임 (null = 참여 안 함)
 
   const Progress({
     this.tags = const [Tag(id: 'general', name: '미분류')],
@@ -133,6 +134,7 @@ class Progress {
     this.lockEnabled = false,
     this.soundId = 'scene',
     this.escapeSpent = 0,
+    this.rankNickname,
   });
 
   Progress copyWith({
@@ -145,6 +147,7 @@ class Progress {
     bool? lockEnabled,
     String? soundId,
     int? escapeSpent,
+    String? Function()? rankNickname,
   }) =>
       Progress(
         tags: tags ?? this.tags,
@@ -158,6 +161,8 @@ class Progress {
         lockEnabled: lockEnabled ?? this.lockEnabled,
         soundId: soundId ?? this.soundId,
         escapeSpent: escapeSpent ?? this.escapeSpent,
+        rankNickname:
+            rankNickname != null ? rankNickname() : this.rankNickname,
       );
 
   Map<String, dynamic> toJson() => {
@@ -171,6 +176,7 @@ class Progress {
         'lockEnabled': lockEnabled,
         'soundId': soundId,
         'escapeSpent': escapeSpent,
+        'rankNickname': rankNickname,
       };
 
   factory Progress.fromJson(Map<String, dynamic> j) => Progress(
@@ -193,5 +199,6 @@ class Progress {
         lockEnabled: j['lockEnabled'] as bool? ?? false,
         soundId: j['soundId'] as String? ?? 'scene',
         escapeSpent: j['escapeSpent'] as int? ?? 0,
+        rankNickname: j['rankNickname'] as String?,
       );
 }

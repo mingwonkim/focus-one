@@ -46,3 +46,4 @@
 - audioplayers 때문에 Linux CI에 gstreamer dev 패키지, .deb Depends에 gstreamer 런타임 추가됨.
 
 - 2026-10-11 폰 집중 강제: 일시정지 없음, 그만두기는 시작 10초 안 취소만. 실수 출구는 물방울 비상 탈출(남은 1분당 2개 = 모은 속도의 2배라 아깝게, 결과는 그만두기와 같아 보상 없음). '시간 단축'은 보상을 사는 셈이라 기각.
+- 2026-10-11 랭킹: Supabase 프로젝트 focusone(ref bvnwdbbjkrjdqgqyidhp, 서울, DB 비번 ~/.config/focusone/). 익명 로그인 + 닉네임 옵트인. 테이블 RLS 정책 없음 → security definer 함수(submit_score/ranking/leave_ranking)로만. 점수는 앱 rankScore(모은 물방울 − 비상 탈출, 상점 구매는 유지)를 보내고 서버가 차이만 반영: 하루(KST) +720(사용자 결정 12시간), 직전 제출 뒤 경과 분 이상 못 오름. 주간 = 월요일 KST 시작.

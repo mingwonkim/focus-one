@@ -408,6 +408,10 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  String? get rankNickname => _progress.rankNickname;
+  void setRankNickname(String? v) =>
+      _setProgress(_progress.copyWith(rankNickname: () => v));
+
   /// 랭킹 점수 = 지금까지 모은 물방울 − 비상 탈출에 쓴 물방울. 상점 구매는 빼지 않는다.
   int get rankScore {
     final earned = _sessions

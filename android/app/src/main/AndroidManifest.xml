@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 랭킹(Supabase) — 릴리스 빌드는 기본으로 안 들어가서 명시 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="FocusOne"
         android:name="${applicationName}"

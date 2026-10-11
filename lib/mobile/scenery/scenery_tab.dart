@@ -73,7 +73,7 @@ class _SceneryTabState extends State<SceneryTab> {
           MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap),
       children: [
         Row(children: [
-          Text('풍경',
+          Text('꾸미기',
               style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -115,7 +115,7 @@ class _SceneryTabState extends State<SceneryTab> {
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(
-                        '집중을 끝내면 친구가 와요.\n꾸미기를 눌러 이곳에 데려다 두세요.',
+                        '집중을 끝내면 친구가 와요.\n배치 바꾸기를 눌러 이곳에 데려다 두세요.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, height: 1.5, color: style.textMuted),
@@ -157,7 +157,7 @@ class _SceneryTabState extends State<SceneryTab> {
             width: double.infinity,
             height: MobileSize.cta,
             icon: Icons.edit_rounded,
-            label: '꾸미기',
+            label: '배치 바꾸기',
             onTap: () => setState(() {
               _draft = List.of(s.placementsOf(scene));
               _picked = null;
@@ -217,7 +217,7 @@ class _SceneryTabState extends State<SceneryTab> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                _decorTab ? '상점에서 물방울로 장식을 살 수 있어요.' : '이 풍경의 친구를 아직 못 만났어요.',
+                _decorTab ? '상점에서 물방울로 장식을 살 수 있어요.' : '이 장면의 친구를 아직 못 만났어요.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: style.textMuted),
               ),

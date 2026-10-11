@@ -7,6 +7,7 @@ import '../../models/task.dart';
 import '../../state/app_state.dart';
 import '../../state/stats.dart';
 import '../focus/sheets.dart' show tagColor;
+import 'ranking_page.dart';
 
 enum _Period { day, week, month, year }
 
@@ -143,6 +144,24 @@ class _RecordsTabState extends State<RecordsTab> {
               ),
             ),
         ])),
+        // 랭킹 (점수 = 모은 물방울 − 비상 탈출)
+        GestureDetector(
+          onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RankingPage())),
+          child: card(Row(children: [
+            Icon(Icons.emoji_events_outlined, color: style.accent),
+            const SizedBox(width: MobileSize.iconGap),
+            Text('랭킹',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: style.textStrong)),
+            const Spacer(),
+            Text(s.rankNickname ?? '참여하기',
+                style: label()),
+            Icon(Icons.chevron_right_rounded, color: style.textMuted),
+          ])),
+        ),
         const SizedBox(height: MobileSize.sectionGap - MobileSize.cardGap),
         // 기간 선택
         SegmentedButton<_Period>(
