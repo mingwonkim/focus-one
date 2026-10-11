@@ -1,4 +1,4 @@
-package com.mingwonkim.focus_one
+package com.looinlabs.focusone
 
 import io.flutter.embedding.android.FlutterActivity
 
