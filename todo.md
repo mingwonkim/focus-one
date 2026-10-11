@@ -52,8 +52,11 @@
 - [x] 앱 이름 FocusOne → Tocko (보이는 이름만, iOS 번들 ID 유지)
 - [x] Android applicationId·패키지 → com.looinlabs.tocko (debug APK 빌드 확인)
 - [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
-- [ ] App Store Connect 앱 등록 (사용자): 이름 'Tocko: ADHD 집중 타이머 & 앱 잠금', 번들 com.looinlabs.focusone, 'Mac에서 사용 가능' 끄기
-- [ ] 스토어 스크린샷 6.9" 5장 + 문구(docs/mobile/store.md) + 심사 메모
+- [x] App Store Connect 앱 등록 (사용자) — app id 6821653231
+- [x] ASC API 키 (~/.config/tocko/asc.env, 저장소 밖) + tool/asc*.py: 문구·카테고리·연령등급·무료·175개국·저작권·버전 1.0.0 반영
+- [ ] 심사 연락처 전화번호 (사용자) → appStoreReviewDetail + 메모
+- [ ] 앱 개인정보 항목·'Mac에서 사용 가능' 끄기 (웹)
+- [x] 스토어 스크린샷 6.9" 5장 업로드 (tool/media/seed_test.dart 예시 데이터 → Pro Max 시뮬)
 - [ ] Xcode로 TestFlight 업로드 → 심사 제출
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: release AAB → Play Console 업로드 (접근성 선언·시연 영상과 함께)
