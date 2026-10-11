@@ -25,6 +25,16 @@
 - [x] 코드 렌더 4안 + Higgsfield 시안 8장 비교 → 사용자 H3(바다·고래) 선택 (크레딧 6.5 사용, 잔액 30.18)
 - [x] macOS/Windows/Linux(.deb)/트레이 아이콘 생성 + tool/apply_icons.sh + CI 적용, 로컬 macOS 릴리즈 빌드에서 AppIcon 확인
 
+## 2026-10-11 — 모바일(iOS+Android) v1 (브랜치 mobile-v1, 계획 ~/.claude/plans/zazzy-crunching-hammock.md)
+- [ ] P0 레퍼런스: Arctic Habit 실측(iPhone 미러링) + Mobbin + PRD + astra 설계서
+- [ ] P1 플랫폼 추가·셸 분리 + 차단 기술 시험(iOS 15분 shield, Android 접근성) + Family Controls 배포 권한 신청
+- [ ] P2 저장 안전성 + 세션 복구·보상 1회 확정
+- [ ] P3 데이터 모델(태그·친구·배치·재화) + 통계
+- [ ] P4 집중 홈 1장 → 사용자 검토 → 할 일·기록·인박스·소리·알림
+- [ ] P5 수집 도감·풍경 + Higgsfield 친구 12종
+- [ ] P6 Deep Focus 본구현
+- [ ] P7 모션·다듬기·TestFlight·AAB → 사용자 확정 → main 머지
+
 ## 다음 세션
 - [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
 - [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
