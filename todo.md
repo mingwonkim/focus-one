@@ -43,7 +43,7 @@
   - [ ] Android 실기기 확인, Play 접근성 선언·시연 영상(출시 전)
 - [x] 실사용 피드백 1 (2026-10-11): 폰 일시정지 제거, 화면 꺼져도 소리(just_audio·백그라운드 오디오), Mixkit 원음 11개로 교체 + 장면별 상황 소리 (docs/mobile/sounds.md)
   - [ ] 아이폰에서 화면 끔·반복 이음새 확인
-  - [ ] 도서관·기차·모닥불 Freesound CC0로 교체 (사용자 Safari 로그인 필요)
+  - [x] 도서관·기차·모닥불 Freesound CC0로 교체, 백색·갈색 음량 −20 LUFS로 맞춤
 - [ ] P7 모션·다듬기·TestFlight·AAB → 사용자 확정 → main 머지
 
 ## 다음 세션
