@@ -1,4 +1,4 @@
-package com.looinlabs.focusone
+package com.looinlabs.tocko
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent

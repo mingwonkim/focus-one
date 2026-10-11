@@ -49,7 +49,8 @@
 - [x] 풍경 탭 → '꾸미기' (탭 안 버튼은 '배치 바꾸기')
 - [x] 소리 시트 장면별 정리: 빗소리→숲, 바람→밤, 백색·갈색만 '집중 소음' 공통. 폰 밤 아이콘 별(+) → 달
 - [ ] 아이폰에 최신 빌드 설치 (랭킹·꾸미기 탭 포함) → 실기기 랭킹 참여 확인
-- [x] 앱 이름 FocusOne → Tocko (보이는 이름만, 번들 ID 유지)
+- [x] 앱 이름 FocusOne → Tocko (보이는 이름만, iOS 번들 ID 유지)
+- [x] Android applicationId·패키지 → com.looinlabs.tocko (debug APK 빌드 확인)
 - [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
 - [ ] App Store Connect 앱 등록 (사용자): 이름 'Tocko: ADHD 집중 타이머 & 앱 잠금', 번들 com.looinlabs.focusone, 'Mac에서 사용 가능' 끄기
 - [ ] 스토어 스크린샷 6.9" 5장 + 문구(docs/mobile/store.md) + 심사 메모
@@ -64,7 +65,6 @@
 - [ ] (보류) 주간 랭킹 상위 5명 커피 쿠폰 — 사용자 50명 이상일 때. 필요: Apple/Google 로그인 자격, 동점 = 먼저 도달, 상위 기록 수동 확인, 당첨자 연락처 동의, 앱 내 공식 규칙
 - [ ] (나중에) 내부 ID를 Tocko로 — 사용자 결정 2026-10-12: 지금은 보이는 이름만 Tocko, iOS 번들 ID는 출시 위해 유지
   - iOS 번들 ID com.looinlabs.focusone(+ .FocusMonitor), App Group group.com.looinlabs.focusone → tocko: Family Controls 배포 승인을 새 ID로 다시 받아야 함(수일~수주). 승인 후 업데이트로
-  - Android applicationId·namespace·Kotlin 패키지 com.looinlabs.focusone → com.looinlabs.tocko: Play 첫 업로드 전에 해야 함(출시 후엔 변경 불가)
   - 채널 이름 focusone/lock, ManagedSettingsStore 'focusone', Dart 패키지 focus_one, CI 산출물 이름 focus-one, 저장소 이름
   - 주의: 데이터 파일 focus_one_data.json·데스크탑 앱 데이터 경로는 패키지명에 묶임 → 바꾸면 기존 기록 이전 코드 필요
 - [ ] (나중에) macOS 버전 출시 — 폰 출시 후. macos/ 커밋·앱 이름 Tocko(지금은 focus_one으로 보임)·Developer ID 서명+공증 또는 Mac App Store
