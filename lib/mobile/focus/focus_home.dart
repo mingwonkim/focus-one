@@ -333,15 +333,15 @@ class _Controls extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('여기서 그만둘까요?'),
-        content: const Text('집중한 시간은 기록되지만 친구는 오지 않아요.'),
+        title: const Text('시작을 취소할까요?'),
+        content: const Text('10초가 지나면 끝날 때까지 그만둘 수 없어요.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('계속하기')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('그만두기')),
+              child: const Text('취소')),
         ],
       ),
     );
@@ -407,15 +407,21 @@ class _Controls extends StatelessWidget {
         memo,
       ]);
     }
+    // 그만두기도 막는다(사용자 결정 2026-10-11) — 잘못 누른 시작만 10초 안에 취소.
+    // 예전 버전에서 일시정지해 둔 세션은 갇히지 않게 그대로 그만둘 수 있다.
+    final canCancel =
+        !s.isRunning || s.totalSeconds - s.remainingSeconds < 10;
     return Row(children: [
-      RoundIconButton(
-        style: style,
-        size: MobileSize.cta,
-        icon: Icons.stop_rounded,
-        tooltip: '그만두기',
-        onTap: () => _confirmAbandon(context),
-      ),
-      const SizedBox(width: 12),
+      if (canCancel) ...[
+        RoundIconButton(
+          style: style,
+          size: MobileSize.cta,
+          icon: Icons.close_rounded,
+          tooltip: '시작 취소',
+          onTap: () => _confirmAbandon(context),
+        ),
+        const SizedBox(width: 12),
+      ],
       // 폰은 일시정지 없음(집중 강제, 사용자 결정 2026-10-11) — 딴생각은 메모로 던지고 계속.
       // 예전 버전에서 일시정지해 둔 세션만 '계속'으로 이어갈 수 있다.
       Expanded(

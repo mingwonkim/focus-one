@@ -204,7 +204,7 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
               style:
                   TextStyle(fontSize: 14, height: 1.4, color: style.textMuted)),
           const SizedBox(height: 28),
-          _row(style, Icons.timer_outlined, '집중하는 동안만 잠겨요. 끝나거나 그만두면 바로 풀려요.'),
+          _row(style, Icons.timer_outlined, '집중하는 동안만 잠기고, 끝나면 바로 풀려요.'),
           if (Platform.isIOS)
             _row(style, Icons.hourglass_bottom_rounded,
                 '15분 이상 집중할 때 잠겨요.'),
@@ -259,8 +259,8 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
           const SizedBox(height: 12),
           Text(
             Platform.isIOS
-                ? '15분 이상 집중할 때 잠기고, 끝나거나 그만두면 바로 풀려요.'
-                : '집중하는 동안 고른 앱을 열면 FocusOne으로 돌아와요. 끝나거나 그만두면 풀려요.',
+                ? '15분 이상 집중할 때 잠기고, 끝나면 바로 풀려요.'
+                : '집중하는 동안 고른 앱을 열면 FocusOne으로 돌아와요. 끝나면 풀려요.',
             style: TextStyle(fontSize: 13, height: 1.4, color: style.textMuted),
           ),
         ],
