@@ -207,7 +207,7 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
           _row(style, Icons.timer_outlined, '집중하는 동안만 잠겨요. 끝나거나 그만두면 바로 풀려요.'),
           if (Platform.isIOS)
             _row(style, Icons.hourglass_bottom_rounded,
-                '15분 이상 집중할 때 잠겨요. (iOS 제한)'),
+                '15분 이상 집중할 때 잠겨요.'),
           _row(style, Icons.call_outlined, '전화·문자 같은 기본 앱은 그대로 쓸 수 있어요.'),
           if (Platform.isAndroid)
             _row(style, Icons.visibility_off_outlined,

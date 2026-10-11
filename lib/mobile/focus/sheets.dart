@@ -440,24 +440,29 @@ Future<void> showSoundSheet(BuildContext context) =>
     showFocusSheet(context, '집중 소리', (ctx) {
       return Consumer<AppState>(builder: (_, s, __) {
         final style = s.scene.style;
-        final options = [
-          ('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined),
-          ('rain', '빗소리', Icons.water_drop_outlined),
-          ('white', '백색소음', Icons.blur_on_rounded),
-          ('brown', '갈색소음', Icons.graphic_eq_rounded),
+        // 장면 소리(지금 장면) · 상황 소리 · 소음 — 아이디는 assets/sounds/<id>.m4a
+        final groups = [
+          ('장면', [('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined)]),
+          ('상황', [
+            ('cafe', '카페', Icons.local_cafe_outlined),
+            ('library', '도서관', Icons.menu_book_outlined),
+            ('rain', '비 오는 날', Icons.water_drop_outlined),
+            ('fire', '모닥불', Icons.local_fire_department_outlined),
+            ('train', '기차 안', Icons.train_outlined),
+            ('wind', '바람', Icons.air_rounded),
+          ]),
+          ('소음', [
+            ('white', '백색소음', Icons.blur_on_rounded),
+            ('brown', '갈색소음', Icons.graphic_eq_rounded),
+          ]),
         ];
-        Widget row(String label, IconData icon, bool selected,
-                VoidCallback onTap) =>
-            _Row(
+        Widget row(String label, IconData icon, bool selected, VoidCallback onTap) => _Row(
               selected: selected,
               onTap: onTap,
               child: Row(children: [
                 Icon(icon, color: style.textStrong),
                 const SizedBox(width: 12),
-                Expanded(
-                    child: Text(label,
-                        style:
-                            TextStyle(fontSize: 16, color: style.textStrong))),
+                Expanded(child: Text(label, style: TextStyle(fontSize: 16, color: style.textStrong))),
                 if (selected) Icon(Icons.check_rounded, color: style.accent),
               ]),
             );
@@ -466,11 +471,17 @@ Future<void> showSoundSheet(BuildContext context) =>
           padding: const EdgeInsets.fromLTRB(
               MobileSize.gutter, 4, MobileSize.gutter, 24),
           children: [
-            for (final (id, label, icon) in options)
-              row(label, icon, s.soundEnabled && s.soundId == id, () {
-                s.setSoundEnabled(true);
-                s.setSoundId(id);
-              }),
+            for (final (title, options) in groups) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: Text(title, style: TextStyle(fontSize: 13, color: style.textMuted)),
+              ),
+              for (final (id, label, icon) in options)
+                row(label, icon, s.soundEnabled && s.soundId == id, () {
+                  s.setSoundEnabled(true);
+                  s.setSoundId(id);
+                }),
+            ],
             row('끄기', Icons.volume_off_outlined, !s.soundEnabled,
                 () => s.setSoundEnabled(false)),
             const SizedBox(height: 8),
