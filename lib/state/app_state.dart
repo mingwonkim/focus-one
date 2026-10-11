@@ -401,9 +401,19 @@ class AppState extends ChangeNotifier {
   bool escapeSession() {
     final cost = escapeCost;
     if (_active == null || _progress.drops < cost) return false;
-    _setProgress(_progress.copyWith(drops: _progress.drops - cost));
+    _setProgress(_progress.copyWith(
+        drops: _progress.drops - cost,
+        escapeSpent: _progress.escapeSpent + cost));
     abandonSession();
     return true;
+  }
+
+  /// 랭킹 점수 = 지금까지 모은 물방울 − 비상 탈출에 쓴 물방울. 상점 구매는 빼지 않는다.
+  int get rankScore {
+    final earned = _sessions
+        .where((x) => x.outcome == SessionOutcome.completed)
+        .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+    return (earned - _progress.escapeSpent).clamp(0, earned);
   }
 
   void _cancelSession() {

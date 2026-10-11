@@ -80,6 +80,8 @@ void main() {
     final c = await boot(t0.add(const Duration(hours: 2)));
     expect(c.ownedCount('fawn'), 1);
     expect(c.drops, 25);
+    expect(c.buyDecor('grass'), isTrue);
+    expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
     c.dispose();
   });
 
@@ -113,6 +115,7 @@ void main() {
     expect(b.activeSession, isNull);
     expect(b.drops, 5);
     expect(b.ownedCount('fawn'), 1);
+    expect(b.rankScore, 5); // 모은 25 − 탈출 20
     b.dispose();
   });
 
