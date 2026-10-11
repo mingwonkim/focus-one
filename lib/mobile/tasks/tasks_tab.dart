@@ -36,18 +36,23 @@ class _TasksTabState extends State<TasksTab> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.tabBar + 40),
+          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap),
       children: [
-        Row(children: [
-          Expanded(
-            child: Text('할 일',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: style.textStrong)),
-          ),
-          _InboxButton(state: s),
-        ]),
+        // 탭 제목 행 높이 통일 (48)
+        ConstrainedBox(
+          constraints:
+              const BoxConstraints(minHeight: MobileSize.headerMinHeight),
+          child: Row(children: [
+            Expanded(
+              child: Text('할 일',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: style.textStrong)),
+            ),
+            _InboxButton(state: s),
+          ]),
+        ),
         const SizedBox(height: 16),
         for (final (id, name, color) in sections) ...[
           _SectionHeader(
@@ -65,7 +70,7 @@ class _TasksTabState extends State<TasksTab> {
               _TaskRow(state: s, task: t),
             if (id.isNotEmpty) _AddRow(state: s, tagId: id),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: MobileSize.sectionGap),
         ],
         if (s.todayDoneTasks.isNotEmpty) ...[
           _SectionHeader(
@@ -167,7 +172,8 @@ class _TaskRow extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(minHeight: 64),
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.only(
+          left: 6), // 테두리2+6+체크48 = 글자 시작 56 (추가 입력과 같은 선)
       decoration: BoxDecoration(
         color: style.rowBg,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -213,7 +219,7 @@ class _TaskRow extends StatelessWidget {
         ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
               task.title,
               maxLines: 2,
@@ -273,6 +279,8 @@ class _AddRowState extends State<_AddRow> {
           hintText: '할 일 추가',
           hintStyle: TextStyle(color: style.textMuted),
           prefixIcon: Icon(Icons.add_rounded, color: style.textMuted),
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 56, minHeight: 52), // 글자 시작 56
           filled: true,
           fillColor: style.rowBg.withValues(alpha: 0.6),
           border: OutlineInputBorder(

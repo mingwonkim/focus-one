@@ -74,7 +74,7 @@ class _MobileShellState extends State<MobileShell> {
           ? null
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter, 8),
                 child: Container(
                   height: 64,
                   padding: const EdgeInsets.all(6),
@@ -87,36 +87,43 @@ class _MobileShellState extends State<MobileShell> {
                     children: [
                       for (final t in MobileTab.values)
                         Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _tabs.value = t,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: t == current ? style.divider : null,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.full),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(_labels[t]!.$2,
-                                      size: 22,
-                                      color: t == current
-                                          ? style.accent
-                                          : style.textMuted),
-                                  Text(
-                                    _labels[t]!.$1,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: t == current
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                      color: t == current
-                                          ? style.textStrong
-                                          : style.textMuted,
+                          // 스크린리더: "집중 탭, 버튼, 선택됨"
+                          child: Semantics(
+                            button: true,
+                            selected: t == current,
+                            label: '${_labels[t]!.$1} 탭',
+                            excludeSemantics: true,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _tabs.value = t,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: t == current ? style.divider : null,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.full),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(_labels[t]!.$2,
+                                        size: 22,
+                                        color: t == current
+                                            ? style.accent
+                                            : style.textMuted),
+                                    Text(
+                                      _labels[t]!.$1,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: t == current
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                        color: t == current
+                                            ? style.textStrong
+                                            : style.textMuted,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),

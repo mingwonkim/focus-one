@@ -40,7 +40,7 @@ Future<T?> showFocusSheet<T>(
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 8, 8, 4),
+              padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 8, 8, 12), // 제목–본문 16
               child: Row(
                 children: [
                   Expanded(
@@ -126,6 +126,7 @@ class _AddFieldState extends State<_AddField> {
         prefixIcon: Icon(Icons.add_rounded, color: style.textMuted),
         filled: true,
         fillColor: style.cardBg,
+        contentPadding: const EdgeInsets.symmetric(vertical: 18), // 행 56과 같은 높이
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none),
@@ -166,7 +167,7 @@ Future<void> showTaskSheet(BuildContext context) =>
                 Navigator.pop(ctx);
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s16),
             TextButton(
               onPressed: () {
                 s.clearCurrentTask();
@@ -329,12 +330,14 @@ class _MemoBodyState extends State<_MemoBody> {
             hintText: '떠오른 생각을 적고 다시 집중',
             filled: true,
             fillColor: style.cardBg,
+            contentPadding: const EdgeInsets.all(MobileSize.cardPadding),
+            constraints: const BoxConstraints(minHeight: MobileSize.fieldMinHeight),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s16),
         PillButton(
           style: style,
           width: double.infinity,

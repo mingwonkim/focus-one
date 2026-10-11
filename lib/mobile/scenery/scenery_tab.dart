@@ -70,7 +70,7 @@ class _SceneryTabState extends State<SceneryTab> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.tabBar + 40),
+          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap),
       children: [
         Row(children: [
           Text('풍경',
@@ -150,7 +150,7 @@ class _SceneryTabState extends State<SceneryTab> {
             );
           }),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: MobileSize.sectionGap),
         if (!editing) ...[
           PillButton(
             style: style,
@@ -163,7 +163,7 @@ class _SceneryTabState extends State<SceneryTab> {
               _picked = null;
             }),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: MobileSize.cardGap),
           Row(children: [
             for (final (label, icon, page) in [
               ('보관함', Icons.inventory_2_outlined, const StoragePage()),
@@ -180,7 +180,7 @@ class _SceneryTabState extends State<SceneryTab> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(icon, size: 20, color: style.textStrong),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: MobileSize.iconGap),
                         Text(label,
                             style: TextStyle(
                                 fontWeight: FontWeight.w600,

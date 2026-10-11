@@ -81,7 +81,7 @@ class _FocusHomeState extends State<FocusHome> {
                           _RunningBadge(state: s),
                       ]),
                       Column(children: [
-                        const SizedBox(height: 12),
+                        const SizedBox(height: MobileSize.sectionGap), // 도구 행과 최소 24
                         MobileRing(
                           scene: s.scene,
                           companion: companion,
@@ -103,7 +103,7 @@ class _FocusHomeState extends State<FocusHome> {
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: MobileSize.cardGap),
                         if (idle)
                           Wrap(
                             alignment: WrapAlignment.center,
@@ -140,6 +140,8 @@ class _FocusHomeState extends State<FocusHome> {
                           ),
                         const SizedBox(height: 16),
                       ]),
+                      // 빈 자리 — spaceBetween이 링 묶음을 남는 공간 가운데에 둔다
+                      const SizedBox.shrink(),
                     ],
                   ),
                 ),
@@ -148,7 +150,7 @@ class _FocusHomeState extends State<FocusHome> {
           ),
           _Controls(state: s),
           // 탭바 자리 (진행 중엔 탭바 숨김)
-          SizedBox(height: idle ? MobileSize.tabBar + (h < 700 ? 12 : 24) : 24),
+          const SizedBox(height: MobileSize.contentBottomGap),
         ],
       ),
     );
@@ -175,7 +177,7 @@ class _TaskCard extends StatelessWidget {
         opacity: 1,
         child: Container(
           constraints: const BoxConstraints(minHeight: MobileSize.taskCard),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: MobileSize.cardPadding),
           decoration: BoxDecoration(
             color: style.rowBg,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -189,7 +191,7 @@ class _TaskCard extends StatelessWidget {
                 children: [
                   Text('지금 할 일',
                       style: TextStyle(fontSize: 13, color: style.textMuted)),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: MobileSize.labelGap),
                   Text(
                     (title == null || title.isEmpty) ? '하나만 골라볼까요?' : title,
                     maxLines: 2,
@@ -230,6 +232,7 @@ class _ToolRow extends StatelessWidget {
         ),
         const Spacer(),
         RoundIconButton(
+          size: MobileSize.touchMin,
           style: style,
           icon: s.soundEnabled
               ? Icons.volume_up_rounded
@@ -239,6 +242,7 @@ class _ToolRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         RoundIconButton(
+          size: MobileSize.touchMin,
           style: style,
           icon: s.lockEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
           tooltip: s.lockEnabled ? '앱 잠금 켜짐' : '앱 잠금',

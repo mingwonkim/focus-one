@@ -110,8 +110,8 @@ class _StoragePageState extends State<StoragePage> {
             crossAxisCount: 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: MobileSize.gridGap,
+            crossAxisSpacing: MobileSize.gridGap,
             childAspectRatio: 0.85,
             children: [
               for (final (id, name) in all)
@@ -167,13 +167,13 @@ class DexPage extends StatelessWidget {
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: MobileSize.gridGap,
+            crossAxisSpacing: MobileSize.gridGap,
             childAspectRatio: 169 / 156,
             children: [
               for (final c in Companion.of(scene))
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(MobileSize.cardPadding),
                   decoration: _card(style),
                   child: Column(children: [
                     Expanded(
@@ -206,7 +206,7 @@ class DexPage extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: MobileSize.sectionGap),
         ],
       ]),
     );
@@ -272,8 +272,8 @@ class ShopPage extends StatelessWidget {
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
+            mainAxisSpacing: MobileSize.gridGap,
+            crossAxisSpacing: MobileSize.gridGap,
             childAspectRatio: 169 / 170,
             children: [
               for (final d in Decor.all.where((d) => d.scene == scene))
@@ -284,7 +284,7 @@ class ShopPage extends StatelessWidget {
                     onTap:
                         s.drops >= d.price ? () => _buy(context, s, d) : null,
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(MobileSize.cardPadding),
                       decoration: _card(style),
                       child: Column(children: [
                         Expanded(child: Image.asset(d.asset)),
@@ -310,7 +310,7 @@ class ShopPage extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: MobileSize.sectionGap),
         ],
       ]),
     );

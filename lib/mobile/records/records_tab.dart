@@ -90,8 +90,10 @@ class _RecordsTabState extends State<RecordsTab> {
     final golden = st.goldenHours(now);
     final recent = s.sessions.reversed.take(20).toList();
 
-    Widget card(Widget child, {EdgeInsets? padding}) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
+    Widget card(Widget child,
+            {EdgeInsets? padding, double gap = MobileSize.cardGap}) =>
+        Container(
+          margin: EdgeInsets.only(bottom: gap),
           padding: padding ?? const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: style.rowBg,
@@ -106,13 +108,19 @@ class _RecordsTabState extends State<RecordsTab> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.tabBar + 40),
+          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap),
       children: [
-        Text('기록',
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: style.textStrong)),
+        // 탭 제목 행 높이 통일 (할 일·풍경과 같은 48)
+        SizedBox(
+          height: MobileSize.headerMinHeight,
+          child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('기록',
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: style.textStrong))),
+        ),
         const SizedBox(height: 16),
         // 연속일 + 최근 7일 점
         card(Row(children: [
@@ -135,6 +143,7 @@ class _RecordsTabState extends State<RecordsTab> {
               ),
             ),
         ])),
+        const SizedBox(height: MobileSize.sectionGap - MobileSize.cardGap),
         // 기간 선택
         SegmentedButton<_Period>(
           showSelectedIcon: false,
@@ -187,7 +196,7 @@ class _RecordsTabState extends State<RecordsTab> {
               ]))),
         ]),
         card(SizedBox(
-          height: 160,
+          height: total == 0 ? 96 : 160, // 빈 상태는 작게 — 아래 달력을 밀어내지 않게
           child: total == 0
               ? Center(child: Text('기록 없음', style: label()))
               : CustomPaint(
@@ -230,6 +239,8 @@ class _RecordsTabState extends State<RecordsTab> {
                 ]),
               ),
           ])),
+        // 차트·태그 묶음과 달력 사이는 섹션 간격
+        const SizedBox(height: MobileSize.sectionGap - MobileSize.cardGap),
         card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${_calMonth(r).month}월 집중 달력', style: label()),
           const SizedBox(height: 12),

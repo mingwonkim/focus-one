@@ -217,6 +217,15 @@ abstract class AppSpacing {
   static const double lg = 24;
   static const double xl = 32;
   static const double xxl = 48;
+
+  // 폰 4/8 리듬 (데스크탑 기존 이름은 그대로 둠)
+  static const double s4 = 4;
+  static const double s8 = 8;
+  static const double s12 = 12;
+  static const double s16 = 16;
+  static const double s20 = 20;
+  static const double s24 = 24;
+  static const double s32 = 32;
 }
 
 abstract class AppRadius {
@@ -268,6 +277,17 @@ abstract class MobileSize {
   static const double taskCard = 72;
   static const double tabBar = 64;
   static const double sheetRadius = 24;
+  // 간격 규칙 (docs/mobile/review-2.md, astra 여백 리뷰)
+  static const double headerMinHeight = 48; // 탭 제목 행
+  static const double cardPadding = 16; // 카드 안쪽 (테두리 포함 시각 거리)
+  static const double cardGap = 8; // 같은 묶음 카드 사이
+  static const double sectionGap = 24; // 다른 묶음 사이
+  static const double labelGap = 4; // 라벨–값
+  static const double iconGap = 8; // 아이콘–글자
+  static const double gridGap = 12;
+  static const double contentBottomGap = 24; // 본문 끝–탭바 (탭바 자리는 셸 SafeArea가 이미 비움)
+  static const double fieldMinHeight = 56;
+  static const double touchMin = 48;
   static const int minMinutes = 10;
   static const int maxMinutes = 180;
   static const int stepMinutes = 5;
