@@ -334,14 +334,14 @@ class _Controls extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('시작을 취소할까요?'),
+        title: const Text('여기서 그만둘까요?'),
         content: const Text('10초가 지나면 끝날 때까지 그만둘 수 없어요.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('계속하기')),
-          TextButton(
               onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('그만두기')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
               child: const Text('취소')),
         ],
       ),
@@ -443,7 +443,7 @@ class _Controls extends StatelessWidget {
         style: style,
         size: MobileSize.cta,
         icon: canCancel ? Icons.close_rounded : Icons.water_drop_outlined,
-        tooltip: canCancel ? '시작 취소' : '물방울로 끝내기',
+        tooltip: canCancel ? '그만두기' : '물방울로 끝내기',
         onTap: () => canCancel
             ? _confirmAbandon(context)
             : _confirmEscape(context),
