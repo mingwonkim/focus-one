@@ -8,9 +8,10 @@ import 'design_tokens.dart';
 
 /// 타이머 다이얼 안의 풍경. 좌표는 전부 지름 대비 비율 — 88px/216px 양쪽에서 동작.
 class SceneDialPainter extends CustomPainter {
-  SceneDialPainter(this.scene);
+  SceneDialPainter(this.scene, {this.withCreatures = true});
 
   final FocusScene scene;
+  final bool withCreatures; // 폰은 친구 그림을 따로 올리므로 토끼·고래를 빼고 배경만
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -39,13 +40,19 @@ class SceneDialPainter extends CustomPainter {
         _paintNight(canvas, d);
       case FocusScene.ocean:
         _paintOcean(canvas, d);
+      case FocusScene.daily:
+        _paintDaily(canvas, d);
     }
     canvas.restore();
   }
 
   // css bottom/left/width/height % → 캔버스 rect
   Rect _r(double d,
-      {double? left, double? right, required double bottom, required double w, required double h}) {
+      {double? left,
+      double? right,
+      required double bottom,
+      required double w,
+      required double h}) {
     final x = left != null ? left * d : d - right! * d - w * d;
     final y = d - bottom * d - h * d;
     return Rect.fromLTWH(x, y, w * d, h * d);
@@ -98,8 +105,8 @@ class SceneDialPainter extends CustomPainter {
     // 달 (글로우 → 본체 → 크레이터) — v2: 작은 링(60px)에서도 보이게 중앙·확대
     final moonC = Offset(0.5 * d, 0.48 * d);
     final moonR = 0.2 * d;
-    _radial(canvas, moonC, moonR * 1.5,
-        const Color.fromRGBO(242, 217, 140, 0.28));
+    _radial(
+        canvas, moonC, moonR * 1.5, const Color.fromRGBO(242, 217, 140, 0.28));
     canvas.drawCircle(
       moonC,
       moonR,
@@ -114,25 +121,31 @@ class SceneDialPainter extends CustomPainter {
     canvas.drawCircle(moonC + Offset(-0.06 * d, 0.07 * d), 0.032 * d, p);
     p.color = const Color.fromRGBO(190, 158, 90, 0.4);
     canvas.drawCircle(moonC + Offset(0.07 * d, 0.02 * d), 0.022 * d, p);
-    // 달 위의 토끼 (귀 2 + 머리 + 몸통) — 달 윗변 기준 k배
-    const k = 1.8;
-    final anchor = moonC + Offset(-0.015 * d, -moonR);
-    Offset at(double x, double y) => anchor + Offset(x * d * k, y * d * k);
-    final rp = Paint()..color = const Color(0xFFF5F2EA);
-    canvas.drawPath(
-        _rotRRect(at(-0.02, -0.055), 0.013 * d * k, 0.042 * d * k, -12), rp);
-    canvas.drawPath(
-        _rotRRect(at(0.015, -0.058), 0.013 * d * k, 0.045 * d * k, 8), rp);
-    rp.color = const Color(0xFFFAF7EF);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: at(0, -0.008), width: 0.043 * d * k, height: 0.035 * d * k),
-        rp);
-    rp.color = const Color(0xFFF0EBDD);
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: at(-0.015, 0.014), width: 0.07 * d * k, height: 0.04 * d * k),
-        rp);
+    if (withCreatures) {
+      // 달 위의 토끼 (귀 2 + 머리 + 몸통) — 달 윗변 기준 k배
+      const k = 1.8;
+      final anchor = moonC + Offset(-0.015 * d, -moonR);
+      Offset at(double x, double y) => anchor + Offset(x * d * k, y * d * k);
+      final rp = Paint()..color = const Color(0xFFF5F2EA);
+      canvas.drawPath(
+          _rotRRect(at(-0.02, -0.055), 0.013 * d * k, 0.042 * d * k, -12), rp);
+      canvas.drawPath(
+          _rotRRect(at(0.015, -0.058), 0.013 * d * k, 0.045 * d * k, 8), rp);
+      rp.color = const Color(0xFFFAF7EF);
+      canvas.drawOval(
+          Rect.fromCenter(
+              center: at(0, -0.008),
+              width: 0.043 * d * k,
+              height: 0.035 * d * k),
+          rp);
+      rp.color = const Color(0xFFF0EBDD);
+      canvas.drawOval(
+          Rect.fromCenter(
+              center: at(-0.015, 0.014),
+              width: 0.07 * d * k,
+              height: 0.04 * d * k),
+          rp);
+    }
     // 별
     for (final (x, y, r, a) in [
       (0.80, 0.24, 0.016, 0.95),
@@ -148,6 +161,54 @@ class SceneDialPainter extends CustomPainter {
     canvas.drawOval(_r(d, left: -0.16, bottom: -0.18, w: 0.74, h: 0.46), p);
     p.color = const Color(0xFF070A13);
     canvas.drawOval(_r(d, right: -0.14, bottom: -0.22, w: 0.80, h: 0.50), p);
+  }
+
+  /// 일상: 창가 햇살 + 테이블 + 김 나는 머그 (작은 링 60px에서도 머그 실루엣이 보이게 크게)
+  void _paintDaily(Canvas canvas, double d) {
+    final p = Paint();
+    // 창문 빛
+    _radial(canvas, Offset(0.68 * d, 0.22 * d), 0.3 * d,
+        const Color.fromRGBO(255, 244, 222, 0.9));
+    p.color = const Color.fromRGBO(255, 255, 255, 0.35);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(0.52 * d, 0.08 * d, 0.3 * d, 0.36 * d),
+            Radius.circular(0.04 * d)),
+        p);
+    // 테이블
+    p.color = const Color(0xFFD9826A);
+    canvas.drawRect(Rect.fromLTWH(0, 0.7 * d, d, 0.3 * d), p);
+    p.color = const Color(0xFFE99B82);
+    canvas.drawRect(Rect.fromLTWH(0, 0.68 * d, d, 0.04 * d), p);
+    if (!withCreatures) return; // 폰은 친구 그림을 따로 올림 — 머그는 생략
+    // 머그
+    final mug = RRect.fromRectAndRadius(
+        Rect.fromLTWH(0.33 * d, 0.46 * d, 0.3 * d, 0.26 * d),
+        Radius.circular(0.06 * d));
+    p.color = const Color(0xFFFFFBF8);
+    canvas.drawRRect(mug, p);
+    canvas.drawArc(
+        Rect.fromLTWH(0.56 * d, 0.5 * d, 0.14 * d, 0.14 * d),
+        -1.4,
+        2.8,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.035 * d
+          ..color = const Color(0xFFFFFBF8));
+    // 김
+    final steam = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.022 * d
+      ..strokeCap = StrokeCap.round
+      ..color = const Color.fromRGBO(255, 255, 255, 0.8);
+    for (final x in [0.42, 0.52]) {
+      final path = Path()
+        ..moveTo(x * d, 0.42 * d)
+        ..quadraticBezierTo((x - 0.04) * d, 0.36 * d, x * d, 0.31 * d)
+        ..quadraticBezierTo((x + 0.04) * d, 0.26 * d, x * d, 0.21 * d);
+      canvas.drawPath(path, steam);
+    }
   }
 
   void _paintOcean(Canvas canvas, double d) {
@@ -170,36 +231,39 @@ class SceneDialPainter extends CustomPainter {
         ).createShader(shaft),
     );
     canvas.restore();
-    // 고래 (몸통 상/하 투톤 + 꼬리 + 눈)
-    final body = _r(d, left: 0.24, bottom: 0.30, w: 0.47, h: 0.215);
-    canvas.drawOval(
-      body,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF2B7DB4),
-            Color(0xFF2B7DB4),
-            Color(0xFFCFEAF8),
-            Color(0xFFCFEAF8),
-          ],
-          stops: [0, 0.58, 0.585, 1],
-        ).createShader(body),
-    );
-    p.color = const Color(0xFF2B7DB4);
-    canvas.drawPath(
-        _rotRRect(Offset(0.20 * d, body.top + 0.02 * d), 0.07 * d, 0.024 * d, 24,
-            horizontal: true),
-        p);
-    canvas.drawPath(
-        _rotRRect(Offset(0.20 * d, body.top + 0.075 * d), 0.065 * d, 0.024 * d,
-            -14,
-            horizontal: true),
-        p);
-    p.color = const Color(0xFF0E2F47);
-    canvas.drawCircle(Offset(body.right - 0.03 * d, body.top + 0.11 * d),
-        0.011 * d, p);
+    if (withCreatures) {
+      // 고래 (몸통 상/하 투톤 + 꼬리 + 눈)
+      final body = _r(d, left: 0.24, bottom: 0.30, w: 0.47, h: 0.215);
+      canvas.drawOval(
+        body,
+        Paint()
+          ..shader = const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF2B7DB4),
+              Color(0xFF2B7DB4),
+              Color(0xFFCFEAF8),
+              Color(0xFFCFEAF8),
+            ],
+            stops: [0, 0.58, 0.585, 1],
+          ).createShader(body),
+      );
+      p.color = const Color(0xFF2B7DB4);
+      canvas.drawPath(
+          _rotRRect(
+              Offset(0.20 * d, body.top + 0.02 * d), 0.07 * d, 0.024 * d, 24,
+              horizontal: true),
+          p);
+      canvas.drawPath(
+          _rotRRect(
+              Offset(0.20 * d, body.top + 0.075 * d), 0.065 * d, 0.024 * d, -14,
+              horizontal: true),
+          p);
+      p.color = const Color(0xFF0E2F47);
+      canvas.drawCircle(
+          Offset(body.right - 0.03 * d, body.top + 0.11 * d), 0.011 * d, p);
+    }
     // 물방울
     final bubble = Paint()
       ..style = PaintingStyle.stroke
@@ -232,7 +296,8 @@ class SceneDialPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(SceneDialPainter old) => old.scene != scene;
+  bool shouldRepaint(SceneDialPainter old) =>
+      old.scene != scene || old.withCreatures != withCreatures;
 }
 
 /// 잎사귀 (border-radius: 0 62% 0 62% 회전) — 숲 장식/불릿
@@ -351,8 +416,8 @@ class _WaveArcPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..color = color;
     canvas.drawArc(
-      Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2,
-          size.width - strokeWidth, size.height * 2 - strokeWidth),
+      Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth,
+          size.height * 2 - strokeWidth),
       math.pi,
       math.pi,
       false,
@@ -367,13 +432,25 @@ class _WaveArcPainter extends CustomPainter {
 
 /// 작업 리스트 행의 불릿 — 잎 / 별 / 파도
 class SceneBullet extends StatelessWidget {
-  const SceneBullet({super.key, required this.scene, required this.selected});
+  const SceneBullet(
+      {super.key,
+      required this.scene,
+      required this.selected,
+      this.moon = false});
 
   final FocusScene scene;
   final bool selected;
+  final bool moon; // 폰: 밤을 별(+처럼 보임) 대신 달로
 
   @override
   Widget build(BuildContext context) {
+    if (moon && scene == FocusScene.night) {
+      return Icon(Icons.nightlight_round,
+          size: 14,
+          color: selected
+              ? const Color(0xFFE6C766)
+              : const Color.fromRGBO(230, 199, 102, 0.5));
+    }
     return switch (scene) {
       FocusScene.forest => Leaf(
           size: 10,
@@ -394,8 +471,49 @@ class SceneBullet extends StatelessWidget {
               ? const Color.fromRGBO(31, 122, 181, 0.85)
               : const Color.fromRGBO(120, 190, 228, 0.8),
         ),
+      FocusScene.daily => _MugBullet(
+          color: selected ? const Color(0xFFE08A6E) : const Color(0xFFF2B9A6),
+        ),
     };
   }
+}
+
+/// 일상 불릿: 작은 머그
+class _MugBullet extends StatelessWidget {
+  const _MugBullet({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 13,
+        height: 11,
+        child: Stack(children: [
+          Positioned(
+            left: 0,
+            top: 1,
+            child: Container(
+              width: 9,
+              height: 10,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(3)),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            top: 3,
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: 1.5),
+              ),
+            ),
+          ),
+        ]),
+      );
 }
 
 /// 누름 피드백: 0.97 스케일 (80ms 누름 / 120ms 해제). 동작 줄이기 설정이면 즉시.

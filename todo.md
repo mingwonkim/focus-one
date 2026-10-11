@@ -25,8 +25,37 @@
 - [x] 코드 렌더 4안 + Higgsfield 시안 8장 비교 → 사용자 H3(바다·고래) 선택 (크레딧 6.5 사용, 잔액 30.18)
 - [x] macOS/Windows/Linux(.deb)/트레이 아이콘 생성 + tool/apply_icons.sh + CI 적용, 로컬 macOS 릴리즈 빌드에서 AppIcon 확인
 
+## 2026-10-11 — 모바일(iOS+Android) v1 (브랜치 mobile-v1, 계획 ~/.claude/plans/zazzy-crunching-hammock.md)
+- [x] P0 레퍼런스: Arctic Habit 실측(iPhone 미러링, 10분 세션 완료까지) + Mobbin + PRD + astra 설계서 → docs/mobile/
+- [ ] P1 플랫폼 추가·셸 분리 + 차단 기술 시험(iOS 15분 shield, Android 접근성) + Family Controls 배포 권한 신청
+  - [x] ios/android 추가 + 폰 셸(탭 4개) — iOS 시뮬(iPhone 17 Pro)·Android 에뮬(focusone-design) 실행 확인
+  - [x] 아이폰 실기기 등록·서명·설치 (팀 QZ366AK4NB), FocusLock+FocusMonitor 확장 탑재
+  - [x] 차단 기술 시험: 아이폰 실기기에서 잠금 동작 확인 (사용자, 2026-10-11) — 앱 종료 후 자동 해제는 P6에서 재확인
+  - [x] Family Controls 배포 권한 신청 제출 (2026-10-11, Apple 회신 대기)
+- [x] P2 저장 안전성 + 세션 복구·보상 1회 확정 — 시각 기준 타이머, 진행 세션 저장, .bak 복구, 테스트 6개
+- [x] P3 데이터 모델(태그·친구·배치·재화) + 통계 — Progress 묶음 저장(schema 3), FocusStats(자정 분할·잔디·골든타임), 테스트 9개
+- [x] P4 집중 홈 1장 → 사용자 검토 → 할 일·기록·인박스·알림 (astra 리뷰 1 12건 반영, 잔디 → 장면색 집중 달력) — 소리 선택 시트는 P7
+- [x] P5 풍경(6×6 꾸미기)·보관함·도감·상점 + 친구 12종·장식 9종(codex 이미지 생성) + 집중 소리 시트(빗소리·백색·갈색 합성)
+- [ ] P6 Deep Focus 본구현
+  - [x] 정식 잠금 화면(안내·동의·권한·앱 선택·설정), 세션 연동(재생=잠금, 일시정지·종료=해제)
+  - [x] Android 접근성 잠금 — 에뮬레이터에서 차단·만료 후 미차단 확인
+  - [x] 아이폰 실기기: 정식 화면 잠금·앱 종료 후에도 유지 확인(10/11), 자동 해제는 사용자 확인 완료
+  - [ ] Android 실기기 확인, Play 접근성 선언·시연 영상(출시 전)
+- [x] 실사용 피드백 1 (2026-10-11): 폰 일시정지 제거, 화면 꺼져도 소리(just_audio·백그라운드 오디오), Mixkit 원음 11개로 교체 + 장면별 상황 소리 (docs/mobile/sounds.md)
+  - [ ] 아이폰에서 화면 끔·반복 이음새 확인
+  - [x] 그만두기 막기: 시작 10초 안에만 취소, 이후엔 물방울로 비상 탈출(남은 1분당 2개, 보상 없음)
+  - [x] 도서관·기차·모닥불 Freesound CC0로 교체, 백색·갈색 음량 −20 LUFS로 맞춤
+- [x] 랭킹 (2026-10-11): Supabase focusone(서울) 익명 계정+닉네임, 점수 = 모은 물방울 − 비상 탈출, 하루 +720 상한·경과 분 검증, 이번 주/누적, 나가기. 시뮬 참여·나가기 확인
+- [x] 풍경 탭 → '꾸미기' (탭 안 버튼은 '배치 바꾸기')
+- [x] 소리 시트 장면별 정리: 빗소리→숲, 바람→밤, 백색·갈색만 '집중 소음' 공통. 폰 밤 아이콘 별(+) → 달
+- [ ] 아이폰에 최신 빌드 설치 (랭킹·꾸미기 탭 포함) → 실기기 랭킹 참여 확인
+- [ ] 개인정보 처리방침에 랭킹(닉네임·점수) 추가 — 출시 전
+- [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
+- [ ] Android 출시: release AAB → Play Console 업로드 (접근성 선언·시연 영상과 함께)
+- [ ] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사
+
 ## 다음 세션
-- [ ] GitHub Actions 빌드(0cd61d9) 통과 확인 — Linux GStreamer 의존성·macOS ad-hoc 서명 단계가 처음 도는 커밋. 실패 시 Actions 로그부터.
-- [ ] 사운드 실사용 피드백 반영 — 합성음 음색/볼륨 기본값, 필요하면 실제 녹음 파일로 교체 (tool/gen_sounds.py로 재생성 가능)
-- [ ] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인
+- [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
+- [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
+- [ ] (보류) 주간 랭킹 상위 5명 커피 쿠폰 — 사용자 50명 이상일 때. 필요: Apple/Google 로그인 자격, 동점 = 먼저 도달, 상위 기록 수동 확인, 당첨자 연락처 동의, 앱 내 공식 규칙
 - [ ] (보류) Apple Developer 공증 — 경고 없는 배포가 필요해지면

@@ -13,6 +13,9 @@ dependencies:
   # 상태 관리
   provider: ^6.1.2
 
+  # 시계 (타이머를 시각 기준으로 계산 — 테스트에서 가짜 시계 주입)
+  clock: ^1.1.1
+
   # 데스크탑 창 제어 (always-on-top, frameless, 크기 전환)
   window_manager: ^0.4.3
 
@@ -30,7 +33,11 @@ dependencies:
 
   # 앰비언트 사운드 재생 (숲/밤/바다 모드)
   audioplayers: ^6.1.0
-
+  flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
+  just_audio: ^0.10.6
+  audio_session: ^0.2.4
+  supabase_flutter: ^2.18.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -42,3 +49,5 @@ flutter:
     - assets/sounds/
     - assets/tray_icon.png
     - assets/tray_icon.ico
+    - assets/mobile/companions/
+    - assets/mobile/decor/

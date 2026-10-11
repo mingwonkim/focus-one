@@ -89,5 +89,6 @@ void main() {
     }
     state.setScene(FocusScene.forest);
     await shot(const ExpandedScreen(), WindowSizes.expanded, 'forest-expanded-inbox', '인박스');
+    state.dispose(); // 시각 기준 타이머(1초 틱)를 정리해야 테스트가 끝난다
   });
 }

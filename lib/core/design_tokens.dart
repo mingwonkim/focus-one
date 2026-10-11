@@ -10,23 +10,36 @@ abstract class AppColors {
   static const success = Color(0xFF34C759); // iOS 그린
 }
 
-/// 화면 분위기 모드: 숲 / 밤 / 바다. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
+/// 화면 분위기 모드: 숲 / 밤 / 바다 / 일상. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
 enum FocusScene {
   forest,
   night,
-  ocean;
+  ocean,
+  daily; // 카페·도서관·기차·모닥불 같은 일상 장소
 
   SceneStyle get style => switch (this) {
         forest => SceneStyle.forest,
         night => SceneStyle.night,
         ocean => SceneStyle.ocean,
+        daily => SceneStyle.daily,
       };
 
   FocusScene get next =>
       FocusScene.values[(index + 1) % FocusScene.values.length];
 
-  /// 앰비언트 사운드 애셋 경로 (forest.wav / night.wav / ocean.wav)
-  String get soundAsset => 'sounds/$name.wav';
+  /// 앰비언트 사운드 애셋 경로 (forest.wav / night.wav / ocean.wav, 일상은 카페)
+  String get soundAsset => this == daily ? 'sounds/cafe.m4a' : 'sounds/$name.wav';
+
+  /// 폰 장면 기본 소리 id (assets/sounds/<id>.m4a, Mixkit 원음)
+  String get phoneSound => this == daily ? 'cafe' : name;
+
+  /// 폰 소리 시트의 장면별 상황 소리 id (백색·갈색소음만 모든 장면 공통)
+  List<String> get situationSounds => switch (this) {
+        forest => const ['birds', 'stream', 'rain'],
+        night => const ['crickets', 'wind'],
+        ocean => const ['harbor', 'rocky'],
+        daily => const ['library', 'train', 'fire'],
+      };
 }
 
 /// 장면별 스타일 값 — v2(Tiimo 레퍼런스) 팔레트. 근거: docs/v2/app-design-spec.md §3.
@@ -175,6 +188,37 @@ class SceneStyle {
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
   );
+
+  // 일상: 피치·코랄 파스텔 (베이지 금지). 대비: accent #A3452F / cardBg ≈ 5.9:1
+  static const daily = SceneStyle(
+    brightness: Brightness.light,
+    cardBg: Color(0xFFFFF2EE),
+    cardBorder: Color(0xFFFBDDD4),
+    rowBg: Color(0xFFFFFFFF),
+    rowShadow: Color(0x0F000000),
+    textStrong: Color(0xFF3A1F18),
+    textMuted: Color(0xFF6B4A41),
+    textFaint: Color(0xFF7D5E55),
+    accent: Color(0xFFA3452F),
+    ringProgress: Color(0xFFE08A6E),
+    ringTrack: Color(0xFFFBE0D8),
+    dialColors: [
+      Color(0xFFFFF6EC),
+      Color(0xFFFFE1D3),
+      Color(0xFFF7B9A2),
+      Color(0xFFE59478),
+    ],
+    dialStops: [0, 0.35, 0.7, 1],
+    pillBg: Color(0xFF2B1D1A),
+    pillFg: Color(0xFFFFFFFF),
+    checkBg: Color(0xFFA3452F),
+    checkFg: Color(0xFFFFFFFF),
+    divider: Color(0xFFFBE0D8),
+    fieldFill: Color(0xFFFFFFFF),
+    sceneLabel: '일상',
+    footerLabel: '오늘 마신 커피',
+    footerUnit: '잔',
+  );
 }
 
 abstract class AppSpacing {
@@ -184,6 +228,15 @@ abstract class AppSpacing {
   static const double lg = 24;
   static const double xl = 32;
   static const double xxl = 48;
+
+  // 폰 4/8 리듬 (데스크탑 기존 이름은 그대로 둠)
+  static const double s4 = 4;
+  static const double s8 = 8;
+  static const double s12 = 12;
+  static const double s16 = 16;
+  static const double s20 = 20;
+  static const double s24 = 24;
+  static const double s32 = 32;
 }
 
 abstract class AppRadius {
@@ -222,6 +275,33 @@ abstract class AppDuration {
   static const micro = Duration(milliseconds: 150);
   static const enter = Duration(milliseconds: 200);
   static const transition = Duration(milliseconds: 280);
+}
+
+/// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)
+abstract class MobileSize {
+  static const double gutter = 20; // 좌우 여백 (SE는 16)
+  static const double ring = 232; // SE 184, 큰 화면 264
+  static const double ringStroke = 24;
+  static const double ringInset = 32;
+  static const double row = 48;
+  static const double cta = 52;
+  static const double taskCard = 72;
+  static const double tabBar = 64;
+  static const double sheetRadius = 24;
+  // 간격 규칙 (docs/mobile/review-2.md, astra 여백 리뷰)
+  static const double headerMinHeight = 48; // 탭 제목 행
+  static const double cardPadding = 16; // 카드 안쪽 (테두리 포함 시각 거리)
+  static const double cardGap = 8; // 같은 묶음 카드 사이
+  static const double sectionGap = 24; // 다른 묶음 사이
+  static const double labelGap = 4; // 라벨–값
+  static const double iconGap = 8; // 아이콘–글자
+  static const double gridGap = 12;
+  static const double contentBottomGap = 24; // 본문 끝–탭바 (탭바 자리는 셸 SafeArea가 이미 비움)
+  static const double fieldMinHeight = 56;
+  static const double touchMin = 48;
+  static const int minMinutes = 10;
+  static const int maxMinutes = 180;
+  static const int stepMinutes = 5;
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

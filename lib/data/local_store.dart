@@ -6,18 +6,23 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/design_tokens.dart';
 import '../models/blocker_settings.dart';
+import '../models/collection.dart';
 import '../models/task.dart';
 
-/// MVP용 JSON 파일 저장소.
-/// - 코드젠(build_runner) 없이 바로 동작
-/// - 데이터가 커지면 drift/isar로 교체 (인터페이스 유지 전제)
+/// JSON 파일 저장소.
+/// - 쓰기는 한 줄로 세운다(동시 저장 금지) → 임시 파일에 쓴 뒤 이름 바꾸기(원자적).
+/// - 직전 파일은 `.bak`로 남겨, 본 파일이 깨지면 복구본에서 읽는다.
 class LocalStore {
+  LocalStore([this._file]); // 파일 지정은 테스트용 — 기본은 앱 지원 폴더
+
   static const _fileName = 'focus_one_data.json';
   File? _file;
+  Future<bool> _queue = Future.value(true);
 
   Future<File> _getFile() async {
     if (_file != null) return _file!;
     final dir = await getApplicationSupportDirectory();
+    await dir.create(recursive: true);
     _file = File('${dir.path}${Platform.pathSeparator}$_fileName');
     return _file!;
   }
@@ -25,22 +30,54 @@ class LocalStore {
   Future<StoreData> load() async {
     try {
       final file = await _getFile();
-      if (!await file.exists()) return StoreData.empty();
-      final raw = await file.readAsString();
-      if (raw.trim().isEmpty) return StoreData.empty();
+      // 본 파일 → 교체 직전 임시 파일 → 복구본 순서
+      for (final f in [file, File('${file.path}.tmp'), File('${file.path}.bak')]) {
+        final data = await _read(f);
+        if (data != null) return data;
+      }
+    } catch (_) {
+      // 경로 조회 실패(테스트 등) — 빈 상태로 시작
+    }
+    return StoreData.empty();
+  }
+
+  Future<StoreData?> _read(File f) async {
+    try {
+      if (!await f.exists()) return null;
+      final raw = await f.readAsString();
+      if (raw.trim().isEmpty) return null;
       return StoreData.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
-      // 파일 손상 시 빈 상태로 시작 (앱이 죽지 않는 것이 우선)
-      return StoreData.empty();
+      return null; // 손상 → 다음 후보
     }
   }
 
-  Future<void> save(StoreData data) async {
+  /// 저장 요청은 순서대로 하나씩 처리된다. 성공하면 true — 실패는 호출자가 재시도.
+  Future<bool> save(StoreData data) {
+    final json = jsonEncode(data.toJson()); // 호출 시점 상태를 고정
+    final done = _queue.then((_) => _write(json));
+    _queue = done;
+    return done;
+  }
+
+  /// 대기 중인 저장이 모두 끝날 때까지 (테스트·종료 직전용)
+  Future<void> flush() => _queue;
+
+  Future<bool> _write(String json) async {
     try {
       final file = await _getFile();
-      await file.writeAsString(jsonEncode(data.toJson()), flush: true);
+      final tmp = File('${file.path}.tmp');
+      await tmp.writeAsString(json, flush: true);
+      // 본 파일이 정상일 때만 복구본으로 올린다 — 손상 파일이 좋은 복구본을 덮지 않게
+      if (await _read(file) != null) {
+        await file.rename('${file.path}.bak');
+      } else if (await file.exists()) {
+        await file.delete();
+      }
+      await tmp.rename(file.path);
+      return true;
     } catch (_) {
-      // 저장 실패는 조용히 무시하고 다음 저장 시 재시도
+      return false;
     }
   }
 }
@@ -53,6 +90,8 @@ class StoreData {
   final FocusScene scene;
   final bool soundEnabled;
   final double soundVolume;
+  final ActiveSession? activeSession;
+  final Progress progress;
 
   const StoreData({
     required this.tasks,
@@ -62,12 +101,20 @@ class StoreData {
     this.scene = FocusScene.forest,
     this.soundEnabled = true,
     this.soundVolume = 0.6,
+    this.activeSession,
+    this.progress = const Progress(),
   });
+
+  /// 1 = 데스크탑 v1, 2 = 진행 세션·세션 결과, 3 = 폰 진행(태그·친구·풍경·물방울)
+  static const schemaVersion = 3;
 
   factory StoreData.empty() =>
       const StoreData(tasks: [], inbox: [], sessions: []);
 
   Map<String, dynamic> toJson() => {
+        'schema': schemaVersion,
+        'activeSession': activeSession?.toJson(),
+        'progress': progress.toJson(),
         'tasks': tasks.map((t) => t.toJson()).toList(),
         'inbox': inbox.map((i) => i.toJson()).toList(),
         'sessions': sessions.map((s) => s.toJson()).toList(),
@@ -95,5 +142,12 @@ class StoreData {
             FocusScene.forest,
         soundEnabled: json['soundEnabled'] as bool? ?? true,
         soundVolume: (json['soundVolume'] as num?)?.toDouble() ?? 0.6,
+        progress: json['progress'] != null
+            ? Progress.fromJson(json['progress'] as Map<String, dynamic>)
+            : const Progress(),
+        activeSession: json['activeSession'] != null
+            ? ActiveSession.fromJson(
+                json['activeSession'] as Map<String, dynamic>)
+            : null,
       );
 }

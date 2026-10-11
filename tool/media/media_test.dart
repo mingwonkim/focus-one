@@ -33,7 +33,7 @@ class _NoopStore extends LocalStore {
   @override
   Future<StoreData> load() async => StoreData.empty();
   @override
-  Future<void> save(StoreData data) async {}
+  Future<bool> save(StoreData data) async => true;
 }
 
 /// window_manager 없이 모드만 바꾸는 창 서비스
@@ -291,6 +291,7 @@ class _SoundPill extends StatelessWidget {
       FocusScene.forest => '숲 소리',
       FocusScene.night => '밤바람 · 뻐꾸기',
       FocusScene.ocean => '파도 소리',
+      FocusScene.daily => '카페',
     };
     return Container(
       height: 44,
