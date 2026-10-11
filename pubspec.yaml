@@ -13,6 +13,9 @@ dependencies:
   # 상태 관리
   provider: ^6.1.2
 
+  # 시계 (타이머를 시각 기준으로 계산 — 테스트에서 가짜 시계 주입)
+  clock: ^1.1.1
+
   # 데스크탑 창 제어 (always-on-top, frameless, 크기 전환)
   window_manager: ^0.4.3
 

@@ -1,6 +1,7 @@
 // lib/state/app_state.dart
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/design_tokens.dart';
@@ -25,13 +26,11 @@ class AppState extends ChangeNotifier {
 
   String? _currentTaskId;
   Timer? _ticker;
-  int _totalSeconds = 25 * 60;
-  int _remainingSeconds = 25 * 60;
-  bool _isRunning = false;
+  int _totalSeconds = 25 * 60; // 다음 세션 길이 설정
+  ActiveSession? _active; // 진행/일시정지 중인 세션 (저장됨)
 
-  FocusPhase _phase = FocusPhase.idle;
   int _breakTotalSeconds = 5 * 60;
-  int _breakRemainingSeconds = 5 * 60;
+  DateTime? _breakEndsAt; // 휴식 중일 때만 (저장 안 함 — 꺼지면 휴식은 버린다)
 
   FocusScene _scene = FocusScene.forest;
   bool _soundEnabled = true;
@@ -55,14 +54,16 @@ class AppState extends ChangeNotifier {
   }
 
   /// 작업별 완료한 집중 세션 수 (🍅 카운트)
-  int sessionCountFor(String taskId) =>
-      _sessions.where((s) => s.taskId == taskId).length;
+  int sessionCountFor(String taskId) => _sessions
+      .where((s) => s.taskId == taskId && s.outcome == SessionOutcome.completed)
+      .length;
 
   /// 오늘 완료한 집중 세션 수 (푸터: 심은 나무/모은 별/만난 고래)
   int get todaySessionCount {
     final now = DateTime.now();
     return _sessions
         .where((s) =>
+            s.outcome == SessionOutcome.completed &&
             s.endedAt.year == now.year &&
             s.endedAt.month == now.month &&
             s.endedAt.day == now.day)
@@ -79,8 +80,11 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
-  bool get isRunning => _isRunning;
-  FocusPhase get phase => _phase;
+  bool get isRunning => _active?.isRunning ?? false;
+  FocusPhase get phase => _breakEndsAt != null
+      ? FocusPhase.breakTime
+      : (_active != null ? FocusPhase.focus : FocusPhase.idle);
+  ActiveSession? get activeSession => _active;
   BlockerSettings get blockerSettings => _blockerSettings;
   FocusScene get scene => _scene;
 
@@ -109,22 +113,23 @@ class AppState extends ChangeNotifier {
 
   /// 차단이 실제로 켜져야 하는 상태인가 (집중 중 + 타이머 작동 + 설정 on)
   bool get shouldBlock =>
-      _phase == FocusPhase.focus && _isRunning && _blockerSettings.enabled;
+      phase == FocusPhase.focus && isRunning && _blockerSettings.enabled;
 
-  int get remainingSeconds =>
-      _phase == FocusPhase.breakTime ? _breakRemainingSeconds : _remainingSeconds;
-  int get totalSeconds =>
-      _phase == FocusPhase.breakTime ? _breakTotalSeconds : _totalSeconds;
+  int get remainingSeconds {
+    final now = clock.now();
+    if (_breakEndsAt != null) {
+      return _breakEndsAt!.difference(now).inSeconds.clamp(0, _breakTotalSeconds);
+    }
+    return _active?.remainingSec(now) ?? _totalSeconds;
+  }
+
+  int get totalSeconds => _breakEndsAt != null
+      ? _breakTotalSeconds
+      : (_active?.plannedSec ?? _totalSeconds);
 
   /// 1.0(시작) → 0.0(종료). FocusRing이 이 값으로 원을 줄인다.
-  double get progress {
-    if (_phase == FocusPhase.breakTime) {
-      return _breakTotalSeconds == 0
-          ? 0
-          : _breakRemainingSeconds / _breakTotalSeconds;
-    }
-    return _totalSeconds == 0 ? 0 : _remainingSeconds / _totalSeconds;
-  }
+  double get progress =>
+      totalSeconds == 0 ? 0 : remainingSeconds / totalSeconds;
 
   /// 오늘 완료한 집중 시간(분)
   int get todayFocusMinutes {
@@ -173,6 +178,18 @@ class AppState extends ChangeNotifier {
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
+    // 꺼지기 전 진행 중이던 세션 복구: 이미 끝났으면 완료 처리(휴식 없이), 아니면 이어서
+    _active = data.activeSession;
+    if (_active != null) {
+      if (pending.any((t) => t.id == _active!.taskId)) {
+        _currentTaskId = _active!.taskId;
+      }
+      if (_active!.remainingSec(clock.now()) <= 0) {
+        _finishSession(startBreak: false);
+      } else if (_active!.isRunning) {
+        _startTicker();
+      }
+    }
     notifyListeners();
   }
 
@@ -185,6 +202,7 @@ class AppState extends ChangeNotifier {
           scene: _scene,
           soundEnabled: _soundEnabled,
           soundVolume: _soundVolume,
+          activeSession: _active,
         ),
       );
 
@@ -213,18 +231,16 @@ class AppState extends ChangeNotifier {
   void completeCurrentTask() {
     final task = currentTask;
     if (task == null) return;
-    final wasRunning = _isRunning;
-    final focusedMinutes = ((_totalSeconds - _remainingSeconds) / 60).round();
-    stopTimer();
+    // 진행 중이던 시간은 조기 완료로 기록 (1분 이상일 때)
+    if (_active != null && _active!.focusedSec(clock.now()) >= 60) {
+      _recordSession(SessionOutcome.early);
+    }
+    _cancelSession();
     _tasks = _tasks
         .map((t) => t.id == task.id
             ? t.copyWith(isDone: true, completedAt: DateTime.now())
             : t)
         .toList();
-    // 진행 중이던 시간도 세션으로 기록 (1분 이상일 때)
-    if (wasRunning && focusedMinutes >= 1) {
-      _recordSession(task, focusedMinutes);
-    }
     // 다음 작업 자동 선택은 하지 않는다 — 사용자가 직접 고르게 해서
     // "끝냈다"는 완결감을 준다.
     _currentTaskId = null;
@@ -281,93 +297,112 @@ class AppState extends ChangeNotifier {
   }
 
   // ---- Timer ----
+  // 남은 시간은 항상 시계로 계산한다. 1초 타이머는 화면 갱신·종료 감지용일 뿐.
   void setDurationMinutes(int minutes) {
-    if (_isRunning) return;
+    if (_active != null) return; // 진행·일시정지 중엔 길이 변경 불가
     _totalSeconds = minutes * 60;
-    _remainingSeconds = _totalSeconds;
     notifyListeners();
   }
 
   void startTimer() {
-    if (currentTask == null || _isRunning) return;
-    if (_phase == FocusPhase.breakTime) return; // 휴식 중엔 skipBreak 먼저
-    _phase = FocusPhase.focus;
-    _isRunning = true;
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_remainingSeconds <= 1) {
-        _finishSession();
-      } else {
-        _remainingSeconds--;
-        notifyListeners();
-      }
-    });
+    final task = currentTask;
+    if (task == null || isRunning || _breakEndsAt != null) return;
+    final now = clock.now();
+    _active = _active?.resumed(now) ??
+        ActiveSession(
+          id: _newId(),
+          taskId: task.id,
+          taskTitle: task.title,
+          scene: _scene.name,
+          startedAt: now,
+          plannedSec: _totalSeconds,
+          resumedAt: now,
+        );
+    _startTicker();
     notifyListeners();
+    _persist();
   }
 
   void pauseTimer() {
+    if (!isRunning) return;
     _ticker?.cancel();
-    _isRunning = false;
+    _active = _active!.paused(clock.now());
     notifyListeners();
+    _persist();
   }
 
+  /// 리셋: 기록 없이 세션을 버린다 (데스크탑 ↺)
   void stopTimer() {
-    _ticker?.cancel();
-    _isRunning = false;
-    _phase = FocusPhase.idle;
-    _remainingSeconds = _totalSeconds;
+    _breakEndsAt = null;
+    _cancelSession();
     notifyListeners();
+    _persist();
   }
 
-  void _finishSession() {
-    final task = currentTask;
-    final minutes = (_totalSeconds / 60).round();
+  /// 그만두기: 집중한 만큼 기록은 남기고 보상은 없음 (폰)
+  void abandonSession() {
+    if (_active == null) return;
+    if (_active!.focusedSec(clock.now()) >= 60) {
+      _recordSession(SessionOutcome.abandoned);
+    }
+    stopTimer();
+  }
+
+  void _cancelSession() {
     _ticker?.cancel();
-    _isRunning = false;
-    _remainingSeconds = _totalSeconds;
-    if (task != null) {
-      _recordSession(task, minutes);
-      onSessionComplete?.call(task, minutes);
+    _active = null;
+  }
+
+  void _startTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_breakEndsAt != null) {
+        if (remainingSeconds <= 0) return _endBreak();
+      } else if (_active != null && _active!.remainingSec(clock.now()) <= 0) {
+        return _finishSession();
+      }
+      notifyListeners();
+    });
+  }
+
+  /// 끝까지 완료. 세션 ID로 기록하므로 재실행·복귀가 겹쳐도 한 번만 남는다.
+  void _finishSession({bool startBreak = true}) {
+    final active = _active;
+    if (active == null) return;
+    _recordSession(SessionOutcome.completed);
+    _cancelSession();
+    final task = _tasks.where((t) => t.id == active.taskId).firstOrNull;
+    if (task != null) onSessionComplete?.call(task, active.plannedSec ~/ 60);
+    if (startBreak) {
+      _startBreak(); // 집중이 끝나면 자동으로 휴식 — 차단도 이때 풀린다
+    } else {
+      notifyListeners();
     }
     _persist();
-    _startBreak(); // 집중이 끝나면 자동으로 휴식 — 차단도 이때 풀린다
   }
 
   /// 휴식 시작. 이 동안 차단은 비활성 (shouldBlock == false).
   void _startBreak() {
-    _phase = FocusPhase.breakTime;
-    _breakRemainingSeconds = _breakTotalSeconds;
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_breakRemainingSeconds <= 1) {
-        _endBreak();
-      } else {
-        _breakRemainingSeconds--;
-        notifyListeners();
-      }
-    });
+    _breakEndsAt = clock.now().add(Duration(seconds: _breakTotalSeconds));
+    _startTicker();
     notifyListeners();
   }
 
   void _endBreak() {
     _ticker?.cancel();
-    _phase = FocusPhase.idle;
-    _breakRemainingSeconds = _breakTotalSeconds;
+    _breakEndsAt = null;
     onBreakEnd?.call();
     notifyListeners();
   }
 
   /// 휴식 건너뛰고 바로 대기 상태로
   void skipBreak() {
-    if (_phase != FocusPhase.breakTime) return;
+    if (_breakEndsAt == null) return;
     _endBreak();
   }
 
   void setBreakMinutes(int minutes) {
     _breakTotalSeconds = minutes * 60;
-    if (_phase != FocusPhase.breakTime) {
-      _breakRemainingSeconds = _breakTotalSeconds;
-    }
     notifyListeners();
   }
 
@@ -423,13 +458,24 @@ class AppState extends ChangeNotifier {
     _persist();
   }
 
-  void _recordSession(Task task, int minutes) {
+  /// 진행 세션을 기록으로 확정 (같은 세션 ID는 한 번만)
+  void _recordSession(SessionOutcome outcome) {
+    final a = _active;
+    if (a == null || _sessions.any((s) => s.id == a.id)) return;
+    final now = clock.now();
+    final focused = outcome == SessionOutcome.completed
+        ? a.plannedSec
+        : a.focusedSec(now);
     _sessions.add(FocusSession(
-      id: _newId(),
-      taskId: task.id,
-      taskTitle: task.title,
-      minutes: minutes,
-      endedAt: DateTime.now(),
+      id: a.id,
+      taskId: a.taskId,
+      taskTitle: a.taskTitle,
+      minutes: (focused / 60).round(),
+      endedAt: now,
+      startedAt: a.startedAt,
+      focusedSec: focused,
+      scene: a.scene,
+      outcome: outcome,
     ));
   }
 
