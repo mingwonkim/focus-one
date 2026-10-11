@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../core/app_theme.dart';
 import '../data/local_store.dart';
-import '../services/ambient_sound_service.dart';
+import '../services/mobile_sound_service.dart';
 import '../services/focus_lock_service.dart';
 import '../services/session_notifier.dart';
 import '../state/app_state.dart';
@@ -19,14 +19,17 @@ Future<void> runMobile() async {
     ..autoBreak = false; // 폰: 휴식은 보상 시트에서 선택
   await appState.init();
 
-  // 집중 중에만 장면 사운드 (데스크탑과 같은 규칙)
-  final sound = AmbientSoundService();
+  // 집중 중에만 소리 (데스크탑과 같은 규칙). 화면이 꺼져도 계속 재생.
+  final sound = MobileSoundService();
+  try {
+    await sound.init();
+  } catch (_) {}
   appState.addListener(() {
     sound.setVolume(appState.soundVolume);
     if (appState.phase == FocusPhase.focus &&
         appState.isRunning &&
         appState.soundEnabled) {
-      sound.playAsset(appState.soundAsset);
+      sound.play(appState.soundAsset);
     } else {
       sound.stop();
     }

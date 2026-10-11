@@ -416,20 +416,28 @@ class _Controls extends StatelessWidget {
         onTap: () => _confirmAbandon(context),
       ),
       const SizedBox(width: 12),
+      // 폰은 일시정지 없음(집중 강제, 사용자 결정 2026-10-11) — 딴생각은 메모로 던지고 계속.
+      // 예전 버전에서 일시정지해 둔 세션만 '계속'으로 이어갈 수 있다.
       Expanded(
-        child: PillButton(
-          style: style,
-          width: double.infinity,
-          height: MobileSize.cta,
-          icon: s.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          label: s.isRunning ? '일시정지' : '계속',
-          onTap: s.isRunning
-              ? s.pauseTimer
-              : () => s.startTimer(allowNoTask: true),
-        ),
+        child: s.isRunning
+            ? PillButton(
+                style: style,
+                width: double.infinity,
+                height: MobileSize.cta,
+                icon: Icons.edit_note_rounded,
+                label: '딴생각 메모',
+                onTap: () => showMemoSheet(context),
+              )
+            : PillButton(
+                style: style,
+                width: double.infinity,
+                height: MobileSize.cta,
+                icon: Icons.play_arrow_rounded,
+                label: '계속',
+                onTap: () => s.startTimer(allowNoTask: true),
+              ),
       ),
-      const SizedBox(width: 12),
-      memo,
+      if (!s.isRunning) ...[const SizedBox(width: 12), memo],
     ]);
   }
 }

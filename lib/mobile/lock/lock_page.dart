@@ -259,8 +259,8 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
           const SizedBox(height: 12),
           Text(
             Platform.isIOS
-                ? '15분 이상 집중할 때만 잠겨요. 일시정지하면 풀리고, 남은 시간이 15분 이상이면 다시 잠겨요.'
-                : '집중하는 동안 고른 앱을 열면 FocusOne으로 돌아와요. 일시정지하면 풀려요.',
+                ? '15분 이상 집중할 때 잠기고, 끝나거나 그만두면 바로 풀려요.'
+                : '집중하는 동안 고른 앱을 열면 FocusOne으로 돌아와요. 끝나거나 그만두면 풀려요.',
             style: TextStyle(fontSize: 13, height: 1.4, color: style.textMuted),
           ),
         ],
