@@ -214,10 +214,11 @@ class AppState extends ChangeNotifier {
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
   // ---- Task ----
-  void addTask(String title, {bool setAsCurrent = false}) {
+  void addTask(String title, {bool setAsCurrent = false, String? tagId}) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return;
-    final task = Task(id: _newId(), title: trimmed, createdAt: DateTime.now());
+    final task = Task(
+        id: _newId(), title: trimmed, createdAt: DateTime.now(), tagId: tagId);
     _tasks.add(task);
     if (setAsCurrent || _currentTaskId == null) {
       _currentTaskId = task.id;

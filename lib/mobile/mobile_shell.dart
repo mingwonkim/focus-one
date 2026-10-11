@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../core/design_tokens.dart';
 import '../state/app_state.dart';
 import 'focus/focus_home.dart';
+import 'records/records_tab.dart';
+import 'tasks/tasks_tab.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
 
@@ -17,7 +19,14 @@ class MobileShell extends StatefulWidget {
 }
 
 class _MobileShellState extends State<MobileShell> {
-  MobileTab _tab = MobileTab.focus;
+  /// 다른 탭에서 "바로 집중" 등으로 탭을 바꿀 수 있게 Provider로 내려준다
+  final _tabs = ValueNotifier(MobileTab.focus);
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
 
   static const _labels = {
     MobileTab.focus: ('집중', Icons.timer_outlined),
@@ -27,22 +36,29 @@ class _MobileShellState extends State<MobileShell> {
   };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ChangeNotifierProvider.value(
+        value: _tabs,
+        child: Builder(builder: _build),
+      );
+
+  Widget _build(BuildContext context) {
     final state = context.watch<AppState>();
     final style = state.scene.style;
     // 진행·휴식 중엔 탭바를 숨긴다 (집중 화면에서 다른 데로 새지 않게)
     final hideBar = state.phase != FocusPhase.idle;
+    final tab = context.watch<ValueNotifier<MobileTab>>().value;
+    final current = hideBar ? MobileTab.focus : tab;
     return Scaffold(
       backgroundColor: style.cardBg,
       body: SafeArea(
-        child: _tab == MobileTab.focus
-            ? const FocusHome()
-            : Center(
-                child: Text(
-                  _labels[_tab]!.$1,
-                  style: TextStyle(fontSize: 20, color: style.textStrong),
-                ),
-              ),
+        child: switch (current) {
+          MobileTab.focus => const FocusHome(),
+          MobileTab.tasks => const TasksTab(),
+          MobileTab.records => const RecordsTab(),
+          MobileTab.scenery => Center(
+              child: Text(_labels[current]!.$1,
+                  style: TextStyle(fontSize: 20, color: style.textStrong))),
+        },
       ),
       extendBody: true,
       bottomNavigationBar: hideBar
@@ -64,10 +80,10 @@ class _MobileShellState extends State<MobileShell> {
                         Expanded(
                           child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
-                            onTap: () => setState(() => _tab = t),
+                            onTap: () => _tabs.value = t,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: t == _tab ? style.divider : null,
+                                color: t == current ? style.divider : null,
                                 borderRadius:
                                     BorderRadius.circular(AppRadius.full),
                               ),
@@ -76,17 +92,17 @@ class _MobileShellState extends State<MobileShell> {
                                 children: [
                                   Icon(_labels[t]!.$2,
                                       size: 22,
-                                      color: t == _tab
+                                      color: t == current
                                           ? style.accent
                                           : style.textMuted),
                                   Text(
                                     _labels[t]!.$1,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      fontWeight: t == _tab
+                                      fontWeight: t == current
                                           ? FontWeight.w600
                                           : FontWeight.w400,
-                                      color: t == _tab
+                                      color: t == current
                                           ? style.textStrong
                                           : style.textMuted,
                                     ),

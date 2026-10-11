@@ -52,6 +52,17 @@ class FocusStats {
     ];
   }
 
+  /// 하루의 시간대별(0~23시) 합 — 구기록은 시간 정보가 없어 제외
+  List<int> hours(DateTime day) {
+    final out = List.filled(24, 0);
+    for (final s in sessions) {
+      for (final (h, sec) in _pieces(s, hourly: true)) {
+        if (_day(h) == _day(day)) out[h.hour] += sec;
+      }
+    }
+    return out;
+  }
+
   /// 연도의 월별 합
   List<int> months(int year) {
     final out = List.filled(12, 0);
