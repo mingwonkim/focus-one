@@ -52,12 +52,22 @@ class _MobileShellState extends State<MobileShell> {
     return Scaffold(
       backgroundColor: style.cardBg,
       body: SafeArea(
-        child: switch (current) {
-          MobileTab.focus => const FocusHome(),
-          MobileTab.tasks => const TasksTab(),
-          MobileTab.records => const RecordsTab(),
-          MobileTab.scenery => const SceneryTab(),
-        },
+        // 탭 전환 페이드 120ms (동작 줄이기면 즉시)
+        child: AnimatedSwitcher(
+          duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
+              ? Duration.zero
+              : AppDuration.tab,
+          switchInCurve: Curves.easeOut,
+          child: KeyedSubtree(
+            key: ValueKey(current),
+            child: switch (current) {
+              MobileTab.focus => const FocusHome(),
+              MobileTab.tasks => const TasksTab(),
+              MobileTab.records => const RecordsTab(),
+              MobileTab.scenery => const SceneryTab(),
+            },
+          ),
+        ),
       ),
       extendBody: true,
       bottomNavigationBar: hideBar

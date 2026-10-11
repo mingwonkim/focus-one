@@ -73,21 +73,29 @@ class MobileRing extends StatelessWidget {
             top: inset,
             right: inset,
             bottom: inset,
-            child: ClipOval(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CustomPaint(
-                      painter: SceneDialPainter(scene, withCreatures: false)),
-                  Padding(
-                    padding: EdgeInsets.all(size * 0.08),
-                    child: AnimatedOpacity(
-                      opacity: reveal.clamp(0.0, 1.0),
-                      duration: reduce ? Duration.zero : AppDuration.tick,
-                      child: Image.asset(companion.asset, fit: BoxFit.contain),
+            // 장면·친구가 바뀌면 280ms 크로스페이드
+            child: AnimatedSwitcher(
+              duration: reduce ? Duration.zero : AppDuration.transition,
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              child: ClipOval(
+                key: ValueKey('${scene.name}/${companion.id}'),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CustomPaint(
+                        painter: SceneDialPainter(scene, withCreatures: false)),
+                    Padding(
+                      padding: EdgeInsets.all(size * 0.08),
+                      child: AnimatedOpacity(
+                        opacity: reveal.clamp(0.0, 1.0),
+                        duration: reduce ? Duration.zero : AppDuration.tick,
+                        child:
+                            Image.asset(companion.asset, fit: BoxFit.contain),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
