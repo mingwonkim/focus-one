@@ -171,7 +171,8 @@ void main() {
       expect(st.byTag(from, to), {'a': 3600, 'b': 600});
       expect(st.completedCount(from, to), 1);
       expect(st.goldenHours(DateTime(2026, 10, 11, 23)), [9]);
-      expect(st.heatmap(DateTime(2026, 10, 11))[DateTime(2026, 10, 11)], 3);
+      expect(st.monthDots(DateTime(2026, 10))[DateTime(2026, 10, 11)], (3, 'forest'));
+      expect(st.monthDots(DateTime(2026, 10)).length, 31);
     });
   });
 }

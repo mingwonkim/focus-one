@@ -11,7 +11,8 @@ class FocusStats {
 
   /// 실집중 구간을 날/시간 경계로 잘라 (구간 시작, 초) 목록으로.
   /// 구간 기록이 없는 세션(구기록)은 끝난 날에 통째로 넣고, 시간대 분할에선 제외한다.
-  Iterable<(DateTime, int)> _pieces(FocusSession s, {required bool hourly}) sync* {
+  Iterable<(DateTime, int)> _pieces(FocusSession s,
+      {required bool hourly}) sync* {
     if (s.segments.isEmpty) {
       final sec = s.focusedSec ?? s.minutes * 60;
       if (!hourly && sec > 0) yield (_day(s.endedAt), sec);
@@ -20,8 +21,9 @@ class FocusStats {
     for (final (start, end) in s.segments) {
       var cur = start;
       while (cur.isBefore(end)) {
-        final bucket =
-            hourly ? DateTime(cur.year, cur.month, cur.day, cur.hour) : _day(cur);
+        final bucket = hourly
+            ? DateTime(cur.year, cur.month, cur.day, cur.hour)
+            : _day(cur);
         final next = hourly
             ? DateTime(bucket.year, bucket.month, bucket.day, bucket.hour + 1)
             : DateTime(bucket.year, bucket.month, bucket.day + 1);
@@ -107,18 +109,34 @@ class FocusStats {
     return m;
   }
 
-  /// 잔디: 최근 [weeks]주 날짜별 단계 0~4 (0 / ~25분 / ~60분 / ~120분 / 그 이상)
-  Map<DateTime, int> heatmap(DateTime now, {int weeks = 26}) {
-    final d = daily();
-    final start = DateTime(now.year, now.month, now.day - weeks * 7 + 1);
+  /// 집중 달력: [month]의 날짜 → (단계 0~4, 그날 가장 오래 집중한 장면 이름)
+  /// 단계: 0 / ~25분 / ~60분 / ~120분 / 그 이상
+  Map<DateTime, (int, String?)> monthDots(DateTime month) {
+    final sec = <DateTime, int>{};
+    final byScene = <DateTime, Map<String, int>>{};
+    for (final s in sessions) {
+      for (final (d, x) in _pieces(s, hourly: false)) {
+        if (d.year != month.year || d.month != month.month) continue;
+        sec[d] = (sec[d] ?? 0) + x;
+        final m = byScene.putIfAbsent(d, () => {});
+        final k = s.scene ?? 'forest';
+        m[k] = (m[k] ?? 0) + x;
+      }
+    }
+    final days = DateTime(month.year, month.month + 1, 0).day;
     return {
-      for (var i = 0; i < weeks * 7; i++)
-        DateTime(start.year, start.month, start.day + i): _level(
-            d[DateTime(start.year, start.month, start.day + i)] ?? 0),
+      for (var i = 1; i <= days; i++)
+        DateTime(month.year, month.month, i): (
+          level(sec[DateTime(month.year, month.month, i)] ?? 0),
+          byScene[DateTime(month.year, month.month, i)]
+              ?.entries
+              .reduce((a, b) => a.value >= b.value ? a : b)
+              .key,
+        ),
     };
   }
 
-  static int _level(int sec) => sec == 0
+  static int level(int sec) => sec == 0
       ? 0
       : sec < 25 * 60
           ? 1
@@ -139,6 +157,9 @@ class FocusStats {
     }
     final best = perHour.reduce((a, b) => a > b ? a : b);
     if (best == 0) return const [];
-    return [for (var h = 0; h < 24; h++) if (perHour[h] == best) h];
+    return [
+      for (var h = 0; h < 24; h++)
+        if (perHour[h] == best) h
+    ];
   }
 }

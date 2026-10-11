@@ -75,6 +75,7 @@ class AppState extends ChangeNotifier {
             s.endedAt.day == now.day)
         .length;
   }
+
   List<BrainDumpItem> get inbox => List.unmodifiable(_inbox);
   List<FocusSession> get sessions => List.unmodifiable(_sessions);
 
@@ -124,7 +125,10 @@ class AppState extends ChangeNotifier {
   int get remainingSeconds {
     final now = clock.now();
     if (_breakEndsAt != null) {
-      return _breakEndsAt!.difference(now).inSeconds.clamp(0, _breakTotalSeconds);
+      return _breakEndsAt!
+          .difference(now)
+          .inSeconds
+          .clamp(0, _breakTotalSeconds);
     }
     return _active?.remainingSec(now) ?? _totalSeconds;
   }
@@ -216,18 +220,17 @@ class AppState extends ChangeNotifier {
   /// 대기 중인 저장 완료까지 (테스트용)
   Future<void> flush() => _store.flush();
 
-  StoreData _snapshot() =>
-        StoreData(
-          tasks: _tasks,
-          inbox: _inbox,
-          sessions: _sessions,
-          blockerSettings: _blockerSettings,
-          scene: _scene,
-          soundEnabled: _soundEnabled,
-          soundVolume: _soundVolume,
-          activeSession: _active,
-          progress: _progress,
-        );
+  StoreData _snapshot() => StoreData(
+        tasks: _tasks,
+        inbox: _inbox,
+        sessions: _sessions,
+        blockerSettings: _blockerSettings,
+        scene: _scene,
+        soundEnabled: _soundEnabled,
+        soundVolume: _soundVolume,
+        activeSession: _active,
+        progress: _progress,
+      );
 
   String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -514,9 +517,8 @@ class AppState extends ChangeNotifier {
     final now = outcome == SessionOutcome.completed
         ? (a.plannedEnd ?? clock.now())
         : clock.now();
-    final focused = outcome == SessionOutcome.completed
-        ? a.plannedSec
-        : a.focusedSec(now);
+    final focused =
+        outcome == SessionOutcome.completed ? a.plannedSec : a.focusedSec(now);
     _sessions.add(FocusSession(
       id: a.id,
       taskId: a.taskId,
@@ -565,15 +567,16 @@ class AppState extends ChangeNotifier {
     final n = name.trim();
     if (n.isEmpty) return;
     final tag = Tag(id: _newId(), name: n, colorIndex: _progress.tags.length);
-    _setProgress(_progress.copyWith(
-        tags: [..._progress.tags, tag], currentTagId: () => tag.id));
+    _setProgress(_progress
+        .copyWith(tags: [..._progress.tags, tag], currentTagId: () => tag.id));
   }
 
   void renameTag(String id, String name) {
     final n = name.trim();
     if (n.isEmpty) return;
-    _setProgress(_progress.copyWith(
-        tags: [for (final t in _progress.tags) t.id == id ? t.copyWith(name: n) : t]));
+    _setProgress(_progress.copyWith(tags: [
+      for (final t in _progress.tags) t.id == id ? t.copyWith(name: n) : t
+    ]));
   }
 
   /// 태그 삭제: 지난 기록의 tagId는 그대로 둔다(통계에서 "삭제된 태그"로 묶음)
@@ -581,19 +584,30 @@ class AppState extends ChangeNotifier {
     final rest = _progress.tags.where((t) => t.id != id).toList();
     if (rest.isEmpty) return; // 마지막 태그는 지우지 않는다
     _tasks = [
-      for (final t in _tasks) t.tagId == id ? Task(id: t.id, title: t.title, isDone: t.isDone, createdAt: t.createdAt, completedAt: t.completedAt) : t
+      for (final t in _tasks)
+        t.tagId == id
+            ? Task(
+                id: t.id,
+                title: t.title,
+                isDone: t.isDone,
+                createdAt: t.createdAt,
+                completedAt: t.completedAt)
+            : t
     ];
     _setProgress(_progress.copyWith(
         tags: rest,
-        currentTagId: () =>
-            _progress.currentTagId == id ? rest.first.id : _progress.currentTagId));
+        currentTagId: () => _progress.currentTagId == id
+            ? rest.first.id
+            : _progress.currentTagId));
   }
 
   void selectTag(String id) =>
       _setProgress(_progress.copyWith(currentTagId: () => id));
 
   void setTaskTag(String taskId, String tagId) {
-    _tasks = [for (final t in _tasks) t.id == taskId ? t.copyWith(tagId: tagId) : t];
+    _tasks = [
+      for (final t in _tasks) t.id == taskId ? t.copyWith(tagId: tagId) : t
+    ];
     notifyListeners();
     _persist();
   }
@@ -621,8 +635,10 @@ class AppState extends ChangeNotifier {
   bool buyDecor(String id) {
     final d = Decor.byId(id);
     if (d == null || _progress.drops < d.price) return false;
-    final owned = Map.of(_progress.owned)..[id] = (_progress.owned[id] ?? 0) + 1;
-    _setProgress(_progress.copyWith(owned: owned, drops: _progress.drops - d.price));
+    final owned = Map.of(_progress.owned)
+      ..[id] = (_progress.owned[id] ?? 0) + 1;
+    _setProgress(
+        _progress.copyWith(owned: owned, drops: _progress.drops - d.price));
     return true;
   }
 

@@ -231,9 +231,12 @@ class _RecordsTabState extends State<RecordsTab> {
               ),
           ])),
         card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('6개월 집중 잔디', style: label()),
+          Text('${_calMonth(r).month}월 집중 달력', style: label()),
           const SizedBox(height: 12),
-          _Heatmap(data: st.heatmap(now), style: style),
+          _MonthDots(
+              month: _calMonth(r),
+              data: st.monthDots(_calMonth(r)),
+              style: style),
         ])),
         card(Row(children: [
           Text('골든타임', style: label()),
@@ -273,6 +276,11 @@ class _RecordsTabState extends State<RecordsTab> {
       ],
     );
   }
+
+  /// 달력은 보고 있는 기간의 달 (년 보기면 이번 달)
+  DateTime _calMonth((DateTime, DateTime) r) => _period == _Period.year
+      ? DateTime(DateTime.now().year, DateTime.now().month)
+      : DateTime(r.$1.year, r.$1.month);
 
   static String _hm(int sec) {
     final m = sec ~/ 60;
@@ -315,46 +323,70 @@ class _BarsPainter extends CustomPainter {
   bool shouldRepaint(_BarsPainter o) => o.values != values || o.color != color;
 }
 
-/// 26주 × 7일 격자, 명도 4단계
-class _Heatmap extends StatelessWidget {
-  const _Heatmap({required this.data, required this.style});
-  final Map<DateTime, int> data;
+/// 한 달 달력에 날마다 점 하나: 색 = 그날 가장 오래 집중한 장면, 크기 = 집중 시간 4단계.
+/// 숫자는 쓰지 않는다(정보 과밀 금지). 오늘만 테두리.
+class _MonthDots extends StatelessWidget {
+  const _MonthDots(
+      {required this.month, required this.data, required this.style});
+  final DateTime month;
+  final Map<DateTime, (int, String?)> data;
   final SceneStyle style;
 
   @override
   Widget build(BuildContext context) {
-    final days = data.entries.toList();
-    final weeks = (days.length / 7).ceil();
-    return LayoutBuilder(builder: (_, c) {
-      final cell = (c.maxWidth - (weeks - 1) * 2) / weeks;
-      return SizedBox(
-        height: cell * 7 + 12,
-        child: Row(children: [
-          for (var w = 0; w < weeks; w++) ...[
-            if (w > 0) const SizedBox(width: 2),
-            Column(children: [
-              for (var d = 0; d < 7; d++) ...[
-                if (d > 0) const SizedBox(height: 2),
-                Container(
-                  width: cell,
-                  height: cell,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    color: () {
-                      final i = w * 7 + d;
-                      final lv = i < days.length ? days[i].value : 0;
-                      return lv == 0
-                          ? style.divider
-                          : Color.lerp(
-                              style.divider, style.ringProgress, lv / 4)!;
-                    }(),
-                  ),
-                ),
-              ],
-            ]),
-          ],
-        ]),
-      );
-    });
+    final lead = month.weekday - 1; // 월요일 시작
+    final days = data.length;
+    final today = DateTime.now();
+    final cells = lead + days;
+    return Column(children: [
+      Row(children: [
+        for (final w in const ['월', '화', '수', '목', '금', '토', '일'])
+          Expanded(
+            child: Center(
+              child: Text(w,
+                  style: TextStyle(fontSize: 11, color: style.textMuted)),
+            ),
+          ),
+      ]),
+      const SizedBox(height: 6),
+      for (var row = 0; row * 7 < cells; row++)
+        SizedBox(
+          height: 36,
+          child: Row(children: [
+            for (var c = 0; c < 7; c++)
+              Expanded(child: _dot(row * 7 + c - lead + 1, days, today)),
+          ]),
+        ),
+    ]);
+  }
+
+  Widget _dot(int day, int days, DateTime today) {
+    if (day < 1 || day > days) return const SizedBox.shrink();
+    final d = DateTime(month.year, month.month, day);
+    final (lv, scene) = data[d]!;
+    final isToday =
+        d.year == today.year && d.month == today.month && d.day == today.day;
+    final color = lv == 0
+        ? style.divider
+        : (FocusScene.values.asNameMap()[scene] ?? FocusScene.forest)
+            .style
+            .ringProgress;
+    final size = lv == 0 ? 6.0 : 10.0 + lv * 4; // 6 / 14 / 18 / 22 / 26
+    return Center(
+      child: Semantics(
+        label: '$day일 ${lv == 0 ? '집중 없음' : '집중 $lv단계'}',
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: isToday
+                ? Border.all(color: style.textStrong, width: 1.5)
+                : null,
+          ),
+        ),
+      ),
+    );
   }
 }
