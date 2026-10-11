@@ -26,7 +26,8 @@ Future<void> runMobile() async {
     }
   });
 
-  runApp(ChangeNotifierProvider.value(value: appState, child: const MobileApp()));
+  runApp(
+      ChangeNotifierProvider.value(value: appState, child: const MobileApp()));
 }
 
 class MobileApp extends StatelessWidget {

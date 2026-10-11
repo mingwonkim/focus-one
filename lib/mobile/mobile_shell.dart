@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/design_tokens.dart';
 import '../state/app_state.dart';
-import 'lock_test_panel.dart';
+import 'focus/focus_home.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
 
@@ -28,12 +28,15 @@ class _MobileShellState extends State<MobileShell> {
 
   @override
   Widget build(BuildContext context) {
-    final style = context.watch<AppState>().scene.style;
+    final state = context.watch<AppState>();
+    final style = state.scene.style;
+    // 진행·휴식 중엔 탭바를 숨긴다 (집중 화면에서 다른 데로 새지 않게)
+    final hideBar = state.phase != FocusPhase.idle;
     return Scaffold(
       backgroundColor: style.cardBg,
       body: SafeArea(
         child: _tab == MobileTab.focus
-            ? const LockTestPanel() // P1 시험용 — P4에서 집중 홈으로 교체
+            ? const FocusHome()
             : Center(
                 child: Text(
                   _labels[_tab]!.$1,
@@ -42,54 +45,62 @@ class _MobileShellState extends State<MobileShell> {
               ),
       ),
       extendBody: true,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: style.rowBg,
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              boxShadow: AppShadow.card(style.rowShadow),
-            ),
-            child: Row(
-              children: [
-                for (final t in MobileTab.values)
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _tab = t),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: t == _tab ? style.divider : null,
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(_labels[t]!.$2,
-                                size: 22,
-                                color: t == _tab ? style.accent : style.textMuted),
-                            Text(
-                              _labels[t]!.$1,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight:
-                                    t == _tab ? FontWeight.w600 : FontWeight.w400,
-                                color: t == _tab ? style.textStrong : style.textMuted,
+      bottomNavigationBar: hideBar
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Container(
+                  height: 64,
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: style.rowBg,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    boxShadow: AppShadow.card(style.rowShadow),
+                  ),
+                  child: Row(
+                    children: [
+                      for (final t in MobileTab.values)
+                        Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => setState(() => _tab = t),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: t == _tab ? style.divider : null,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(_labels[t]!.$2,
+                                      size: 22,
+                                      color: t == _tab
+                                          ? style.accent
+                                          : style.textMuted),
+                                  Text(
+                                    _labels[t]!.$1,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: t == _tab
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: t == _tab
+                                          ? style.textStrong
+                                          : style.textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

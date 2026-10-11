@@ -233,6 +233,13 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 폰: 할 일 없이 태그만으로 집중
+  void clearCurrentTask() {
+    if (_active != null) return;
+    _currentTaskId = null;
+    notifyListeners();
+  }
+
   void completeCurrentTask() {
     final task = currentTask;
     if (task == null) return;

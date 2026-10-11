@@ -224,6 +224,22 @@ abstract class AppDuration {
   static const transition = Duration(milliseconds: 280);
 }
 
+/// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)
+abstract class MobileSize {
+  static const double gutter = 20; // 좌우 여백 (SE는 16)
+  static const double ring = 232; // SE 184, 큰 화면 264
+  static const double ringStroke = 24;
+  static const double ringInset = 32;
+  static const double row = 48;
+  static const double cta = 52;
+  static const double taskCard = 72;
+  static const double tabBar = 64;
+  static const double sheetRadius = 24;
+  static const int minMinutes = 10;
+  static const int maxMinutes = 180;
+  static const int stepMinutes = 5;
+}
+
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)
 abstract class WindowSizes {
   static const mini = Size(320, 128);

@@ -29,23 +29,30 @@ class _LockTestPanelState extends State<LockTestPanel> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text('앱 잠금 기술 시험', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        const Text('앱 잠금 기술 시험',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         for (final (label, f) in <(String, Future<Object?> Function())>[
           ('상태', () async => (await _lock.status()).toString()),
           ('1. 권한 요청', _lock.authorize),
           ('2. 잠글 앱 선택', _lock.pickApps),
-          ('3. 15분 잠금 시작', () => _lock.start(
-                'test-${DateTime.now().millisecondsSinceEpoch}',
-                DateTime.now().add(const Duration(minutes: 15, seconds: 5)))),
-          ('잠금 해제', () async {
-            await _lock.stop();
-            return 'ok';
-          }),
+          (
+            '3. 15분 잠금 시작',
+            () => _lock.start('test-${DateTime.now().millisecondsSinceEpoch}',
+                DateTime.now().add(const Duration(minutes: 15, seconds: 5)))
+          ),
+          (
+            '잠금 해제',
+            () async {
+              await _lock.stop();
+              return 'ok';
+            }
+          ),
         ])
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: FilledButton(onPressed: () => _run(label, f), child: Text(label)),
+            child: FilledButton(
+                onPressed: () => _run(label, f), child: Text(label)),
           ),
         const SizedBox(height: 12),
         Text(_log),
