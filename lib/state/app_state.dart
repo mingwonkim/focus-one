@@ -557,11 +557,11 @@ class AppState extends ChangeNotifier {
   String get soundId => _progress.soundId;
   void setSoundId(String id) => _setProgress(_progress.copyWith(soundId: id));
   String get soundAsset {
-    const dailyOnly = {'library', 'train', 'fire'};
-    final id = (dailyOnly.contains(soundId) && _scene != FocusScene.daily)
-        ? 'scene'
-        : soundId;
-    return id == 'scene' ? _scene.soundAsset : 'sounds/$id.m4a';
+    // 다른 장면의 상황 소리를 골라 둔 채 장면을 바꾸면 장면 기본으로
+    final other = FocusScene.values
+        .any((sc) => sc != _scene && sc.situationSounds.contains(soundId));
+    final id = soundId == 'scene' || other ? _scene.phoneSound : soundId;
+    return 'sounds/$id.m4a';
   }
   void setLockEnabled(bool v) =>
       _setProgress(_progress.copyWith(lockEnabled: v));

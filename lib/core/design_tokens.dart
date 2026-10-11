@@ -29,6 +29,17 @@ enum FocusScene {
 
   /// 앰비언트 사운드 애셋 경로 (forest.wav / night.wav / ocean.wav, 일상은 카페)
   String get soundAsset => this == daily ? 'sounds/cafe.m4a' : 'sounds/$name.wav';
+
+  /// 폰 장면 기본 소리 id (assets/sounds/<id>.m4a, Mixkit 원음)
+  String get phoneSound => this == daily ? 'cafe' : name;
+
+  /// 폰 소리 시트의 장면별 상황 소리 id
+  List<String> get situationSounds => switch (this) {
+        forest => const ['birds', 'stream'],
+        night => const ['crickets'],
+        ocean => const ['harbor', 'rocky'],
+        daily => const ['library', 'train', 'fire'],
+      };
 }
 
 /// 장면별 스타일 값 — v2(Tiimo 레퍼런스) 팔레트. 근거: docs/v2/app-design-spec.md §3.

@@ -36,6 +36,32 @@ void main() {
         return st;
       });
 
+  test('소리: 장면 기본·상황 소리, 장면 바꾸면 다른 장면 상황 소리는 기본으로', () async {
+    final st = await boot(DateTime(2026, 10, 11, 9));
+    st.setScene(FocusScene.forest);
+    expect(st.soundAsset, 'sounds/forest.m4a');
+    st.setSoundId('birds');
+    expect(st.soundAsset, 'sounds/birds.m4a');
+    st.setScene(FocusScene.daily);
+    expect(st.soundAsset, 'sounds/cafe.m4a');
+    st.setSoundId('rain');
+    st.setScene(FocusScene.ocean);
+    expect(st.soundAsset, 'sounds/rain.m4a');
+    for (final sc in FocusScene.values) {
+      for (final id in [
+        sc.phoneSound,
+        ...sc.situationSounds,
+        'rain',
+        'wind',
+        'white',
+        'brown'
+      ]) {
+        expect(File('assets/sounds/$id.m4a').existsSync(), isTrue, reason: id);
+      }
+    }
+    st.dispose();
+  });
+
   test('완료 시 친구 1 + 물방울(분) — 재실행해도 한 번만', () async {
     final t0 = DateTime(2026, 10, 11, 9);
     final a = await boot(t0);

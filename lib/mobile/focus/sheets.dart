@@ -444,14 +444,23 @@ Future<void> showSoundSheet(BuildContext context) =>
       return Consumer<AppState>(builder: (_, s, __) {
         final style = s.scene.style;
         // 지금 장면의 소리 · 날씨 · 소음 — 아이디는 assets/sounds/<id>.m4a ('scene' = 장면 기본)
-        final sceneSounds = s.scene == FocusScene.daily
-            ? [
-                ('scene', '카페', Icons.local_cafe_outlined),
-                ('library', '도서관', Icons.menu_book_outlined),
-                ('train', '기차 안', Icons.train_outlined),
-                ('fire', '모닥불', Icons.local_fire_department_outlined),
-              ]
-            : [('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined)];
+        const labels = {
+          'birds': ('새소리', Icons.flutter_dash_rounded),
+          'stream': ('시냇물', Icons.waves_rounded),
+          'crickets': ('풀벌레', Icons.bug_report_outlined),
+          'harbor': ('항구', Icons.sailing_outlined),
+          'rocky': ('바위 해변', Icons.landscape_outlined),
+          'library': ('도서관', Icons.menu_book_outlined),
+          'train': ('기차 안', Icons.train_outlined),
+          'fire': ('모닥불', Icons.local_fire_department_outlined),
+        };
+        final sceneSounds = [
+          s.scene == FocusScene.daily
+              ? ('scene', '카페', Icons.local_cafe_outlined)
+              : ('scene', '${style.sceneLabel} 소리', Icons.park_outlined),
+          for (final id in s.scene.situationSounds)
+            (id, labels[id]!.$1, labels[id]!.$2),
+        ];
         final groups = [
           (style.sceneLabel, sceneSounds),
           ('날씨', [
