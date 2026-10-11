@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/app_theme.dart';
 import '../data/local_store.dart';
 import '../services/ambient_sound_service.dart';
+import '../services/focus_lock_service.dart';
 import '../services/session_notifier.dart';
 import '../state/app_state.dart';
 import 'mobile_shell.dart';
@@ -25,7 +26,7 @@ Future<void> runMobile() async {
     if (appState.phase == FocusPhase.focus &&
         appState.isRunning &&
         appState.soundEnabled) {
-      sound.play(appState.scene);
+      sound.playAsset(appState.soundAsset);
     } else {
       sound.stop();
     }
@@ -37,6 +38,31 @@ Future<void> runMobile() async {
     await notifier.init();
     appState.addListener(() => notifier.sync(appState));
   } catch (_) {}
+
+  // 앱 잠금: 진행 중(재생)일 때만 잠그고, 일시정지·그만두기·완료면 해제.
+  // iOS는 남은 시간이 15분 미만이면 잠그지 않는다(FocusLockService.minLock).
+  final lock = FocusLockService();
+  // 이번 재생 구간에 이미 시도했는지(성공 여부 무관) — 매초 틱마다 재시도하지 않게
+  String? triedFor;
+  var locked = false;
+  appState.addListener(() async {
+    final a = appState.activeSession;
+    final want = appState.lockEnabled && a != null && a.isRunning;
+    try {
+      if (want && triedFor != a.id) {
+        triedFor = a.id;
+        final ends =
+            DateTime.now().add(Duration(seconds: appState.remainingSeconds));
+        locked = await lock.start(a.id, ends);
+      } else if (!want && triedFor != null) {
+        triedFor = null; // 재개하면 다시 시도
+        if (locked) await lock.stop();
+        locked = false;
+      }
+    } catch (_) {
+      // 채널 오류여도 집중은 계속
+    }
+  });
 
   runApp(
       ChangeNotifierProvider.value(value: appState, child: const MobileApp()));

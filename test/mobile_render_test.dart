@@ -34,11 +34,22 @@ void main() {
         ));
         await tester.pump();
         expect(tester.takeException(), isNull, reason: '$name $scene 집중');
-        for (final tab in ['할 일', '기록', '집중']) {
+        for (final tab in ['할 일', '기록', '풍경', '집중']) {
           await tester.tap(find.text(tab).last);
           await tester.pump();
           expect(tester.takeException(), isNull, reason: '$name $scene $tab');
         }
+      }
+      // 풍경 → 보관함·도감·상점 페이지
+      await tester.tap(find.text('풍경').last);
+      await tester.pump();
+      for (final page in ['보관함', '도감', '상점']) {
+        await tester.ensureVisible(find.text(page).first);
+        await tester.tap(find.text(page).first);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: '$name $page');
+        await tester.pageBack();
+        await tester.pumpAndSettle();
       }
       state.dispose();
     });

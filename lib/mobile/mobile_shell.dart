@@ -6,6 +6,7 @@ import '../core/design_tokens.dart';
 import '../state/app_state.dart';
 import 'focus/focus_home.dart';
 import 'records/records_tab.dart';
+import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
@@ -55,9 +56,7 @@ class _MobileShellState extends State<MobileShell> {
           MobileTab.focus => const FocusHome(),
           MobileTab.tasks => const TasksTab(),
           MobileTab.records => const RecordsTab(),
-          MobileTab.scenery => Center(
-              child: Text(_labels[current]!.$1,
-                  style: TextStyle(fontSize: 20, color: style.textStrong))),
+          MobileTab.scenery => const SceneryTab(),
         },
       ),
       extendBody: true,

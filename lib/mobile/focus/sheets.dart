@@ -434,3 +434,63 @@ Future<void> showRewardSheet(BuildContext context) {
     );
   }).whenComplete(s.clearLastReward);
 }
+
+/// 소리: 장면 소리·빗소리·백색·갈색·끄기 + 볼륨. 즉시 적용, 다음 집중에도 기억.
+Future<void> showSoundSheet(BuildContext context) =>
+    showFocusSheet(context, '집중 소리', (ctx) {
+      return Consumer<AppState>(builder: (_, s, __) {
+        final style = s.scene.style;
+        final options = [
+          ('scene', '${style.sceneLabel} 소리', Icons.landscape_outlined),
+          ('rain', '빗소리', Icons.water_drop_outlined),
+          ('white', '백색소음', Icons.blur_on_rounded),
+          ('brown', '갈색소음', Icons.graphic_eq_rounded),
+        ];
+        Widget row(String label, IconData icon, bool selected,
+                VoidCallback onTap) =>
+            _Row(
+              selected: selected,
+              onTap: onTap,
+              child: Row(children: [
+                Icon(icon, color: style.textStrong),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Text(label,
+                        style:
+                            TextStyle(fontSize: 16, color: style.textStrong))),
+                if (selected) Icon(Icons.check_rounded, color: style.accent),
+              ]),
+            );
+        return ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(
+              MobileSize.gutter, 4, MobileSize.gutter, 24),
+          children: [
+            for (final (id, label, icon) in options)
+              row(label, icon, s.soundEnabled && s.soundId == id, () {
+                s.setSoundEnabled(true);
+                s.setSoundId(id);
+              }),
+            row('끄기', Icons.volume_off_outlined, !s.soundEnabled,
+                () => s.setSoundEnabled(false)),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.volume_down_rounded, color: style.textMuted),
+              Expanded(
+                child: Slider(
+                  value: s.soundVolume,
+                  activeColor: style.ringProgress,
+                  onChanged: s.soundEnabled
+                      ? (v) => s.setSoundVolume(v, persist: false)
+                      : null,
+                  onChangeEnd: s.setSoundVolume,
+                ),
+              ),
+              Icon(Icons.volume_up_rounded, color: style.textMuted),
+            ]),
+            Text('집중하는 동안에만 들려요. 다음 집중에도 기억돼요.',
+                style: TextStyle(fontSize: 12, color: style.textMuted)),
+          ],
+        );
+      });
+    });

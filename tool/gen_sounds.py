@@ -3,6 +3,7 @@
 forest.wav  : 잎 바스락 노이즈 + 새 지저귐
 night.wav   : 낮은 바람 + 뻐꾸기 울음
 ocean.wav   : 파도 스웰 (브라운 노이즈 진폭 변조)
+rain/white/brown (폰 소리 시트, --extra): 빗소리 / 백색소음 / 갈색소음 → m4a로 변환해 assets/sounds/
 40초 루프, 경계 크로스페이드로 이음새 없음. 모노 44.1kHz 16bit.
 """
 import math
@@ -138,8 +139,36 @@ def gen_ocean():
     return normalize(crossfade_loop(buf), 0.5)
 
 
+def gen_rain():
+    n = N + FADE
+    hiss = lowpass(white(n), 0.55)
+    body = lowpass(white(n), 0.08)
+    buf = [hiss[i] * 0.35 + body[i] * 0.9 for i in range(n)]
+    # 빗방울: 짧은 감쇠 클릭을 무작위로
+    for _ in range(int(DUR * 60)):
+        start = random.randrange(0, n - 400)
+        amp = random.uniform(0.05, 0.25)
+        for k in range(400):
+            buf[start + k] += amp * math.exp(-k / 60.0) * random.uniform(-1, 1)
+    return normalize(crossfade_loop(buf), 0.45)
+
+
+def gen_white():
+    # 귀에 덜 날카롭게 살짝 로우패스
+    return normalize(crossfade_loop(lowpass(white(N + FADE), 0.6)), 0.35)
+
+
+def gen_brown():
+    return normalize(crossfade_loop(brown(N + FADE)), 0.5)
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "."
+    if "--extra" in sys.argv:
+        save(f"{out}/rain.wav", gen_rain())
+        save(f"{out}/white.wav", gen_white())
+        save(f"{out}/brown.wav", gen_brown())
+        sys.exit(0)
     save(f"{out}/forest.wav", gen_forest())
     save(f"{out}/night.wav", gen_night())
     save(f"{out}/ocean.wav", gen_ocean())

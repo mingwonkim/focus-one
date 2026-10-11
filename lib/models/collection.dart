@@ -10,10 +10,13 @@ class Tag {
 
   const Tag({required this.id, required this.name, this.colorIndex = 0});
 
-  Tag copyWith({String? name, int? colorIndex}) =>
-      Tag(id: id, name: name ?? this.name, colorIndex: colorIndex ?? this.colorIndex);
+  Tag copyWith({String? name, int? colorIndex}) => Tag(
+      id: id,
+      name: name ?? this.name,
+      colorIndex: colorIndex ?? this.colorIndex);
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'colorIndex': colorIndex};
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'name': name, 'colorIndex': colorIndex};
 
   factory Tag.fromJson(Map<String, dynamic> j) => Tag(
         id: j['id'] as String,
@@ -64,6 +67,8 @@ class Decor {
 
   const Decor(this.id, this.scene, this.name, this.price);
 
+  String get asset => 'assets/mobile/decor/$id.webp';
+
   static const all = [
     Decor('grass', FocusScene.forest, '풀숲', 20),
     Decor('tree', FocusScene.forest, '나무', 40),
@@ -78,6 +83,10 @@ class Decor {
 
   static Decor? byId(String? id) => all.where((d) => d.id == id).firstOrNull;
 }
+
+/// 친구·장식 공통 그림 경로
+String itemAsset(String id) =>
+    Companion.byId(id)?.asset ?? Decor.byId(id)?.asset ?? '';
 
 /// 풍경 6×6 격자 위 한 칸 (친구 또는 장식 1개)
 class Placement {
@@ -103,6 +112,8 @@ class Progress {
   final Map<String, int> owned; // 친구·장식 id → 보유 수
   final Map<String, List<Placement>> placements; // 장면 이름 → 배치
   final int drops;
+  final bool lockEnabled; // 집중 중 앱 잠금 (권한·선택은 OS 쪽)
+  final String soundId; // 'scene'(장면 소리) | 'rain' | 'white' | 'brown'
 
   const Progress({
     this.tags = const [Tag(id: 'general', name: '미분류')],
@@ -111,6 +122,8 @@ class Progress {
     this.owned = const {},
     this.placements = const {},
     this.drops = 0,
+    this.lockEnabled = false,
+    this.soundId = 'scene',
   });
 
   Progress copyWith({
@@ -120,6 +133,8 @@ class Progress {
     Map<String, int>? owned,
     Map<String, List<Placement>>? placements,
     int? drops,
+    bool? lockEnabled,
+    String? soundId,
   }) =>
       Progress(
         tags: tags ?? this.tags,
@@ -130,6 +145,8 @@ class Progress {
         owned: owned ?? this.owned,
         placements: placements ?? this.placements,
         drops: drops ?? this.drops,
+        lockEnabled: lockEnabled ?? this.lockEnabled,
+        soundId: soundId ?? this.soundId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -140,10 +157,15 @@ class Progress {
         'placements': placements
             .map((k, v) => MapEntry(k, v.map((p) => p.toJson()).toList())),
         'drops': drops,
+        'lockEnabled': lockEnabled,
+        'soundId': soundId,
       };
 
   factory Progress.fromJson(Map<String, dynamic> j) => Progress(
-        tags: (j['tags'] as List? ?? const [{'id': 'general', 'name': '미분류'}])
+        tags: (j['tags'] as List? ??
+                const [
+                  {'id': 'general', 'name': '미분류'}
+                ])
             .map((e) => Tag.fromJson(e as Map<String, dynamic>))
             .toList(),
         currentTagId: j['currentTagId'] as String? ?? 'general',
@@ -156,5 +178,7 @@ class Progress {
                 .map((e) => Placement.fromJson(e as Map<String, dynamic>))
                 .toList())),
         drops: j['drops'] as int? ?? 0,
+        lockEnabled: j['lockEnabled'] as bool? ?? false,
+        soundId: j['soundId'] as String? ?? 'scene',
       );
 }

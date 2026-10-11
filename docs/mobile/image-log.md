@@ -22,3 +22,7 @@ Higgsfield 새 계정 크레딧 부족(0.03) → 사용자 요청으로 무료 �
 | ray | 바다 | 구름가오리 | light blue baby manta ray, cloud-like fins |
 
 원본 1024 PNG는 스크래치에만(커밋 안 함). 생성 2회(1장 시험 + 11장 일괄), 버림 0.
+
+## 장식 9종 (2026-10-11, codex image_generation, 1회 일괄, 버림 0)
+공통: "Matte 3D toy diorama object, soft pastel colors, rounded chunky shapes, three-quarter top view, centered filling 75% of frame, soft light from upper left, transparent background, no text, no characters, no ground plate." + ref_fawn.png로 톤 통일.
+숲: grass(풀숲)·tree(나무)·bench(벤치) / 밤: starstone(별돌)·moonlamp(달등)·telescope(망원경) / 바다: coral(산호)·seaweed(해초)·shellhouse(조개집). 512 webp 합계 232KB → assets/mobile/decor/.

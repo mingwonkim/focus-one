@@ -83,6 +83,21 @@ void main() {
     a.dispose();
   });
 
+  test('편집 완료: 겹침·보유 초과면 거절하고 아무것도 안 바꿈', () async {
+    final t0 = DateTime(2026, 10, 11, 9);
+    final a = await boot(t0);
+    withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
+    await a.flush();
+    a.dispose();
+    final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴 1마리 획득
+    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
+    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0)]), isTrue);
+    expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isFalse); // 숲에 이미 놓음
+    expect(b.placementsOf(FocusScene.forest).single.x, 0);
+    expect(b.placementsOf(FocusScene.night), isEmpty);
+    b.dispose();
+  });
+
   test('태그 삭제해도 기록은 남고 마지막 태그는 못 지움', () async {
     final a = await boot(DateTime(2026, 10, 11));
     a.addTag('운동');

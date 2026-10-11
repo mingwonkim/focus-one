@@ -550,6 +550,15 @@ class AppState extends ChangeNotifier {
   Tag? get currentTag =>
       _progress.tags.where((t) => t.id == _progress.currentTagId).firstOrNull;
   int get drops => _progress.drops;
+  bool get lockEnabled => _progress.lockEnabled;
+
+  /// 폰 소리 선택. 'scene'이면 장면을 따라간다.
+  String get soundId => _progress.soundId;
+  void setSoundId(String id) => _setProgress(_progress.copyWith(soundId: id));
+  String get soundAsset =>
+      soundId == 'scene' ? _scene.soundAsset : 'sounds/$soundId.m4a';
+  void setLockEnabled(bool v) =>
+      _setProgress(_progress.copyWith(lockEnabled: v));
   int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
   FocusSession? get lastReward => _lastReward;
   void clearLastReward() {
@@ -660,6 +669,31 @@ class AppState extends ChangeNotifier {
       ..._progress.placements,
       s.name: [...list, Placement(itemId, x, y)],
     }));
+    return true;
+  }
+
+  /// 편집 완료: 장면 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
+  bool setPlacements(FocusScene s, List<Placement> list) {
+    final cells = <(int, int)>{};
+    final used = <String, int>{};
+    for (final p in list) {
+      final inGrid =
+          p.x >= 0 && p.y >= 0 && p.x < Placement.grid && p.y < Placement.grid;
+      if (!inGrid) return false;
+      if (!cells.add((p.x, p.y))) return false;
+      used[p.itemId] = (used[p.itemId] ?? 0) + 1;
+    }
+    // 다른 장면에 놓인 것까지 합쳐 보유 수 이하
+    for (final e in used.entries) {
+      final elsewhere = _progress.placements.entries
+          .where((x) => x.key != s.name)
+          .expand((x) => x.value)
+          .where((p) => p.itemId == e.key)
+          .length;
+      if (e.value + elsewhere > ownedCount(e.key)) return false;
+    }
+    _setProgress(_progress.copyWith(
+        placements: {..._progress.placements, s.name: List.of(list)}));
     return true;
   }
 

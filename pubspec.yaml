@@ -47,3 +47,4 @@ flutter:
     - assets/tray_icon.png
     - assets/tray_icon.ico
     - assets/mobile/companions/
+    - assets/mobile/decor/

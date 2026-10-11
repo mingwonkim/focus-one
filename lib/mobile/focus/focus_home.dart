@@ -7,7 +7,7 @@ import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
 import '../../features/mini/widgets/focus_ring.dart' show formatClock;
 import '../../state/app_state.dart';
-import '../lock_test_panel.dart';
+import '../lock/lock_page.dart';
 import 'mobile_ring.dart';
 import 'sheets.dart';
 
@@ -234,18 +234,16 @@ class _ToolRow extends StatelessWidget {
           icon: s.soundEnabled
               ? Icons.volume_up_rounded
               : Icons.volume_off_rounded,
-          tooltip: s.soundEnabled ? '소리 끄기' : '소리 켜기',
-          onTap: () => s.setSoundEnabled(!s.soundEnabled),
+          tooltip: '집중 소리',
+          onTap: () => showSoundSheet(context),
         ),
         const SizedBox(width: 8),
         RoundIconButton(
           style: style,
-          icon: Icons.lock_outline_rounded,
-          tooltip: '앱 잠금',
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('앱 잠금')),
-                  body: const LockTestPanel()))),
+          icon: s.lockEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
+          tooltip: s.lockEnabled ? '앱 잠금 켜짐' : '앱 잠금',
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const LockPage())),
         ),
       ]),
     );
