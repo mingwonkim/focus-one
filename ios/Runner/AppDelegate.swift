@@ -12,5 +12,8 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let r = engineBridge.pluginRegistry.registrar(forPlugin: "FocusLock") {
+      FocusLock.register(with: r)
+    }
   }
 }

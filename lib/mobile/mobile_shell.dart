@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/design_tokens.dart';
 import '../state/app_state.dart';
+import 'lock_test_panel.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
 
@@ -31,12 +32,14 @@ class _MobileShellState extends State<MobileShell> {
     return Scaffold(
       backgroundColor: style.cardBg,
       body: SafeArea(
-        child: Center(
-          child: Text(
-            _labels[_tab]!.$1,
-            style: TextStyle(fontSize: 20, color: style.textStrong),
-          ),
-        ),
+        child: _tab == MobileTab.focus
+            ? const LockTestPanel() // P1 시험용 — P4에서 집중 홈으로 교체
+            : Center(
+                child: Text(
+                  _labels[_tab]!.$1,
+                  style: TextStyle(fontSize: 20, color: style.textStrong),
+                ),
+              ),
       ),
       extendBody: true,
       bottomNavigationBar: SafeArea(
