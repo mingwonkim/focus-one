@@ -20,7 +20,12 @@
 - 리뷰: astra 리뷰 1(12건) 반영 기록 docs/mobile/review-1.md.
 - Android 업로드 키: `~/.config/focusone/upload-keystore.jks` + key.properties (저장소 밖, 분실 시 Play 업로드 키 재설정 필요 → 백업 필수).
 
-## 앱 아이콘 (2026-10-08)
+## 앱 아이콘 v2 (2026-10-11) — 현재
+- 사용자 선택: "네 친구 빼꼼" F3-b — 숲·밤·바다·일상 친구(새싹사슴·달토끼·물결고래·갈색 라떼멍) 얼굴이 네 색 링 아래로 빼꼼. 앱 안 캐릭터와 같은 스타일이어야 한다는 사용자 지적으로 H3(실사풍 고래) 교체.
+- 원본 `assets/icon/source.png`(1024 불투명) → `python3 tool/make_icons.py` 가 iOS·macOS·Windows·Linux·트레이·Android 전부 생성.
+- 과정: 고래 A·사슴·달토끼·라떼멍·네 친구 비교 → "부담스럽다" 피드백(큰 눈·꽉 찬 구성) → 작게·눈웃음·여백 → 빼꼼 + 얼굴 1.5배.
+
+## 앱 아이콘 v1 (2026-10-08)
 - 사용자 선택: Higgsfield 시안 H3(바다·고래, gpt_image_2_5, job 7dc1b3a0…). 기록 `docs/v2/higgsfield-log.md`.
 - 생성 이미지의 회색 배경은 크레딧 대신 PIL로 스퀘어클(n=5) 마스크 처리 → macOS 1024(본체 824+여백 100+그림자), Windows .ico·Linux 256·트레이는 여백 없는 타일.
 - 플랫폼 폴더는 커밋 안 하므로 `flutter create` 후 `bash tool/apply_icons.sh` 필수 (CI에도 단계 추가). 트레이 아이콘은 pubspec assets 등록 필요.

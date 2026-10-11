@@ -29,3 +29,6 @@ Higgsfield 새 계정 크레딧 부족(0.03) → 사용자 요청으로 무료 �
 
 ## 일상 장면 (2026-10-11, codex, 1회 일괄, 버림 0)
 친구: puppy(라떼멍)·hamster(책햄찌)·raccoon(기차너구리)·hedgehog(캠프도치) / 장식: mug(머그잔)·books(책 더미)·lamp(스탠드). ref_fawn·ref_tree로 톤 통일, 피치·코랄 파스텔.
+
+## 앱 아이콘 (2026-10-11, codex) — 최종 F3-b
+라운드: 고래 A/B → 사슴·달토끼·라떼멍·네 친구(C~F) → 달토끼 D2~D4 → 네 친구 F2~F4 → F3 얼굴 1.5배(b)·1.8배(c). 최종 F3-b → assets/icon/source.png. 버린 시안은 스크래치에만.
