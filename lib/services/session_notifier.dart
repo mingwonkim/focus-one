@@ -1,4 +1,7 @@
 // lib/services/session_notifier.dart
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -10,6 +13,9 @@ import '../state/app_state.dart';
 class SessionNotifier {
   final _plugin = FlutterLocalNotificationsPlugin();
   static const _id = 1;
+  static const _breakId = 2;
+  static const _breakChannel = MethodChannel('focusone/break');
+  DateTime? _breakShown; // 휴식 남은 시간 표시 중이면 종료 시각
   String? _scheduledFor; // "세션ID@종료시각" — 같은 예약 반복 방지
   bool _asked = false;
 
@@ -29,6 +35,7 @@ class SessionNotifier {
 
   /// AppState 변화마다 호출
   Future<void> sync(AppState s) async {
+    await _syncBreak(s);
     final a = s.activeSession;
     if (a == null || !a.isRunning) {
       if (_scheduledFor != null) {
@@ -67,5 +74,43 @@ class SessionNotifier {
     await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+  }
+
+  /// 휴식 중: iOS는 Dynamic Island·잠금 화면(Live Activity), Android는 줄어드는 시계 알림
+  Future<void> _syncBreak(AppState s) async {
+    if (s.phase != FocusPhase.breakTime) {
+      if (_breakShown == null) return;
+      _breakShown = null;
+      if (Platform.isIOS) {
+        await _breakChannel.invokeMethod('end');
+      } else {
+        await _plugin.cancel(id: _breakId);
+      }
+      return;
+    }
+    final endsAt = DateTime.now().add(Duration(seconds: s.remainingSeconds));
+    // 매 초 호출되니 시각이 실제로 바뀐 경우(휴식 시작·시간 변경)만 다시 띄운다
+    if (_breakShown != null && endsAt.difference(_breakShown!).inSeconds.abs() < 3) return;
+    _breakShown = endsAt;
+    if (Platform.isIOS) {
+      await _breakChannel.invokeMethod('start', {'endsAt': endsAt.millisecondsSinceEpoch.toDouble()});
+      return;
+    }
+    await _plugin.show(
+      id: _breakId,
+      title: '휴식 중',
+      body: '끝나면 다시 집중해요',
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails('break', '휴식 남은 시간',
+            importance: Importance.low,
+            ongoing: true,
+            onlyAlertOnce: true,
+            showWhen: true,
+            when: endsAt.millisecondsSinceEpoch,
+            usesChronometer: true,
+            chronometerCountDown: true,
+            timeoutAfter: s.remainingSeconds * 1000),
+      ),
+    );
   }
 }

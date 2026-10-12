@@ -15,5 +15,8 @@ import UIKit
     if let r = engineBridge.pluginRegistry.registrar(forPlugin: "FocusLock") {
       FocusLock.register(with: r)
     }
+    if let r = engineBridge.pluginRegistry.registrar(forPlugin: "BreakActivity") {
+      BreakActivity.register(with: r)
+    }
   }
 }

@@ -54,10 +54,13 @@
 - [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
 - [x] App Store Connect 앱 등록 (사용자) — app id 6821653231
 - [x] ASC API 키 (~/.config/fokko/asc.env, 저장소 밖) + tool/asc*.py: 문구·카테고리·연령등급·무료·175개국·저작권·버전 1.0.0 반영
-- [ ] 심사 연락처 전화번호 (사용자) → appStoreReviewDetail + 메모
-- [ ] 앱 개인정보 항목·'Mac에서 사용 가능' 끄기 (웹)
+- [x] 심사 연락처·메모 (appStoreReviewDetail, API)
+- [x] 앱 개인정보 게시 · Apple Silicon Mac 사용 가능 끔 (웹)
 - [x] 스토어 스크린샷 6.9" 5장 업로드 (tool/media/seed_test.dart 예시 데이터 → Pro Max 시뮬)
-- [ ] Xcode로 TestFlight 업로드 → 심사 제출
+- [x] iPad 대응 (배율 짧은 변/640 최대 1.6, 가로 두 칸) + iPad 13" 스크린샷 5장 — 심사가 iPad 스크린샷 요구
+- [x] 빌드 3 업로드(Xcode Organizer — CLI 서명은 'No Accounts'로 실패) → 버전 연결 → 심사 제출 (2026-10-12 WAITING_FOR_REVIEW, 자동 출시)
+- [x] 휴식 남은 시간: iOS Live Activity(Dynamic Island·잠금 화면, BreakActivity 확장) + Android 카운트다운 알림 — 시뮬 확인
+- [ ] 1.0.1 업데이트로 출시: 휴식 Live Activity (아카이브 시 Xcode가 확장 프로필 자동 생성), Android 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: release AAB → Play Console 업로드 (접근성 선언·시연 영상과 함께)
 - [ ] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사
