@@ -288,6 +288,13 @@ abstract class MobileSize {
   static const double taskCard = 72;
   static const double tabBar = 64;
   static const double sheetRadius = 24;
+  // iPad: 짧은 변 600 이상이면 태블릿 배치
+  static const double tabletBreak = 600;
+  static const double listMaxWidth = 720; // 목록 화면 가운데 한 열
+  static const double wideMaxWidth = 1100; // 집중·꾸미기 (가로면 두 칸)
+  static const double twoPaneBreak = 800; // 이 폭 이상(가로)이면 두 칸
+  static const double tabletBase = 640; // iPad 배율 = 짧은 변 / 640 (최대 1.6)
+  static const double sidePane = 400; // 두 칸일 때 오른쪽 조작부
   // 간격 규칙 (docs/mobile/review-2.md, astra 여백 리뷰)
   static const double headerMinHeight = 48; // 탭 제목 행
   static const double cardPadding = 16; // 카드 안쪽 (테두리 포함 시각 거리)

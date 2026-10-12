@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/app_theme.dart';
+import '../core/design_tokens.dart';
 import '../data/local_store.dart';
 import '../services/mobile_sound_service.dart';
 import '../services/ranking_service.dart';
@@ -110,7 +111,36 @@ class MobileApp extends StatelessWidget {
       title: 'Fokko',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.of(scene),
+      builder: (context, child) => _TabletScale(child: child!),
       home: const MobileShell(),
+    );
+  }
+}
+
+/// iPad: 폰 기준(짧은 변 640pt)으로 배치하고 화면에 맞게 통째로 키운다 → 글자·버튼이 비율대로 커짐.
+/// 분할 화면 등 좁은 창은 배율 1(폰 그대로).
+class _TabletScale extends StatelessWidget {
+  const _TabletScale({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final k = (mq.size.shortestSide / MobileSize.tabletBase).clamp(1.0, 1.6);
+    if (k == 1.0) return child;
+    return FittedBox(
+      child: SizedBox.fromSize(
+        size: mq.size / k,
+        child: MediaQuery(
+          data: mq.copyWith(
+            size: mq.size / k,
+            padding: mq.padding / k,
+            viewPadding: mq.viewPadding / k,
+            viewInsets: mq.viewInsets / k,
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }

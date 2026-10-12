@@ -7,6 +7,7 @@ import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../services/ranking_service.dart';
 import '../../state/app_state.dart';
+import '../adaptive.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -109,7 +110,8 @@ class _RankingPageState extends State<RankingPage> {
       ),
       body: SafeArea(
         top: false,
-        child: s.rankNickname == null ? _intro(style) : _board(style),
+        child: MaxWidth(
+            child: s.rankNickname == null ? _intro(style) : _board(style)),
       ),
     );
   }

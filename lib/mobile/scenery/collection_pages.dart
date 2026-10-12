@@ -8,6 +8,7 @@ import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
 import '../../state/app_state.dart';
+import '../adaptive.dart';
 
 Widget _page(BuildContext context, String title, Widget body) {
   final style = context.watch<AppState>().scene.style;
@@ -20,7 +21,7 @@ Widget _page(BuildContext context, String title, Widget body) {
       title: Text(title,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
     ),
-    body: SafeArea(top: false, child: body),
+    body: SafeArea(top: false, child: MaxWidth(max: 900, child: body)),
   );
 }
 
@@ -107,7 +108,7 @@ class _StoragePageState extends State<StoragePage> {
           )
         else
           GridView.count(
-            crossAxisCount: 3,
+            crossAxisCount: isTablet(context) ? 5 : 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: MobileSize.gridGap,
@@ -164,7 +165,7 @@ class DexPage extends StatelessWidget {
           ]),
           const SizedBox(height: 10),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: isTablet(context) ? 4 : 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: MobileSize.gridGap,
@@ -269,7 +270,7 @@ class ShopPage extends StatelessWidget {
                   color: style.textStrong)),
           const SizedBox(height: 10),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: isTablet(context) ? 4 : 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: MobileSize.gridGap,

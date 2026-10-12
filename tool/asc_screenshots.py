@@ -7,7 +7,7 @@ import glob, hashlib, os, sys, urllib.request
 sys.path.insert(0, "tool")
 from asc import call  # noqa: E402
 
-APP, TYPE = "6821653231", "APP_IPHONE_67"
+APP, TYPE = "6821653231", sys.argv[2] if len(sys.argv) > 2 else "APP_IPHONE_67"  # iPad: APP_IPAD_PRO_3GEN_129
 files = sorted(glob.glob(os.path.join(sys.argv[1], "*.png")))
 ver = call("GET", f"/v1/apps/{APP}/appStoreVersions?include=appStoreVersionLocalizations")
 loc = next(x["id"] for x in ver["included"] if x["attributes"]["locale"] == "ko")

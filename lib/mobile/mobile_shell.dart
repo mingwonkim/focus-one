@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/design_tokens.dart';
 import '../state/app_state.dart';
+import 'adaptive.dart';
 import 'focus/focus_home.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
@@ -60,12 +61,17 @@ class _MobileShellState extends State<MobileShell> {
           switchInCurve: Curves.easeOut,
           child: KeyedSubtree(
             key: ValueKey(current),
-            child: switch (current) {
-              MobileTab.focus => const FocusHome(),
-              MobileTab.tasks => const TasksTab(),
-              MobileTab.records => const RecordsTab(),
-              MobileTab.scenery => const SceneryTab(),
-            },
+            child: MaxWidth(
+              max: current == MobileTab.focus || current == MobileTab.scenery
+                  ? MobileSize.wideMaxWidth
+                  : MobileSize.listMaxWidth,
+              child: switch (current) {
+                MobileTab.focus => const FocusHome(),
+                MobileTab.tasks => const TasksTab(),
+                MobileTab.records => const RecordsTab(),
+                MobileTab.scenery => const SceneryTab(),
+              },
+            ),
           ),
         ),
       ),
@@ -73,7 +79,9 @@ class _MobileShellState extends State<MobileShell> {
       bottomNavigationBar: hideBar
           ? null
           : SafeArea(
-              child: Padding(
+              child: MaxWidth(
+                max: 480,
+                child: Padding(
                 padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter, 8),
                 child: Container(
                   height: 64,
@@ -131,6 +139,7 @@ class _MobileShellState extends State<MobileShell> {
                     ],
                   ),
                 ),
+              ),
               ),
             ),
     );

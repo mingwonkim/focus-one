@@ -9,6 +9,7 @@ import '../../core/scene_decorations.dart';
 import '../../services/focus_lock_service.dart';
 import '../../state/app_state.dart';
 import '../focus/sheets.dart' show showFocusSheet;
+import '../adaptive.dart';
 
 /// 앱 잠금: 처음엔 안내·동의 → OS 권한 → 앱 선택, 그다음부턴 설정(켜기·잠글 앱).
 /// Android 접근성은 Play 정책상 사용 목적·수집 범위를 먼저 고지하고 동의를 받는다.
@@ -145,9 +146,11 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
           ? const SizedBox.shrink()
           : SafeArea(
               top: false,
-              child: (_authorized && _selected > 0)
-                  ? _settings(s, style, ready)
-                  : _intro(style),
+              child: MaxWidth(
+                child: (_authorized && _selected > 0)
+                    ? _settings(s, style, ready)
+                    : _intro(style),
+              ),
             ),
     );
   }
