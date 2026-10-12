@@ -64,8 +64,8 @@
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
   - [x] 서명 AAB 빌드 (업로드 키 CN=FocusOne, android/key.properties → ~/.config/focusone)
-  - [ ] (사용자) 비상주 사무실 계약 → 사업장 주소 변경 — 자택 주소 공개 금지
-  - [ ] D-U-N-S 신청 (Apple duns-lookup 무료, 새 주소로) → 1~2주
+  - [x] 주소: 비상주 사무실 안 함 — 하루전(개인 계정, 인앱 구매)에 이미 공개돼 있음
+  - [x] D-U-N-S 신청 제출 (2026-10-13, Apple duns-lookup 무료, 사업자 주소) → 발급 1~2주 대기, 안내 메일 develop@looinlabs.com
   - [ ] Play 조직 계정 가입($25 사용자 결제) → 서비스 계정 API 키 ~/.config/fokko/
   - [ ] Play 스토어 자료(문구·스크린샷 1080×1920·그래픽 1024×500·아이콘 512)·접근성 선언·시연 영상
   - [ ] 첫 AAB 업로드 → 심사 제출

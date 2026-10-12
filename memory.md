@@ -4,6 +4,12 @@
 - GitHub Actions 산출물은 서명·공증이 없어 macOS Gatekeeper가 차단 → CI에서 ad-hoc 서명(`codesign -s -`)만 하고, 사용자는 `xattr -cr` 로 격리 해제. 공증은 Apple Developer $99/년이라 보류.
 - 이 맥에는 소스가 있으므로 로컬 빌드(`flutter build macos --release`)가 정답 — 격리 속성이 아예 안 붙음.
 
+## Android 출시 계정 (2026-10-13)
+- Play **조직 계정**(develop@looinlabs.com, Google Workspace 사용자)으로 새로 가입해 출시. 개인 계정(2001kmin, 개발자명 LooinLabs, 하루전 운영 중)은 2023-11 이후 규정상 새 앱마다 테스터 12명×14일 비공개 테스트 필요 → 사용자가 조직 계정 선택.
+- 주소: 조직 계정은 사업장 주소 공개. 사업장=자택이지만 하루전(인앱 구매)에 이미 공개돼 있어 비상주 사무실 안 함.
+- D-U-N-S: Apple duns-lookup(무료)으로 사용자 제출 완료 2026-10-13. 발급(1~2주) 후 Play 조직 가입($25·인증 사용자) → 서비스 계정 API 키 ~/.config/fokko/.
+- 출시 AAB 서명: android/key.properties(gitignore)가 ~/.config/focusone 키를 가리켜야 함. 없으면 debug 키로 조용히 서명됨.
+
 ## 디자인 v2 (2026-10-08 사용자 확정 → main 머지) — 현재 디자인 원본
 - 주 레퍼런스 Tiimo 집중 화면(Mobbin) — 사용자가 A안 선택. **링 안에 장면 일러스트**(숲/달토끼/고래)를 넣는 게 사용자 요구 — 사운드 장면이 강점.
 - 설계서: astra(`docs/v2/app-design-spec.md`), 변경 근거 `docs/v2/app-deviations.md`. 바탕화면 시안 3종(.dc.html)은 v1 원본 — v2가 대체함.
