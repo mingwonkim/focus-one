@@ -61,7 +61,7 @@
 - [x] 빌드 3 업로드(Xcode Organizer — CLI 서명은 'No Accounts'로 실패) → 버전 연결 → 심사 제출 (2026-10-12 WAITING_FOR_REVIEW, 자동 출시)
 - [x] 휴식 남은 시간: iOS Live Activity(Dynamic Island·잠금 화면, BreakActivity 확장) + Android 카운트다운 알림 — 시뮬 확인
 - [x] 1.0 거부(10/14, 2.5.1 자동 검사: Family Controls 권한 없이 제출) — App ID에 FAMILY_CONTROLS_DISTRIBUTION 승인돼 있음. 빌드 4(휴식 Live Activity 포함)를 Organizer Custom→Export로 IPA 만들어 family-controls 포함 확인 후 altool 업로드
-- [ ] 빌드 4 버전 연결 → 재제출
+- [x] 빌드 4 버전 연결 → 재제출 (10/15 00:56, WAITING_FOR_REVIEW). API PATCH submitted=true는 "not ready"로 실패 → ASC 웹 "심사 업데이트"→"앱 심사에 다시 제출"로 해결
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
