@@ -62,15 +62,15 @@
 - [x] 휴식 남은 시간: iOS Live Activity(Dynamic Island·잠금 화면, BreakActivity 확장) + Android 카운트다운 알림 — 시뮬 확인
 - [x] 1.0 거부(10/14, 2.5.1 자동 검사: Family Controls 권한 없이 제출) — App ID에 FAMILY_CONTROLS_DISTRIBUTION 승인돼 있음. 빌드 4(휴식 Live Activity 포함)를 Organizer Custom→Export로 IPA 만들어 family-controls 포함 확인 후 altool 업로드
 - [x] 빌드 4 버전 연결 → 재제출 (10/15 00:56, WAITING_FOR_REVIEW). API PATCH submitted=true는 "not ready"로 실패 → ASC 웹 "심사 업데이트"→"앱 심사에 다시 제출"로 해결
-- [ ] 1.0 2차 거부(10/15, 2.5.4 백그라운드 오디오 재생 안 들림) → astra 검토 반영, 빌드 5 업로드
+- [x] 1.0 2차 거부(10/15, 2.5.4 백그라운드 오디오 재생 안 들림) → astra 검토 반영, 빌드 5 업로드
   - [x] 소리: 끊김(전화·알림 등) 뒤 자동 재개, 로딩 직렬화·실패 재시도, 음량 0이면 정지 (실사용 화면 꺼짐 끊김 원인)
   - [x] 랭킹: 닉네임 자유 입력 → 단어 조합 자동 생성(UGC 회피), 나가기 = 익명 계정 삭제, 개인정보 처리방침 링크
   - [x] Live Activity: 앱 첫 동기화에서 남은 표시 정리
   - [x] 심사 메모 갱신(ASC·store.md)
   - [x] supabase db push (사용자 실행 10/16) — 익명 가입→leave_ranking→user_not_found 확인
-  - [ ] (사용자) 실기기 증빙 영상: 소리 선택→시작→홈→잠금, 소리 계속 (외부 카메라로 잠금 화면)
+  - [x] 실기기 증빙 영상: iPhone 미러링 창을 ScreenCaptureKit(창+앱 소리)로 녹화 — 백색소음 시작→홈 화면 소리 계속(-27dB) 확인, 심사 첨부·답장에 첨부
   - [x] 빌드 5 버전 연결, 아이폰 설치
-  - [ ] 해결 센터 답장(영상 첨부) → 재제출
+  - [x] 해결 센터 답장(영상 첨부) → 재제출 (10/16 00:22, WAITING_FOR_REVIEW)
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
