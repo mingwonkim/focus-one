@@ -77,6 +77,7 @@
   - [x] 서명 AAB 빌드 (업로드 키 CN=FocusOne, android/key.properties → ~/.config/focusone)
   - [x] 주소: 비상주 사무실 안 함 — 하루전(개인 계정, 인앱 구매)에 이미 공개돼 있음
   - [x] D-U-N-S 신청 제출 (2026-10-13, Apple duns-lookup 무료, 사업자 주소) → 발급 1~2주 대기, 안내 메일 develop@looinlabs.com
+  - [ ] D-U-N-S 결과 대기 — 10/16 확인: D&B 접수 메일만 옴(donotreply@iresearch.dnb.com, 추적 11045680, 사건 11104000, 요청 키 BYFVC73Y96, 상호 looinlabs). 결과(9자리 번호) 또는 서류 요청 메일 오면 진행
   - [ ] Play 조직 계정 가입($25 사용자 결제) → 서비스 계정 API 키 ~/.config/fokko/
   - [ ] Play 스토어 자료(문구·스크린샷 1080×1920·그래픽 1024×500·아이콘 512)·접근성 선언·시연 영상
   - [ ] 첫 AAB 업로드 → 심사 제출
