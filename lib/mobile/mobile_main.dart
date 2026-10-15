@@ -25,16 +25,16 @@ Future<void> runMobile() async {
   final sound = MobileSoundService();
   try {
     await sound.init();
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('sound init: $e');
+  }
   appState.addListener(() {
     sound.setVolume(appState.soundVolume);
-    if (appState.phase == FocusPhase.focus &&
+    final on = appState.phase == FocusPhase.focus &&
         appState.isRunning &&
-        appState.soundEnabled) {
-      sound.play(appState.soundAsset);
-    } else {
-      sound.stop();
-    }
+        appState.soundEnabled &&
+        appState.soundVolume > 0;
+    sound.set(on ? appState.soundAsset : null);
   });
 
   // 세션 종료 알림 (거부돼도 앱은 정상 동작)

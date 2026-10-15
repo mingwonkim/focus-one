@@ -38,8 +38,10 @@ class RankingService {
     ];
   }
 
+  /// 익명 계정과 점수를 서버에서 완전히 지운다 (leave_ranking이 auth.users 삭제 → cascade)
   Future<void> leave() async {
-    await _signIn();
+    if (_db.auth.currentSession == null) return; // 계정이 만들어진 적 없음
     await _db.rpc('leave_ranking');
+    await _db.auth.signOut(scope: SignOutScope.local); // 서버 계정은 이미 지워짐
   }
 }

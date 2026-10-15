@@ -1,10 +1,14 @@
 // lib/mobile/records/ranking_page.dart
 // 기록 탭 → 랭킹. 참여 전엔 안내 + 닉네임, 참여 후엔 이번 주/누적 순위.
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
+import '../../models/collection.dart';
 import '../../services/ranking_service.dart';
 import '../../state/app_state.dart';
 import '../adaptive.dart';
@@ -16,8 +20,28 @@ class RankingPage extends StatefulWidget {
   State<RankingPage> createState() => _RankingPageState();
 }
 
+// 닉네임은 정해진 단어 조합에서만 고른다 — 자유 입력(사용자 생성 콘텐츠)이면 신고·차단 기능이 필요해서
+const _adjectives = ['졸린', '느긋한', '부지런한', '반짝이는', '조용한', '용감한', '꿈꾸는', '씩씩한', '포근한', '단단한'];
+
+final _privacyUrl = Uri.parse('https://looinlabs.com/fokko/privacy');
+
+Widget _privacyLink(SceneStyle style) => Center(
+      child: TextButton(
+        onPressed: () => launchUrl(_privacyUrl),
+        child: Text('개인정보 처리방침',
+            style: TextStyle(
+                color: style.textMuted, decoration: TextDecoration.underline)),
+      ),
+    );
+
+String _randomNickname() {
+  final r = Random();
+  final c = Companion.all[r.nextInt(Companion.all.length)];
+  return '${_adjectives[r.nextInt(_adjectives.length)]} ${c.name}${r.nextInt(90) + 10}';
+}
+
 class _RankingPageState extends State<RankingPage> {
-  final _name = TextEditingController();
+  String _name = _randomNickname();
   bool _week = true;
   bool _busy = false;
   Future<List<RankRow>>? _rows;
@@ -30,12 +54,6 @@ class _RankingPageState extends State<RankingPage> {
     }
   }
 
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
   void _load() {
     final rows = context.read<RankingService>().ranking(week: _week);
     setState(() {
@@ -44,16 +62,19 @@ class _RankingPageState extends State<RankingPage> {
   }
 
   Future<void> _join() async {
-    final name = _name.text.trim();
-    if (name.isEmpty || _busy) return;
+    final name = _name;
+    if (_busy) return;
     final s = context.read<AppState>();
+    final svc = context.read<RankingService>();
     setState(() => _busy = true);
     try {
-      await context.read<RankingService>().submit(s.rankScore, name);
+      await svc.submit(s.rankScore, name);
       s.setRankNickname(name);
       _load();
     } catch (e) {
       debugPrint('ranking: $e');
+      // 계정만 만들어지고 참여가 실패했으면 그 계정도 지운다
+      svc.leave().catchError((_) {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('연결이 안 돼요. 잠시 뒤 다시 해 주세요.')));
@@ -67,7 +88,7 @@ class _RankingPageState extends State<RankingPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('랭킹에서 나갈까요?'),
-        content: const Text('올라간 닉네임과 점수가 지워져요. 내 기록과 물방울은 그대로예요.'),
+        content: const Text('랭킹 계정과 닉네임·점수가 서버에서 모두 지워져요. 내 기록과 물방울은 그대로예요.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -140,21 +161,27 @@ class _RankingPageState extends State<RankingPage> {
         line(Icons.storefront_outlined, '상점에서 쓴 물방울은 점수에서 빠지지 않아요'),
         line(Icons.schedule_rounded, '하루 최대 12시간까지 점수에 들어가요'),
         line(Icons.person_outline_rounded, '닉네임과 점수만 올라가요. 가입은 필요 없어요'),
+        line(Icons.delete_outline_rounded, '언제든 나가면 서버에서 모두 지워져요'),
         const SizedBox(height: MobileSize.sectionGap),
-        TextField(
-          controller: _name,
-          maxLength: 12,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _join(),
-          decoration: InputDecoration(
-            hintText: '닉네임',
-            filled: true,
-            fillColor: style.rowBg,
-            contentPadding: const EdgeInsets.all(MobileSize.cardPadding),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: BorderSide.none),
-          ),
+        Container(
+          padding: const EdgeInsets.only(left: MobileSize.cardPadding),
+          decoration: BoxDecoration(
+              color: style.rowBg,
+              borderRadius: BorderRadius.circular(AppRadius.lg)),
+          child: Row(children: [
+            Expanded(
+              child: Text(_name,
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: style.textStrong)),
+            ),
+            IconButton(
+              tooltip: '다른 닉네임',
+              icon: Icon(Icons.casino_outlined, color: style.accent),
+              onPressed: () => setState(() => _name = _randomNickname()),
+            ),
+          ]),
         ),
         const SizedBox(height: MobileSize.cardGap),
         PillButton(
@@ -165,6 +192,8 @@ class _RankingPageState extends State<RankingPage> {
           label: _busy ? '참여하는 중…' : '참여하기',
           onTap: _join,
         ),
+        const SizedBox(height: MobileSize.cardGap),
+        _privacyLink(style),
       ],
     );
   }
@@ -219,6 +248,7 @@ class _RankingPageState extends State<RankingPage> {
                         child: Text('랭킹에서 나가기',
                             style: TextStyle(color: style.textMuted))),
                   ),
+                  _privacyLink(style),
                 ],
               ),
             );

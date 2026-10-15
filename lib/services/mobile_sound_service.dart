@@ -1,12 +1,15 @@
 // lib/services/mobile_sound_service.dart
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 /// 폰 집중 소리. 화면이 꺼져도 계속(iOS 백그라운드 오디오 + 재생 세션),
 /// 반복 이음새 없이(just_audio LoopMode.one). 데스크탑은 AmbientSoundService(audioplayers) 그대로.
 class MobileSoundService {
   final _player = AudioPlayer();
-  String? _asset;
+  String? _loaded; // 플레이어에 올라간 애셋
+  String? _want; // 지금 나와야 할 애셋, null = 무음
+  Future<void> _queue = Future.value(); // 로딩·재생을 한 줄로 (빠른 전환·로딩 중 정지 경합 방지)
 
   Future<void> init() async {
     final session = await AudioSession.instance;
@@ -20,21 +23,42 @@ class MobileSoundService {
       ),
       androidAudioFocusGainType: AndroidAudioFocusGainType.gainTransientMayDuck,
     ));
+    // 전화·Siri·알림음 등으로 끊겼다가 끝나면 다시 재생. iOS가 '재개해도 됨'을 안 주는 경우가 있어
+    // 그대로 두면 화면이 꺼진 채 무음 → 앱도 잠들어 화면을 켤 때까지 안 돌아옴 (실사용 10/15).
+    // 이어폰 분리(becomingNoisy)는 just_audio가 멈춘 그대로 둔다.
+    session.interruptionEventStream.listen((e) {
+      if (!e.begin && _want != null && _want == _loaded) _player.play();
+    });
     await _player.setLoopMode(LoopMode.one);
   }
 
   Future<void> setVolume(double v) => _player.setVolume(v);
 
-  Future<void> play(String asset) async {
-    if (_asset != asset) {
-      _asset = asset;
-      await _player.setAsset('assets/$asset');
-    }
-    if (!_player.playing) _player.play(); // play()는 멈출 때 끝나므로 기다리지 않는다
+  /// null이면 멈춤. 매 초 불려도 바뀔 때만 동작한다.
+  void set(String? asset) {
+    if (asset == _want) return;
+    _want = asset;
+    _queue = _queue.then((_) => _apply());
   }
 
-  Future<void> stop() async {
-    if (_player.playing) await _player.pause();
+  Future<void> _apply() async {
+    final want = _want;
+    try {
+      if (want == null) {
+        if (_player.playing) await _player.pause();
+        return;
+      }
+      if (_loaded != want) {
+        _loaded = null;
+        await _player.setAsset('assets/$want');
+        _loaded = want;
+      }
+      // 로딩하는 사이 멈추거나 다른 소리로 바뀌었으면 다음 차례가 처리
+      if (_want == want && !_player.playing) _player.play(); // play()는 멈출 때 끝나므로 기다리지 않는다
+    } catch (e) {
+      debugPrint('sound: $e');
+      if (_want == want) _want = null; // 다음 set()에서 다시 시도
+    }
   }
 
   void dispose() => _player.dispose();

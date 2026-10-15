@@ -60,17 +60,31 @@ Fokko는 산만해지기 쉬운 사람, 특히 ADHD인 사람을 위해 만든 �
 2026 looin labs
 
 ## 심사 메모 (App Review Information → Notes)
-Fokko is a single-task focus timer. No account or login is required.
+Fokko is a single-task focus timer. The timer and ambient sounds need no account, login, or network. The UI is Korean; translations are given below.
 
-App lock (Screen Time / Family Controls):
-1. Tap the lock icon (top right of the Focus tab) → "잠금 켜기" (Turn on).
-2. Allow Screen Time access, then pick apps to block and tap "완료" (Done).
-3. Back on the Focus tab, tap "시작" (Start). Lock applies only to sessions of 15 minutes or longer (default is 25 minutes).
-4. Opening a selected app shows the Screen Time shield. It is released automatically when the session ends, even if Fokko is closed.
+BACKGROUND AUDIO (Guideline 2.5.4)
+Ambient sound plays only while a focus session is running (not while idle or on a break).
+1. Open the "집중" (Focus) tab.
+2. Tap the speaker icon at the top right (left of the lock icon). Select "백색소음" (White Noise), set the volume to about 80%, and close the sheet.
+3. Keep the default 25 minutes and tap "시작" (Start). No task is needed. Either answer to the notification prompt is fine.
+4. White noise is audible. Swipe up to the Home Screen (do not force-quit) — audio continues.
+5. Press the side button to lock the iPhone — audio continues while the session is active.
+A screen recording from a physical iPhone is attached in App Review Information / the Resolution Center reply.
 
-Ranking (optional): Records tab → 랭킹 → enter any nickname → 참여하기. Uses anonymous sign-in; "랭킹에서 나가기" deletes the data.
+APP LOCK (Screen Time / Family Controls)
+1. Focus tab → lock icon at the top right → "잠금 켜기" (Turn on).
+2. Allow Screen Time access, select an app, tap "완료" (Done).
+3. Start a session of 15 minutes or longer (default 25). Opening the selected app shows the Screen Time shield.
+4. The shield is removed at the session end by the DeviceActivityMonitor extension, even if Fokko is closed.
 
-There is no pause by design (focus enforcement). Within the first 10 seconds the session can be cancelled with the ✕ button.
+SESSION CONTROLS
+There is no pause by design. Within the first 10 seconds, tap ✕ to cancel. After that, an emergency exit costs in-app droplets earned by focusing (not purchasable).
+
+LIVE ACTIVITY
+After a session ends, tap "5분 휴식" (5-minute break) on the completion sheet. The break countdown appears on the Lock Screen and Dynamic Island.
+
+OPTIONAL RANKING
+Records tab "기록" → "랭킹" (Ranking) → tap "참여하기" (Join). A random nickname is generated from a fixed word list (dice button to change); there is no free-text input. This creates an anonymous account (no email/password). "랭킹에서 나가기" (Leave Ranking) → "나가기" permanently deletes the anonymous account and its server data. A privacy policy link is on the Ranking screen.
 
 ## 앱 개인정보 (App Privacy)
 - 데이터 수집: 예

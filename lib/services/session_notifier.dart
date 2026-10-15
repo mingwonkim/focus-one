@@ -15,7 +15,8 @@ class SessionNotifier {
   static const _id = 1;
   static const _breakId = 2;
   static const _breakChannel = MethodChannel('focusone/break');
-  DateTime? _breakShown; // 휴식 남은 시간 표시 중이면 종료 시각
+  // 휴식 남은 시간 표시 중이면 종료 시각. 처음엔 '모름'으로 두어 앱이 꺼진 사이 남은 표시를 첫 동기화에서 정리
+  DateTime? _breakShown = DateTime(0);
   String? _scheduledFor; // "세션ID@종료시각" — 같은 예약 반복 방지
   bool _asked = false;
 
