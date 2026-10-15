@@ -67,9 +67,10 @@
   - [x] 랭킹: 닉네임 자유 입력 → 단어 조합 자동 생성(UGC 회피), 나가기 = 익명 계정 삭제, 개인정보 처리방침 링크
   - [x] Live Activity: 앱 첫 동기화에서 남은 표시 정리
   - [x] 심사 메모 갱신(ASC·store.md)
-  - [ ] (사용자 승인) supabase db push — 20261015000000_leave_deletes_account.sql
+  - [x] supabase db push (사용자 실행 10/16) — 익명 가입→leave_ranking→user_not_found 확인
   - [ ] (사용자) 실기기 증빙 영상: 소리 선택→시작→홈→잠금, 소리 계속 (외부 카메라로 잠금 화면)
-  - [ ] 빌드 5 연결 → 해결 센터 답장(영상 첨부) → 재제출
+  - [x] 빌드 5 버전 연결, 아이폰 설치
+  - [ ] 해결 센터 답장(영상 첨부) → 재제출
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
