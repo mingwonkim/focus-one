@@ -27,17 +27,24 @@ void main() {
     final now = DateTime.now();
     final day0 = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 14)); // 어제까지
     var s = await boot(day0);
-    for (final t in ['공부', '업무', '독서']) {
-      s.addTag(t);
+    // ID가 마이크로초 시각이라 Windows(시계 해상도가 거침)에선 연달아 만들면 겹친다 → 한 번에 하나씩 쉬며
+    Future<void> each<T>(List<T> xs, void Function(T) f) async {
+      for (final x in xs) {
+        f(x);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     }
+
+    await each(['공부', '업무', '독서'], s.addTag);
     String tag(String n) => s.tags.firstWhere((t) => t.name == n).id;
-    s.addTask('토익 단어 50개 외우기', tagId: tag('공부'));
-    s.addTask('기획서 초안 쓰기', tagId: tag('업무'));
-    s.addTask('책 30쪽 읽기', tagId: tag('독서'));
-    s.addTask('영어 쉐도잉 20분', tagId: tag('공부'));
-    s.addTask('메일 답장하기', tagId: tag('업무'));
-    s.addToInbox('세탁기 돌리기');
-    s.addToInbox('엄마한테 전화');
+    await each([
+      ('토익 단어 50개 외우기', '공부'),
+      ('기획서 초안 쓰기', '업무'),
+      ('책 30쪽 읽기', '독서'),
+      ('영어 쉐도잉 20분', '공부'),
+      ('메일 답장하기', '업무'),
+    ], (x) => s.addTask(x.$1, tagId: tag(x.$2)));
+    await each(['세탁기 돌리기', '엄마한테 전화'], s.addToInbox);
     await s.flush();
     s.dispose();
 
@@ -56,6 +63,7 @@ void main() {
         s.setScene(scene);
         final task = s.pendingTasks.firstWhere((t) => t.tagId == tag(tg));
         s.selectTask(task.id);
+        s.selectTag(tag(tg)); // 이미 고른 할 일이면 selectTask가 태그를 안 바꾼다
         final locked = Companion.of(scene).where((c) => s.isUnlocked(c)).toList();
         s.selectCompanion(locked.last.id);
         s.setDurationMinutes(mins);

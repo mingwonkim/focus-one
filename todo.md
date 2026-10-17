@@ -71,6 +71,8 @@
   - [x] 실기기 증빙 영상: iPhone 미러링 창을 ScreenCaptureKit(창+앱 소리)로 녹화 — 백색소음 시작→홈 화면 소리 계속(-27dB) 확인, 심사 첨부·답장에 첨부
   - [x] 빌드 5 버전 연결, 아이폰 설치
   - [x] 해결 센터 답장(영상 첨부) → 재제출 (10/16 00:22, WAITING_FOR_REVIEW)
+- [x] 스토어 홍보 스크린샷 6장(iPhone 6.9"·iPad 13", 문구+실제 화면) + 앱 프리뷰 23초(886×1920, 장면 소리) — tool/store, docs/mobile/store-assets (10/17, 사용자 검토 대기)
+- [ ] 위 에셋 ASC 업로드 — 1.0 심사 중이라 미디어 잠김. 승인 후 다음 버전에서 asc_screenshots.py(iphone·ipad) + asc_preview.py. ASC 키는 맥에만 있음
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)

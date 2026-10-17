@@ -56,3 +56,4 @@
 
 - 2026-10-12 앱 이름 FocusOne → **Tocko** (같은 분야 'Focus One' 앱 다수, 스토어 검색·상표 충돌 회피). 보이는 이름만 변경 — 번들 ID com.looinlabs.focusone·패키지·저장소·Supabase 프로젝트명은 유지(Family Controls 승인이 번들 ID에 묶임). 후보 비교: Focusling(길다), Onlee(타이머 느낌 없음), Fokko.
 - 2026-10-12 앱 이름 최종 **Fokko** (Tocko에서 변경, 사용자 결정). 스토어 'Fokko: ADHD 집중 타이머 & 앱 잠금', 사이트 looinlabs.com/fokko, Android com.looinlabs.fokko, ASC 키 ~/.config/fokko/.
+- 2026-10-17 스토어 에셋은 Windows에서도 생성: flutter test로 실제 MobileShell을 기기 크기로 렌더(tool/store, 폰트 Pretendard+Noto Color Emoji를 FONTS로). 영상도 프레임 렌더 → ffmpeg. 함정: CustomPainter의 TextPainter는 테마 글꼴을 상속 안 함(테스트에선 □) → records 막대 라벨에 DefaultTextStyle 전달. 시드는 ID가 마이크로초 시각이라 Windows에선 연달아 만들면 태그 ID가 겹침.
