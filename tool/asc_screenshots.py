@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""스크린샷 폴더(01_*.png …, 이름순)를 한국어 1.0 버전 iPhone 6.9" 세트로 업로드 (기존 세트는 비움).
+"""스크린샷 폴더(01_*.png …, 이름순)를 한국어 편집 중 버전 iPhone 6.9" 세트로 업로드 (기존 세트는 비움).
 실행: python3 tool/asc_screenshots.py <폴더>
 """
 import glob, hashlib, os, sys, urllib.request
 
 sys.path.insert(0, "tool")
-from asc import call  # noqa: E402
+from asc import call, ko_loc  # noqa: E402
 
 APP, TYPE = "6821653231", sys.argv[2] if len(sys.argv) > 2 else "APP_IPHONE_67"  # iPad: APP_IPAD_PRO_3GEN_129
 files = sorted(glob.glob(os.path.join(sys.argv[1], "*.png")))
-ver = call("GET", f"/v1/apps/{APP}/appStoreVersions?include=appStoreVersionLocalizations")
-loc = next(x["id"] for x in ver["included"] if x["attributes"]["locale"] == "ko")
+loc = ko_loc(APP)
 sets = call("GET", f"/v1/appStoreVersionLocalizations/{loc}/appScreenshotSets")["data"]
 s = next((x for x in sets if x["attributes"]["screenshotDisplayType"] == TYPE), None)
 if s:

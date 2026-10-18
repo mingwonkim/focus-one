@@ -72,7 +72,12 @@
   - [x] 빌드 5 버전 연결, 아이폰 설치
   - [x] 해결 센터 답장(영상 첨부) → 재제출 (10/16 00:22, WAITING_FOR_REVIEW)
 - [x] 스토어 홍보 스크린샷 6장(iPhone 6.9"·iPad 13", 문구+실제 화면) + 앱 프리뷰 23초(886×1920, 장면 소리) — tool/store, docs/mobile/store-assets (10/17, 사용자 검토 대기)
-- [ ] 위 에셋 ASC 업로드 — 1.0 심사 중이라 미디어 잠김. 승인 후 다음 버전에서 asc_screenshots.py(iphone·ipad) + asc_preview.py. ASC 키는 맥에만 있음
+- [x] 1.0.0 승인·출시 확인 (10/18 READY_FOR_SALE)
+- [x] Windows용 ASC API 키(fokko-windows, 앱 관리) → ~/.config/fokko/ · 업로드 스크립트가 편집 가능한 버전을 고르게(asc.ko_loc) · pubspec 1.0.1+6
+- [ ] 1.0.1: ASC 버전 생성 → 스크린샷·영상 업로드 (auto mode가 ASC 쓰기를 막음 — 사용자 허용 규칙 추가 후). Git Bash에선 MSYS_NO_PATHCONV=1 필요
+  - MSYS_NO_PATHCONV=1 python tool/asc.py POST /v1/appStoreVersions '{"data":{"type":"appStoreVersions","attributes":{"platform":"IOS","versionString":"1.0.1","releaseType":"AFTER_APPROVAL"},"relationships":{"app":{"data":{"type":"apps","id":"6821653231"}}}}}'
+  - python tool/asc_screenshots.py docs/mobile/store-assets/iphone · … ipad APP_IPAD_PRO_3GEN_129 · python tool/asc_preview.py docs/mobile/store-assets/preview.mp4
+- [ ] 1.0.1 빌드(맥 Xcode Organizer, family-controls 포함 확인) → 버전 연결 → 새 기능 문구 → 심사 제출
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)

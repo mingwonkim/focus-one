@@ -27,6 +27,17 @@ def call(method, path, body=None):
         sys.exit(f"{e.code} {e.read().decode()[:1500]}")
 
 
+def ko_loc(app):
+    """편집 가능한 버전(출시·심사 중 아님)의 한국어 현지화 ID. 출시된 버전의 미디어는 못 바꾼다."""
+    ver = call("GET", f"/v1/apps/{app}/appStoreVersions?include=appStoreVersionLocalizations")
+    v = next((x for x in ver["data"] if x["attributes"]["appVersionState"] in
+              ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED")), None)
+    if not v:
+        sys.exit("편집 가능한 버전 없음 — ASC에서 새 버전을 먼저 만든다")
+    ids = {x["id"] for x in v["relationships"]["appStoreVersionLocalizations"]["data"]}
+    return next(x["id"] for x in ver["included"] if x["id"] in ids and x["attributes"]["locale"] == "ko")
+
+
 if __name__ == "__main__":
     m, p = sys.argv[1], sys.argv[2]
     print(json.dumps(call(m, p, json.loads(sys.argv[3]) if len(sys.argv) > 3 else None), ensure_ascii=False, indent=1))
