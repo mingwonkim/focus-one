@@ -76,7 +76,8 @@
 - [x] Windows용 ASC API 키(fokko-windows, 앱 관리) → ~/.config/fokko/ · 업로드 스크립트가 편집 가능한 버전을 고르게(asc.ko_loc) · pubspec 1.0.1+6
 - [x] 1.0.1 ASC 버전 생성 + 스크린샷 iPhone 6·iPad 6 + 앱 프리뷰 업로드 (10/18, 처리 완료 COMPLETE)
 - [x] 1.0.1 빌드 6 업로드·처리 VALID·버전 연결 (10/18, family-controls 확인)
-- [ ] 1.0.1 새 기능 문구 → 심사 제출
+- [x] 1.0.1 새 기능 문구 + 심사 제출 (10/18, tool/asc_submit.py, WAITING_FOR_REVIEW)
+- [ ] 1.0.1 심사 결과 확인
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
