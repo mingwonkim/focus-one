@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python tool/asc*)",
-      "Bash(MSYS_NO_PATHCONV=1 python tool/asc*)",
-      "Bash(orca computer *)"
-    ]
-  }
-}
