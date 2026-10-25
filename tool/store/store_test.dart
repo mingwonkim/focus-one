@@ -307,12 +307,13 @@ void main() {
   }
 
   // 앱 프리뷰: 886×1920 · 30fps. 장면 전환 시각은 timeline.json (소리 입히기용)
+  // 기기 테두리·배경 없이 앱 화면만 꽉 채운다 (1.0.1 거절 2.3.4: 프리뷰에 테두리 금지). 문구는 상태바 자리에 덧씌움.
   testWidgets('video', (tester) async {
     const d = (
       name: 'video',
       canvas: Size(443, 960),
       ratio: 2.0,
-      screen: Size(440, 956),
+      screen: Size(443, 960),
       safe: EdgeInsets.only(top: 62, bottom: 34),
     );
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -327,8 +328,7 @@ void main() {
     final s = await _state(tester);
     const fps = 30;
     final key = GlobalKey();
-    final end = ValueNotifier(0.0); // 마지막 로고 화면 불투명도
-    var title = '', sub = '';
+    var title = '';
     var n = 0;
     final marks = <String, double>{};
     void mark(String k) => marks[k] = n / fps;
@@ -338,13 +338,8 @@ void main() {
           child: RepaintBoundary(
             key: key,
             child: Stack(children: [
-              _Poster(d: d, scene: s.scene, title: title, sub: sub, child: _screen(s, d)),
-              Positioned.fill(
-                child: ValueListenableBuilder(
-                  valueListenable: end,
-                  builder: (_, v, __) => v == 0 ? const SizedBox() : Opacity(opacity: v, child: const _EndCard()),
-                ),
-              ),
+              _screen(s, d),
+              Positioned(left: 0, right: 0, top: 0, height: d.safe.top, child: _Caption(scene: s.scene, text: title)),
             ]),
           ),
         );
@@ -361,10 +356,7 @@ void main() {
       }
     }
 
-    void say(String t, String sb) {
-      title = t;
-      sub = sb;
-    }
+    void say(String t, String _) => title = t.replaceAll('\n', ' ');
 
     Future<void> tap(Finder f) async {
       await tester.tap(f);
@@ -430,13 +422,6 @@ void main() {
     await g.up();
     await hold(1.0);
 
-    // 7) 로고
-    for (var i = 1; i <= 9; i++) {
-      end.value = i / 9;
-      if (i == 1) await _images(tester);
-      await frame();
-    }
-    await hold(1.8);
     mark('end');
 
     File('$out/video/timeline.json').writeAsStringSync(jsonEncode(marks));
@@ -447,28 +432,27 @@ void main() {
   });
 }
 
-/// 영상 끝 화면: 앱 아이콘 + 이름
-class _EndCard extends StatelessWidget {
-  const _EndCard();
+/// 영상 문구: 상태바 자리(앱이 비워 두는 위쪽 안전 영역)에 한 줄
+class _Caption extends StatelessWidget {
+  const _Caption({required this.scene, required this.text});
+  final FocusScene scene;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    final st = FocusScene.forest.style;
-    return ColoredBox(
-      color: st.cardBg,
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(34),
-          child: Image.file(File('assets/icon/source.png'), width: 150, height: 150),
-        ),
-        const SizedBox(height: 28),
-        Text('Fokko',
-            style:
-                TextStyle(fontFamily: 'Pretendard', fontSize: 44, fontWeight: FontWeight.w800, color: st.textStrong)),
-        const SizedBox(height: 8),
-        Text('ADHD 집중 타이머 & 앱 잠금',
-            style: TextStyle(fontFamily: 'Pretendard', fontSize: 18, fontWeight: FontWeight.w500, color: st.textMuted)),
-      ]),
+    final st = scene.style;
+    return Center(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Text(text,
+            key: ValueKey(text),
+            style: TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                color: st.textStrong)),
+      ),
     );
   }
 }
