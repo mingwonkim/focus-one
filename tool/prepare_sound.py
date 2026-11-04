@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """받은 배경음(WAV 등)을 앱용 반복 소리로 다듬는다.
 - 최대 길이 자르기 → 끝 4초를 처음 4초에 크로스페이드(반복 이음새가 안 들리게)
+- 2초 음량을 고르게(원형 레벨러 — 반복 경계에서도 이어짐). 갑자기 커지는 소리 방지
 - 음량 맞춤(−20 LUFS 고정 이득 + 리미터) → AAC 112k m4a
-실행: python3 tool/prepare_sound.py <입력> <출력.m4a> [--max 180]
+실행: python3 tool/prepare_sound.py <입력> <출력.m4a> [--max 180] [--loop]
+  --loop: 입력이 이미 반복 이음새가 된 파일(assets/sounds/*.m4a 재처리) — 크로스페이드 생략
 필요: ffmpeg, numpy
 """
 import re
@@ -23,10 +25,26 @@ raw = subprocess.run(
 x = np.frombuffer(raw, dtype=np.float32).reshape(-1, 2).copy()
 f = int(FADE * SR)
 assert len(x) > 3 * f, "너무 짧음"
-body = x[: len(x) - f].copy()
-ramp = np.linspace(0.0, 1.0, f, dtype=np.float32)[:, None]
-# 등전력 크로스페이드: 시작부 = 처음 f(서서히 커짐) + 꼬리 f(서서히 작아짐)
-body[:f] = x[:f] * np.sqrt(ramp) + x[len(x) - f:] * np.sqrt(1 - ramp)
+if "--loop" in sys.argv:
+    body = x
+else:
+    body = x[: len(x) - f].copy()
+    ramp = np.linspace(0.0, 1.0, f, dtype=np.float32)[:, None]
+    # 등전력 크로스페이드: 시작부 = 처음 f(서서히 커짐) + 꼬리 f(서서히 작아짐)
+    body[:f] = x[:f] * np.sqrt(ramp) + x[len(x) - f:] * np.sqrt(1 - ramp)
+
+
+def circ_avg(v, n):
+    """반복 재생 기준 이동 평균(끝과 처음이 이어진다고 보고 계산)."""
+    t = np.concatenate([v[-n:], v, v[:n]])
+    c = np.cumsum(np.concatenate([[0.0], t]))
+    return ((c[n + n // 2 + 1:] - c[n // 2 + 1:-n])[: len(v)]) / n
+
+
+# 레벨러: 2초 음량을 중앙값 쪽으로 75% 당김(누름 최대 −12dB, 올림 최대 +6dB), 1초로 부드럽게.
+env = 10 * np.log10(circ_avg((body.astype(np.float64) ** 2).mean(axis=1), 2 * SR) + 1e-12)
+gain_db = circ_avg(np.clip((np.median(env) - env) * 0.75, -12.0, 6.0), SR)
+body = (body * (10 ** (gain_db / 20))[:, None]).astype(np.float32)
 
 # 음량: 측정 후 고정 이득 + 리미터 (loudnorm 1패스는 딱딱 튀는 소리에서 목표에 못 미침)
 log = subprocess.run(
@@ -35,7 +53,7 @@ log = subprocess.run(
 lufs = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", log)[-1])
 subprocess.run(
     ["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", "-",
-     "-af", f"volume={-20 - lufs:.1f}dB,alimiter=limit=0.89:level=false", "-ar", str(SR),
+     "-af", f"volume={-20 - lufs:.1f}dB,alimiter=limit=0.89:level=false:latency=1", "-ar", str(SR),
      "-c:a", "aac", "-b:a", "112k", out],
     input=body.tobytes(), check=True)
 print(f"{out}: {len(body) / SR:.1f}s")

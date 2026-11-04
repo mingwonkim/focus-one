@@ -1,7 +1,8 @@
 # 폰 집중 소리 출처
 
 Mixkit Sound Effects Free License (상업 이용 가능, 표기 의무 없음, 소리 파일 단독 재배포 금지).
-`python3 tool/prepare_sound.py <원본> assets/sounds/<id>.m4a` — 끝 4초 크로스페이드 이음새 + −20 LUFS(고정 이득·리미터) + AAC 112k.
+`python3 tool/prepare_sound.py <원본> assets/sounds/<id>.m4a` — 끝 4초 크로스페이드 이음새 + 2초 음량 레벨러(원형, 반복 경계 포함) + −20 LUFS(고정 이득·리미터, 지연 보정) + AAC 112k.
+이미 반복 파일인 걸 다시 다듬을 땐 `--loop --max 999`. (2026-11-04: 갑자기 커짐 신고 → 전체 재처리, 리미터 5ms 무음 제거)
 
 | id | 용도 | Mixkit id |
 |---|---|---|
