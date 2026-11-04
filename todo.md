@@ -95,7 +95,7 @@
 - [x] 소리 갑자기 커짐: 원인 = 음원 안 큰 소리 구간(중앙값 +11~16dB) + 반복 경계 음량 단차(+6dB) + 리미터 지연 5ms 무음(4개). 2초 원형 레벨러·지연 보정으로 전체 재처리 → 최대−중앙 ≤8dB, 경계 ≤3dB
 - [x] 게임화 1차안 (Fable 계획, 문턱 절반: 씨앗→새싹 30분 … 마스터 500h): 칭호 10단계·테두리 아바타(높은 단계 회전·빛·별)·기록 탭 프로필 카드·승급 축하(보상 시트)·명예의 전당(이번 주/이번 달/누적, 시상대, 지난 1~3위 보존)·공유 카드(share_plus). 로컬 Postgres로 SQL 검증, 테스트 36개 통과
   - [ ] 사용자 디자인 검토 (미리보기: flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>)
-  - [ ] 사용자: `supabase db push` (20261104000000_hall_of_fame.sql) — 적용 전엔 새 앱의 랭킹 화면이 연결 오류
+  - [x] `supabase db push` (11/04 Claude, CLI 연결돼 있음) — 출시된 1.0.x가 쓰는 옛 submit_score·ranking은 남기게 고친 뒤 반영. 실서버에서 옛·새 ranking·past_winners 응답 확인
   - [ ] 실기기: 공유 시트 PNG(카톡·사진 저장), 승급 시트 확인
   - [ ] 개인정보 처리방침에 아바타(친구 id) 추가 — 출시 전
 
