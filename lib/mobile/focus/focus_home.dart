@@ -8,6 +8,7 @@ import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
 import '../../features/mini/widgets/focus_ring.dart' show formatClock;
 import '../../state/app_state.dart';
+import '../adaptive.dart';
 import '../lock/lock_page.dart';
 import 'mobile_ring.dart';
 import 'sheets.dart';
@@ -39,7 +40,13 @@ class _FocusHomeState extends State<FocusHome> {
     final active = s.activeSession;
     final idle = active == null && s.phase != FocusPhase.breakTime;
     final h = MediaQuery.sizeOf(context).height;
-    final ringSize = h < 700 ? 184.0 : (h > 900 ? 264.0 : MobileSize.ring);
+    final tablet = isTablet(context);
+    final landscape = tablet && MediaQuery.sizeOf(context).aspectRatio > 1;
+    final ringSize = landscape
+        ? (h * 0.52).clamp(232.0, 360.0) // 가로: 높이에 맞춰 크게
+        : tablet
+        ? (MediaQuery.sizeOf(context).shortestSide * 0.42).clamp(232.0, 320.0)
+        : (h < 700 ? 184.0 : (h > 900 ? 264.0 : MobileSize.ring));
     _minutes = idle ? s.totalSeconds ~/ 60 : _minutes;
 
     // 완료 직후 보상 시트 1회
@@ -58,102 +65,128 @@ class _FocusHomeState extends State<FocusHome> {
     // 대기: 데려올 친구를 또렷하게 보여 주고, 시작하면 흐려졌다가 집중할수록 선명해짐
     final reveal = idle ? 1.0 : 0.25 + 0.75 * (1 - s.progress);
 
-    // 본문은 스크롤(작은 화면·큰 글자에서도 넘침 없게), 버튼 행은 아래 고정.
-    // 대기/진행의 윗부분 높이를 같게 둬서 시작해도 링 위치가 그대로다.
+    final header = Column(children: [
+      const SizedBox(height: 8),
+      _TaskCard(state: s, enabled: idle),
+      const SizedBox(height: 8),
+      if (idle) _ToolRow(state: s) else _RunningBadge(state: s),
+    ]);
+    final ring = Column(children: [
+      const SizedBox(height: MobileSize.sectionGap), // 도구 행과 최소 24
+      MobileRing(
+        scene: s.scene,
+        companion: companion,
+        progress: progress,
+        reveal: reveal,
+        size: ringSize,
+        minutes: _minutes,
+        onMinutes: idle ? (m) => _setMinutes(s, m) : null,
+      ),
+      const SizedBox(height: 8),
+      Text(
+        formatClock(idle ? _minutes * 60 : s.remainingSeconds),
+        style: TextStyle(
+          fontSize: tablet ? 64 : 56,
+          fontWeight: FontWeight.w600,
+          height: 64 / 56,
+          color: style.textStrong,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+      const SizedBox(height: MobileSize.cardGap),
+      if (idle)
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _Chip(
+                state: s,
+                label: companion.name,
+                onTap: () => showCompanionSheet(context)),
+            _Chip(
+                state: s,
+                dot: tagColor(style, s.currentTag?.colorIndex ?? 0),
+                label: s.currentTag?.name ?? '태그',
+                onTap: () => showTagSheet(context)),
+          ],
+        )
+      else
+        SizedBox(
+          height: MobileSize.row,
+          child: Center(
+            child: Text(
+              s.phase == FocusPhase.breakTime
+                  ? '잠깐 쉬어가요'
+                  : (s.isRunning
+                      ? '집중할수록 ${companion.name}이(가) 선명해져요'
+                      : '잠시 멈춤'),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: style.textMuted),
+            ),
+          ),
+        ),
+      const SizedBox(height: 16),
+    ]);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: MobileSize.gutter),
-      child: Column(
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (_, box) => SingleChildScrollView(
+      child: LayoutBuilder(builder: (_, outer) {
+        // iPad 가로: 왼쪽 링, 오른쪽 할 일·버튼
+        if (outer.maxWidth >= MobileSize.twoPaneBreak && outer.maxWidth > outer.maxHeight) {
+          return Row(children: [
+            Expanded(
+              child: SingleChildScrollView(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: box.maxHeight),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(children: [
-                        const SizedBox(height: 8),
-                        _TaskCard(state: s, enabled: idle),
-                        const SizedBox(height: 8),
-                        if (idle)
-                          _ToolRow(state: s)
-                        else
-                          _RunningBadge(state: s),
-                      ]),
-                      Column(children: [
-                        const SizedBox(height: MobileSize.sectionGap), // 도구 행과 최소 24
-                        MobileRing(
-                          scene: s.scene,
-                          companion: companion,
-                          progress: progress,
-                          reveal: reveal,
-                          size: ringSize,
-                          minutes: _minutes,
-                          onMinutes: idle ? (m) => _setMinutes(s, m) : null,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          formatClock(
-                              idle ? _minutes * 60 : s.remainingSeconds),
-                          style: TextStyle(
-                            fontSize: 56,
-                            fontWeight: FontWeight.w600,
-                            height: 64 / 56,
-                            color: style.textStrong,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                        const SizedBox(height: MobileSize.cardGap),
-                        if (idle)
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _Chip(
-                                  state: s,
-                                  label: companion.name,
-                                  onTap: () => showCompanionSheet(context)),
-                              _Chip(
-                                  state: s,
-                                  dot: tagColor(
-                                      style, s.currentTag?.colorIndex ?? 0),
-                                  label: s.currentTag?.name ?? '태그',
-                                  onTap: () => showTagSheet(context)),
-                            ],
-                          )
-                        else
-                          SizedBox(
-                            height: MobileSize.row,
-                            child: Center(
-                              child: Text(
-                                s.phase == FocusPhase.breakTime
-                                    ? '잠깐 쉬어가요'
-                                    : (s.isRunning
-                                        ? '집중할수록 ${companion.name}이(가) 선명해져요'
-                                        : '잠시 멈춤'),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 13, color: style.textMuted),
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                      ]),
-                      // 빈 자리 — spaceBetween이 링 묶음을 남는 공간 가운데에 둔다
-                      const SizedBox.shrink(),
-                    ],
+                  constraints: BoxConstraints(minHeight: outer.maxHeight),
+                  child: Center(child: ring),
+                ),
+              ),
+            ),
+            const SizedBox(width: MobileSize.sectionGap),
+            SizedBox(
+              width: MobileSize.sidePane,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  header,
+                  const SizedBox(height: MobileSize.sectionGap),
+                  _Controls(state: s),
+                  const SizedBox(height: MobileSize.contentBottomGap),
+                ],
+              ),
+            ),
+          ]);
+        }
+        // 본문은 스크롤(작은 화면·큰 글자에서도 넘침 없게), 버튼 행은 아래 고정.
+        // 대기/진행의 윗부분 높이를 같게 둬서 시작해도 링 위치가 그대로다.
+        return Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (_, box) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: box.maxHeight),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        MaxWidth(max: tablet ? 560 : double.infinity, child: header),
+                        ring,
+                        // 빈 자리 — spaceBetween이 링 묶음을 남는 공간 가운데에 둔다
+                        const SizedBox.shrink(),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          _Controls(state: s),
-          // 탭바 자리 (진행 중엔 탭바 숨김)
-          const SizedBox(height: MobileSize.contentBottomGap),
-        ],
-      ),
+            // iPad 세로: 버튼 행은 폰 폭 정도로
+            MaxWidth(max: tablet ? 560 : double.infinity, child: _Controls(state: s)),
+            // 탭바 자리 (진행 중엔 탭바 숨김)
+            const SizedBox(height: MobileSize.contentBottomGap),
+          ],
+        );
+      }),
     );
   }
 }

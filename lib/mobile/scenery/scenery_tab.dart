@@ -9,6 +9,7 @@ import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
 import '../../state/app_state.dart';
+import '../adaptive.dart';
 import 'collection_pages.dart';
 
 /// 풍경 탭 (spec §2): 헤더(장면·물방울) → 정사각 풍경 → 편집 / 보관함·도감·상점.
@@ -68,10 +69,7 @@ class _SceneryTabState extends State<SceneryTab> {
         if (s.ownedCount(id) > 0) (id, name)
     ];
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-          MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap),
-      children: [
+    final kids = <Widget>[
         Row(children: [
           Text('꾸미기',
               style: TextStyle(
@@ -276,8 +274,30 @@ class _SceneryTabState extends State<SceneryTab> {
             ),
           ]),
         ],
-      ],
-    );
+    ];
+    const pad = EdgeInsets.fromLTRB(
+        MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap);
+    return LayoutBuilder(builder: (_, box) {
+      // 폰·iPad 세로: 한 열 (iPad는 가운데 720)
+      if (box.maxWidth < MobileSize.twoPaneBreak || box.maxWidth < box.maxHeight) {
+        return MaxWidth(child: ListView(padding: pad, children: kids));
+      }
+      // iPad 가로: 왼쪽 풍경(높이에 맞춘 정사각), 오른쪽 조작부
+      return Padding(
+        padding: pad,
+        child: Column(children: [
+          kids[0], // 제목 행은 전체 폭
+          kids[1],
+          Expanded(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              kids[2], // 높이에 맞춘 정사각
+              const SizedBox(width: MobileSize.sectionGap),
+              Expanded(child: ListView(padding: EdgeInsets.zero, children: kids.sublist(4))),
+            ]),
+          ),
+        ]),
+      );
+    });
   }
 }
 

@@ -1,12 +1,9 @@
 -- 명예의 전당: 아바타(친구 id) + 이번 주/이번 달/누적 + 칭호용 누적 분 + 지난 기간 1~3위 보존.
 -- 칭호는 서버가 준 total_minutes(= 인정된 집중 분 합, sum(gained))로 앱이 계산한다. 앱이 칭호를 보내지 않음(위조 방지).
--- 구 함수 시그니처는 지운다(출시 전이라 구버전 앱 호환 불필요).
+-- 구 함수 submit_score(int,text)·ranking(boolean)은 남긴다: 출시된 1.0.x 앱이 쓴다(아바타는 안 건드림).
 
 alter table public.leaderboard
   add column avatar text not null default '' check (char_length(avatar) <= 16);
-
-drop function public.submit_score(int, text);
-drop function public.ranking(boolean);
 
 create function public.submit_score(p_total int, p_nickname text, p_avatar text)
 returns void language plpgsql security definer set search_path = public as $$
@@ -127,7 +124,7 @@ begin
     order by h.rank;
 end $$;
 
-revoke all on function public.submit_score, public.ranking, public.past_winners,
-  public.period_start from public, anon;
-grant execute on function public.submit_score, public.ranking, public.past_winners
-  to authenticated;
+revoke all on function public.submit_score(int, text, text), public.ranking(text),
+  public.past_winners(text), public.period_start(text, timestamptz) from public, anon;
+grant execute on function public.submit_score(int, text, text), public.ranking(text),
+  public.past_winners(text) to authenticated;

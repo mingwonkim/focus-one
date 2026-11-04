@@ -1,4 +1,4 @@
-package com.looinlabs.focusone
+package com.looinlabs.fokko
 
 import android.content.ComponentName
 import android.content.Intent

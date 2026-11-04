@@ -203,7 +203,10 @@ class _RecordsTabState extends State<RecordsTab> {
               ? Center(child: Text('기록 없음', style: label()))
               : CustomPaint(
                   painter: _BarsPainter(bars, labels, style.ringProgress,
-                      style.divider, style.textMuted)),
+                      style.divider,
+                      DefaultTextStyle.of(context)
+                          .style
+                          .copyWith(fontSize: 11, color: style.textMuted))),
         )),
         if (byTag.isNotEmpty)
           card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -305,7 +308,8 @@ class _BarsPainter extends CustomPainter {
   _BarsPainter(this.values, this.labels, this.color, this.track, this.text);
   final List<int> values;
   final List<String> labels;
-  final Color color, track, text;
+  final Color color, track;
+  final TextStyle text; // 캔버스 글자는 테마 글꼴을 상속하지 않아 직접 받는다
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -323,8 +327,7 @@ class _BarsPainter extends CustomPainter {
       canvas.drawRRect(r, Paint()..color = values[i] == 0 ? track : color);
       if (labels[i].isNotEmpty) {
         final tp = TextPainter(
-          text: TextSpan(
-              text: labels[i], style: TextStyle(fontSize: 11, color: text)),
+          text: TextSpan(text: labels[i], style: text),
           textDirection: TextDirection.ltr,
         )..layout();
         tp.paint(canvas, Offset(i * w + w / 2 - tp.width / 2, h + 4));

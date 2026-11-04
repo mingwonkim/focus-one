@@ -49,9 +49,46 @@
 - [x] 풍경 탭 → '꾸미기' (탭 안 버튼은 '배치 바꾸기')
 - [x] 소리 시트 장면별 정리: 빗소리→숲, 바람→밤, 백색·갈색만 '집중 소음' 공통. 폰 밤 아이콘 별(+) → 달
 - [ ] 아이폰에 최신 빌드 설치 (랭킹·꾸미기 탭 포함) → 실기기 랭킹 참여 확인
-- [ ] 개인정보 처리방침에 랭킹(닉네임·점수) 추가 — 출시 전
+- [x] 앱 이름 FocusOne → Tocko → **Fokko** (2026-10-12, 보이는 이름·Android ID com.looinlabs.fokko·사이트 /fokko·ASC 이름. iOS 번들 ID 유지)
+- [x] Android applicationId·패키지 → com.looinlabs.tocko (debug APK 빌드 확인)
+- [x] 지원 https://looinlabs.com/tocko/ · 개인정보 https://looinlabs.com/tocko/privacy 배포 (랭킹 수집 항목 포함)
+- [x] App Store Connect 앱 등록 (사용자) — app id 6821653231
+- [x] ASC API 키 (~/.config/fokko/asc.env, 저장소 밖) + tool/asc*.py: 문구·카테고리·연령등급·무료·175개국·저작권·버전 1.0.0 반영
+- [x] 심사 연락처·메모 (appStoreReviewDetail, API)
+- [x] 앱 개인정보 게시 · Apple Silicon Mac 사용 가능 끔 (웹)
+- [x] 스토어 스크린샷 6.9" 5장 업로드 (tool/media/seed_test.dart 예시 데이터 → Pro Max 시뮬)
+- [x] iPad 대응 (배율 짧은 변/640 최대 1.6, 가로 두 칸) + iPad 13" 스크린샷 5장 — 심사가 iPad 스크린샷 요구
+- [x] 빌드 3 업로드(Xcode Organizer — CLI 서명은 'No Accounts'로 실패) → 버전 연결 → 심사 제출 (2026-10-12 WAITING_FOR_REVIEW, 자동 출시)
+- [x] 휴식 남은 시간: iOS Live Activity(Dynamic Island·잠금 화면, BreakActivity 확장) + Android 카운트다운 알림 — 시뮬 확인
+- [x] 1.0 거부(10/14, 2.5.1 자동 검사: Family Controls 권한 없이 제출) — App ID에 FAMILY_CONTROLS_DISTRIBUTION 승인돼 있음. 빌드 4(휴식 Live Activity 포함)를 Organizer Custom→Export로 IPA 만들어 family-controls 포함 확인 후 altool 업로드
+- [x] 빌드 4 버전 연결 → 재제출 (10/15 00:56, WAITING_FOR_REVIEW). API PATCH submitted=true는 "not ready"로 실패 → ASC 웹 "심사 업데이트"→"앱 심사에 다시 제출"로 해결
+- [x] 1.0 2차 거부(10/15, 2.5.4 백그라운드 오디오 재생 안 들림) → astra 검토 반영, 빌드 5 업로드
+  - [x] 소리: 끊김(전화·알림 등) 뒤 자동 재개, 로딩 직렬화·실패 재시도, 음량 0이면 정지 (실사용 화면 꺼짐 끊김 원인)
+  - [x] 랭킹: 닉네임 자유 입력 → 단어 조합 자동 생성(UGC 회피), 나가기 = 익명 계정 삭제, 개인정보 처리방침 링크
+  - [x] Live Activity: 앱 첫 동기화에서 남은 표시 정리
+  - [x] 심사 메모 갱신(ASC·store.md)
+  - [x] supabase db push (사용자 실행 10/16) — 익명 가입→leave_ranking→user_not_found 확인
+  - [x] 실기기 증빙 영상: iPhone 미러링 창을 ScreenCaptureKit(창+앱 소리)로 녹화 — 백색소음 시작→홈 화면 소리 계속(-27dB) 확인, 심사 첨부·답장에 첨부
+  - [x] 빌드 5 버전 연결, 아이폰 설치
+  - [x] 해결 센터 답장(영상 첨부) → 재제출 (10/16 00:22, WAITING_FOR_REVIEW)
+- [x] 스토어 홍보 스크린샷 6장(iPhone 6.9"·iPad 13", 문구+실제 화면) + 앱 프리뷰 23초(886×1920, 장면 소리) — tool/store, docs/mobile/store-assets (10/17, 사용자 검토 대기)
+- [x] 1.0.0 승인·출시 확인 (10/18 READY_FOR_SALE)
+- [x] Windows용 ASC API 키(fokko-windows, 앱 관리) → ~/.config/fokko/ · 업로드 스크립트가 편집 가능한 버전을 고르게(asc.ko_loc) · pubspec 1.0.1+6
+- [x] 1.0.1 ASC 버전 생성 + 스크린샷 iPhone 6·iPad 6 + 앱 프리뷰 업로드 (10/18, 처리 완료 COMPLETE)
+- [x] 1.0.1 빌드 6 업로드·처리 VALID·버전 연결 (10/18, family-controls 확인)
+- [x] 1.0.1 새 기능 문구 + 심사 제출 (10/18, tool/asc_submit.py, WAITING_FOR_REVIEW)
+- [x] 1.0.1 1차 거절(10/20, 2.3.4: 앱 프리뷰에 기기 테두리) → 프리뷰를 앱 화면 전체+상태바 문구로 재생성·업로드 → 10/25 재제출
+- [ ] 1.0.1 심사 결과 확인
+- [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
-- [ ] Android 출시: release AAB → Play Console 업로드 (접근성 선언·시연 영상과 함께)
+- [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
+  - [x] 서명 AAB 빌드 (업로드 키 CN=FocusOne, android/key.properties → ~/.config/focusone)
+  - [x] 주소: 비상주 사무실 안 함 — 하루전(개인 계정, 인앱 구매)에 이미 공개돼 있음
+  - [x] D-U-N-S 신청 제출 (2026-10-13, Apple duns-lookup 무료, 사업자 주소) → 발급 1~2주 대기, 안내 메일 develop@looinlabs.com
+  - [ ] D-U-N-S 결과 대기 — 10/16 11:38 D&B '사건 11104000 해결(Resolved)' 메일 옴, 번호는 미기재(추적 11045680, 요청 키 BYFVC73Y96, 상호 looinlabs). 다음: Apple D-U-N-S 조회 도구로 번호 확인, 없으면 번호 메일 대기
+  - [ ] Play 조직 계정 가입($25 사용자 결제) → 서비스 계정 API 키 ~/.config/fokko/
+  - [ ] Play 스토어 자료(문구·스크린샷 1080×1920·그래픽 1024×500·아이콘 512)·접근성 선언·시연 영상
+  - [ ] 첫 AAB 업로드 → 심사 제출
 - [ ] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사
 
 ## 2026-11-04 — 소리 튐 + 게임화
@@ -66,4 +103,9 @@
 - [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
 - [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
 - [ ] (보류) 주간 랭킹 상위 5명 커피 쿠폰 — 사용자 50명 이상일 때. 필요: Apple/Google 로그인 자격, 동점 = 먼저 도달, 상위 기록 수동 확인, 당첨자 연락처 동의, 앱 내 공식 규칙
+- [ ] (나중에) 내부 ID를 Tocko로 — 사용자 결정 2026-10-12: 지금은 보이는 이름만 Tocko, iOS 번들 ID는 출시 위해 유지
+  - iOS 번들 ID com.looinlabs.focusone(+ .FocusMonitor), App Group group.com.looinlabs.focusone → tocko: Family Controls 배포 승인을 새 ID로 다시 받아야 함(수일~수주). 승인 후 업데이트로
+  - 채널 이름 focusone/lock, ManagedSettingsStore 'focusone', Dart 패키지 focus_one, CI 산출물 이름 focus-one, 저장소 이름
+  - 주의: 데이터 파일 focus_one_data.json·데스크탑 앱 데이터 경로는 패키지명에 묶임 → 바꾸면 기존 기록 이전 코드 필요
+- [ ] (나중에) macOS 버전 출시 — 폰 출시 후. macos/ 커밋·앱 이름 Tocko(지금은 focus_one으로 보임)·Developer ID 서명+공증 또는 Mac App Store
 - [ ] (보류) Apple Developer 공증 — 경고 없는 배포가 필요해지면
