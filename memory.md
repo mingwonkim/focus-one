@@ -20,6 +20,14 @@
 - 리뷰: astra 리뷰 1(12건) 반영 기록 docs/mobile/review-1.md.
 - Android 업로드 키: `~/.config/focusone/upload-keystore.jks` + key.properties (저장소 밖, 분실 시 Play 업로드 키 재설정 필요 → 백업 필수).
 
+## 게임화 (2026-11-04)
+- 동기: 실사용 인기 없음 → 자랑 욕구. 숫자 레벨 금지, 호칭으로 (사용자 요구).
+- 칭호 = 끝까지 완료한 집중 누적 분(`AppState.focusMinutesTotal`) — 탈출로 안 내려감. 문턱은 Fable 제안의 절반(사용자 '마스터 더 빨리'): 0·30·150·450·1200·2400·4800·9000·15000·30000분. 단일 소스 `lib/models/focus_title.dart`.
+- 서버는 칭호를 안 받는다(위조 방지). `ranking()`이 `total_minutes = sum(gained)`(하루 720 상한 거친 값)만 주고 앱이 같은 문턱으로 계산 → 전당 칭호 ≤ 로컬 칭호일 수 있음(안내문 있음).
+- 지난 주/달 1~3위는 `hall_of_fame`에 지연 스냅샷(첫 조회자가 저장, 크론 없음). 동점은 먼저 갱신한 사람(row_number, updated_at).
+- 아바타 = 데려올 친구 id (새 선택 UI 없음).
+- 음원: ffmpeg `alimiter`는 lookahead만큼 지연 → `latency=1` 필수(안 하면 반복마다 5ms 무음).
+
 ## 앱 아이콘 v2 (2026-10-11) — 현재
 - 사용자 선택: "네 친구 빼꼼" F3-b — 숲·밤·바다·일상 친구(새싹사슴·달토끼·물결고래·갈색 라떼멍) 얼굴이 네 색 링 아래로 빼꼼. 앱 안 캐릭터와 같은 스타일이어야 한다는 사용자 지적으로 H3(실사풍 고래) 교체.
 - 원본 `assets/icon/source.png`(1024 불투명) → `python3 tool/make_icons.py` 가 iOS·macOS·Windows·Linux·트레이·Android 전부 생성.

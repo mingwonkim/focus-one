@@ -275,6 +275,40 @@ abstract class AppDuration {
   static const micro = Duration(milliseconds: 150);
   static const enter = Duration(milliseconds: 200);
   static const transition = Duration(milliseconds: 280);
+  static const titleSpin = Duration(seconds: 6); // 높은 칭호 테두리 한 바퀴
+}
+
+/// 칭호 테두리 한 단계. 장면과 무관한 고정 색 = 칭호의 정체성.
+class TitleRing {
+  const TitleRing(this.colors,
+      {required this.width, this.glow = 0, this.spin = false, this.stars = false});
+  final List<Color> colors; // 1색이면 단색, 2색 이상이면 원형 그라데이션
+  final double width;
+  final double glow; // 바깥 빛 번짐 반경 (0 = 없음)
+  final bool spin; // 천천히 회전
+  final bool stars; // 링 위 작은 별 3개 (마스터)
+}
+
+/// FocusTitle.index 순 (씨앗 → 마스터). 숲 녹색 → 달빛 금·라벤더 → 바다 청록 → 금.
+abstract class TitleRings {
+  static const all = <TitleRing>[
+    TitleRing([Color(0xFFB9C2BC)], width: 2),
+    TitleRing([Color(0xFF8FD3A6)], width: 2.5),
+    TitleRing([Color(0xFF52C47C), Color(0xFF8FE2AB)], width: 3),
+    TitleRing([Color(0xFF246B4B), Color(0xFF8FE2AB)], width: 3),
+    TitleRing([Color(0xFF246B4B), Color(0xFFE3C77F)], width: 3.5, glow: 6),
+    TitleRing([Color(0xFFE3C77F), Color(0xFFFFF3C4), Color(0xFFC2B4ED)],
+        width: 3.5, glow: 8),
+    TitleRing([Color(0xFFC2B4ED), Color(0xFFE3C77F), Color(0xFF8FA8FF)],
+        width: 4, glow: 10, spin: true),
+    TitleRing([Color(0xFF7CBFE7), Color(0xFF3585BD), Color(0xFF9EE6E0)],
+        width: 4, glow: 10, spin: true),
+    TitleRing([Color(0xFF142F40), Color(0xFF3585BD), Color(0xFF9EE6E0)],
+        width: 4.5, glow: 12, spin: true),
+    TitleRing([Color(0xFFB98A2E), Color(0xFFFFF3C4), Color(0xFFE3C77F)],
+        width: 5, glow: 16, spin: true, stars: true),
+  ];
+  static const star = Color(0xFFFFFFFF);
 }
 
 /// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)
@@ -302,6 +336,10 @@ abstract class MobileSize {
   static const int minMinutes = 10;
   static const int maxMinutes = 180;
   static const int stepMinutes = 5;
+  // 칭호 테두리 아바타
+  static const double avatar = 56; // 프로필 카드
+  static const double avatarRow = 36; // 랭킹 행
+  static const double avatarLarge = 96; // 승급·공유·1위
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

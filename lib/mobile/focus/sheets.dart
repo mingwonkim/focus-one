@@ -7,7 +7,10 @@ import 'package:provider/provider.dart';
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
+import '../../models/focus_title.dart';
 import '../../state/app_state.dart';
+import '../share/share_card.dart';
+import '../widgets/title_avatar.dart';
 
 Future<T?> showFocusSheet<T>(
     BuildContext context, String title, WidgetBuilder body) {
@@ -358,18 +361,23 @@ Future<void> showRewardSheet(BuildContext context) {
   if (r == null) return Future.value();
   final c = Companion.byId(r.companionId);
   final drops = (r.focusedSec ?? 0) ~/ 60;
-  HapticFeedback.mediumImpact();
+  final promoted = s.lastPromotion;
+  promoted != null ? HapticFeedback.heavyImpact() : HapticFeedback.mediumImpact();
   return showFocusSheet(context, '집중 완료', (ctx) {
     final style = s.scene.style;
     final reduce = MediaQuery.maybeDisableAnimationsOf(ctx) ?? false;
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
           MobileSize.gutter, 0, MobileSize.gutter, 24),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('${r.minutes}분 동안 집중했어요',
             style: TextStyle(fontSize: 13, color: style.textMuted)),
         const SizedBox(height: 12),
-        if (c != null)
+        if (promoted != null) ...[
+          _Promotion(style: style, title: promoted, asset: c?.asset ?? ''),
+          const SizedBox(height: 12),
+        ],
+        if (c != null && promoted == null) // 승급이면 친구는 새 테두리 안에 보인다
           TweenAnimationBuilder<double>(
             tween: Tween(begin: reduce ? 1 : 0.85, end: 1),
             duration:
@@ -436,6 +444,51 @@ Future<void> showRewardSheet(BuildContext context) {
       ]),
     );
   }).whenComplete(s.clearLastReward);
+}
+
+/// 승급 축하: 새 테두리 아바타 팝 + 새 칭호 + 자랑하기
+class _Promotion extends StatelessWidget {
+  const _Promotion(
+      {required this.style, required this.title, required this.asset});
+  final SceneStyle style;
+  final FocusTitle title;
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(MobileSize.cardPadding),
+      decoration: BoxDecoration(
+          color: style.cardBg,
+          borderRadius: BorderRadius.circular(AppRadius.lg)),
+      child: Column(children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: reduce ? 1 : 0.6, end: 1),
+          duration: reduce ? Duration.zero : const Duration(milliseconds: 480),
+          curve: Curves.easeOutBack,
+          builder: (_, v, child) => Transform.scale(scale: v, child: child),
+          child: TitleAvatar(
+              title: title,
+              asset: asset,
+              background: style.rowBg,
+              size: MobileSize.avatarLarge),
+        ),
+        const SizedBox(height: MobileSize.iconGap),
+        Text('승급! 이제 \'${title.label}\'예요',
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: style.textStrong)),
+        TextButton.icon(
+          onPressed: () => showShareSheet(context),
+          icon: Icon(Icons.ios_share_rounded, color: style.accent),
+          label: Text('자랑하기', style: TextStyle(color: style.accent)),
+        ),
+      ]),
+    );
+  }
 }
 
 /// 소리: 장면별 소리·백색·갈색·끄기 + 볼륨. 즉시 적용, 다음 집중에도 기억.

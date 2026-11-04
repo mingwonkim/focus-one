@@ -68,21 +68,22 @@ Future<void> runMobile() async {
     }
   });
 
-  // 랭킹: 참여(닉네임 있음)했으면 점수가 바뀔 때마다 제출. 오프라인이면 다음 변경 때 다시.
+  // 랭킹: 참여(닉네임 있음)했으면 점수·아바타가 바뀔 때마다 제출. 오프라인이면 다음 변경 때 다시.
   final ranking = RankingService();
   try {
     await RankingService.init();
-    String? sent; // 마지막으로 보낸 '닉네임:점수'
+    String? sent; // 마지막으로 보낸 '닉네임:아바타:점수'
     var retryAt = DateTime(0);
     Future<void> sync() async {
       final name = appState.rankNickname;
-      final key = '$name:${appState.rankScore}';
+      final avatar = appState.selectedCompanion.id;
+      final key = '$name:$avatar:${appState.rankScore}';
       if (name == null || key == sent || DateTime.now().isBefore(retryAt)) {
         return;
       }
       sent = key;
       try {
-        await ranking.submit(appState.rankScore, name);
+        await ranking.submit(appState.rankScore, name, avatar);
       } catch (_) {
         sent = null; // ponytail: 1분 뒤 다음 변경 알림 때 재시도
         retryAt = DateTime.now().add(const Duration(minutes: 1));

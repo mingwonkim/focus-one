@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
+import 'package:focus_one/models/focus_title.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
 import 'package:focus_one/state/stats.dart';
@@ -86,6 +87,32 @@ void main() {
     expect(c.drops, 25);
     expect(c.buyDecor('grass'), isTrue);
     expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
+    c.dispose();
+  });
+
+  test('칭호 승급: 누적 30분을 넘긴 세션에서만, 그만두기는 승급 없음', () async {
+    final t0 = DateTime(2026, 10, 11, 9);
+    final a = await boot(t0);
+    withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
+    withClock(Clock.fixed(t0.add(const Duration(minutes: 10))), a.abandonSession);
+    expect(a.title, FocusTitle.seed);
+    expect(a.lastPromotion, isNull);
+    final t1 = t0.add(const Duration(hours: 1));
+    withClock(Clock.fixed(t1), () => a.startTimer(allowNoTask: true));
+    await a.flush();
+    a.dispose();
+    final b = await boot(t1.add(const Duration(hours: 1))); // 25분 완료 → 아직 씨앗
+    expect(b.focusMinutesTotal, 25);
+    expect(b.lastPromotion, isNull);
+    final t2 = t1.add(const Duration(hours: 1));
+    withClock(Clock.fixed(t2), () => b.startTimer(allowNoTask: true));
+    await b.flush();
+    b.dispose();
+    final c = await boot(t2.add(const Duration(hours: 1))); // 50분 → 새싹
+    expect(c.title, FocusTitle.sprout);
+    expect(c.lastPromotion, FocusTitle.sprout);
+    c.clearLastReward();
+    expect(c.lastPromotion, isNull);
     c.dispose();
   });
 

@@ -1,12 +1,18 @@
 // lib/mobile/records/ranking_page.dart
-// 기록 탭 → 랭킹. 참여 전엔 안내 + 닉네임, 참여 후엔 이번 주/누적 순위.
+// 기록 탭 → 명예의 전당. 참여 전엔 안내 + 닉네임, 참여 후엔 이번 주/이번 달/누적 순위
+// (1~3위 시상대 + 지난 기간 1~3위 + 칭호 테두리 아바타).
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
+import '../../models/collection.dart';
+import '../../models/focus_title.dart';
 import '../../services/ranking_service.dart';
 import '../../state/app_state.dart';
+import '../widgets/title_avatar.dart';
+
+typedef _Board = ({List<RankRow> rows, List<RankRow> past});
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -17,16 +23,23 @@ class RankingPage extends StatefulWidget {
 
 class _RankingPageState extends State<RankingPage> {
   final _name = TextEditingController();
-  bool _week = true;
+  RankPeriod _period = RankPeriod.week;
   bool _busy = false;
-  Future<List<RankRow>>? _rows;
+  Future<_Board>? _rows;
 
   @override
   void initState() {
     super.initState();
-    if (context.read<AppState>().rankNickname != null) {
-      _rows = context.read<RankingService>().ranking(week: _week);
-    }
+    if (context.read<AppState>().rankNickname != null) _rows = _fetch();
+  }
+
+  Future<_Board> _fetch() async {
+    final svc = context.read<RankingService>();
+    final past = svc.pastWinners(_period).catchError((Object e) {
+      debugPrint('past_winners: $e'); // 지난 기록이 안 와도 순위는 보여 준다
+      return <RankRow>[];
+    });
+    return (rows: await svc.ranking(_period), past: await past);
   }
 
   @override
@@ -36,7 +49,7 @@ class _RankingPageState extends State<RankingPage> {
   }
 
   void _load() {
-    final rows = context.read<RankingService>().ranking(week: _week);
+    final rows = _fetch();
     setState(() {
       _rows = rows; // 화살표(=>)로 쓰면 Future를 반환해 setState가 에러
     });
@@ -48,7 +61,9 @@ class _RankingPageState extends State<RankingPage> {
     final s = context.read<AppState>();
     setState(() => _busy = true);
     try {
-      await context.read<RankingService>().submit(s.rankScore, name);
+      await context
+          .read<RankingService>()
+          .submit(s.rankScore, name, s.selectedCompanion.id);
       s.setRankNickname(name);
       _load();
     } catch (e) {
@@ -104,7 +119,7 @@ class _RankingPageState extends State<RankingPage> {
         backgroundColor: style.cardBg,
         foregroundColor: style.textStrong,
         surfaceTintColor: Colors.transparent,
-        title: const Text('랭킹',
+        title: const Text('명예의 전당',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
       ),
       body: SafeArea(
@@ -137,6 +152,7 @@ class _RankingPageState extends State<RankingPage> {
         line(Icons.water_drop_outlined, '점수 = 모은 물방울 − 비상 탈출에 쓴 물방울'),
         line(Icons.storefront_outlined, '상점에서 쓴 물방울은 점수에서 빠지지 않아요'),
         line(Icons.schedule_rounded, '하루 최대 12시간까지 점수에 들어가요'),
+        line(Icons.military_tech_outlined, '칭호 테두리는 참여한 뒤 쌓은 집중 시간으로 보여요'),
         line(Icons.person_outline_rounded, '닉네임과 점수만 올라가요. 가입은 필요 없어요'),
         const SizedBox(height: MobileSize.sectionGap),
         TextField(
@@ -172,21 +188,22 @@ class _RankingPageState extends State<RankingPage> {
       Padding(
         padding: const EdgeInsets.fromLTRB(
             MobileSize.gutter, 8, MobileSize.gutter, MobileSize.cardGap),
-        child: SegmentedButton<bool>(
+        child: SegmentedButton<RankPeriod>(
           showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: true, label: Text('이번 주')),
-            ButtonSegment(value: false, label: Text('누적')),
+            ButtonSegment(value: RankPeriod.week, label: Text('이번 주')),
+            ButtonSegment(value: RankPeriod.month, label: Text('이번 달')),
+            ButtonSegment(value: RankPeriod.all, label: Text('누적')),
           ],
-          selected: {_week},
+          selected: {_period},
           onSelectionChanged: (v) {
-            _week = v.first;
+            _period = v.first;
             _load();
           },
         ),
       ),
       Expanded(
-        child: FutureBuilder<List<RankRow>>(
+        child: FutureBuilder<_Board>(
           future: _rows,
           builder: (context, snap) {
             if (snap.hasError) {
@@ -199,7 +216,8 @@ class _RankingPageState extends State<RankingPage> {
             if (!snap.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final rows = snap.data!;
+            final (:rows, :past) = snap.data!;
+            final podium = rows.where((r) => r.rank <= 3).take(3).toList();
             return RefreshIndicator(
               onRefresh: () async {
                 _load();
@@ -209,7 +227,9 @@ class _RankingPageState extends State<RankingPage> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: MobileSize.gutter),
                 children: [
-                  for (final r in rows) _row(style, r),
+                  if (past.isNotEmpty) _past(style, past),
+                  if (podium.isNotEmpty) _podium(style, podium),
+                  for (final r in rows.skip(podium.length)) _row(style, r),
                   const SizedBox(height: MobileSize.sectionGap),
                   Center(
                     child: TextButton(
@@ -226,10 +246,103 @@ class _RankingPageState extends State<RankingPage> {
     ]);
   }
 
+  /// 지난 주/달 1~3위 — 지나도 남는 명예
+  Widget _past(SceneStyle style, List<RankRow> past) => Container(
+        margin: const EdgeInsets.only(bottom: MobileSize.cardGap),
+        padding: const EdgeInsets.all(MobileSize.cardPadding),
+        decoration: BoxDecoration(
+          color: style.rowBg,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadow.card(style.rowShadow),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(_period == RankPeriod.week ? '지난 주 명예의 전당' : '지난 달 명예의 전당',
+              style: TextStyle(fontSize: 13, color: style.textMuted)),
+          const SizedBox(height: MobileSize.cardGap),
+          for (final r in past)
+            Padding(
+              padding: const EdgeInsets.only(top: MobileSize.labelGap),
+              child: Row(children: [
+                Text(_medal(r.rank), style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: MobileSize.iconGap),
+                _avatar(style, r, MobileSize.avatarRow),
+                const SizedBox(width: MobileSize.iconGap),
+                Expanded(child: _nick(style, r, 15)),
+                Text('💧 ${r.points}',
+                    style: TextStyle(fontSize: 14, color: style.textMuted)),
+              ]),
+            ),
+        ]),
+      );
+
+  /// 1~3위 시상대: 2 · 1 · 3 순서, 1위가 가장 크게
+  Widget _podium(SceneStyle style, List<RankRow> top) {
+    Widget spot(RankRow r) {
+      final first = r.rank == 1;
+      return Expanded(
+        child: Column(children: [
+          Text(_medal(r.rank), style: TextStyle(fontSize: first ? 28 : 22)),
+          const SizedBox(height: MobileSize.labelGap),
+          _avatar(style, r,
+              first ? MobileSize.avatarLarge : MobileSize.avatar + 8),
+          const SizedBox(height: MobileSize.iconGap),
+          _nick(style, r, first ? 16 : 14, center: true),
+          Text(FocusTitle.of(r.totalMinutes).label,
+              style: TextStyle(fontSize: 12, color: style.accent)),
+          Text('💧 ${r.points}',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: style.textStrong)),
+        ]),
+      );
+    }
+
+    final order = [
+      if (top.length > 1) top[1],
+      top[0],
+      if (top.length > 2) top[2],
+    ];
+    return Container(
+      margin: const EdgeInsets.only(bottom: MobileSize.cardGap),
+      padding: const EdgeInsets.symmetric(
+          vertical: MobileSize.cardPadding, horizontal: AppSpacing.s8),
+      decoration: BoxDecoration(
+        color: style.rowBg,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadow.card(style.rowShadow),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [for (final r in order) spot(r)],
+      ),
+    );
+  }
+
+  String _medal(int rank) => switch (rank) { 1 => '🥇', 2 => '🥈', _ => '🥉' };
+
+  Widget _avatar(SceneStyle style, RankRow r, double size) => TitleAvatar(
+        title: FocusTitle.of(r.totalMinutes),
+        asset: Companion.byId(r.avatar)?.asset ?? '',
+        background: style.cardBg,
+        size: size,
+      );
+
+  Widget _nick(SceneStyle style, RankRow r, double size,
+          {bool center = false}) =>
+      Text(r.isMe ? '${r.nickname} (나)' : r.nickname,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: center ? TextAlign.center : TextAlign.start,
+          style: TextStyle(
+              fontSize: size,
+              fontWeight: FontWeight.w600,
+              color: style.textStrong));
+
   Widget _row(SceneStyle style, RankRow r) => Container(
         margin: const EdgeInsets.only(bottom: MobileSize.cardGap),
         padding: const EdgeInsets.symmetric(
-            horizontal: MobileSize.cardPadding, vertical: 12),
+            horizontal: MobileSize.cardPadding, vertical: 10),
         decoration: BoxDecoration(
           color: style.rowBg,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -239,18 +352,23 @@ class _RankingPageState extends State<RankingPage> {
         ),
         child: Row(children: [
           SizedBox(
-            width: 40,
+            width: 36,
             child: Text('${r.rank}',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: r.rank <= 3 ? style.accent : style.textMuted)),
+                    color: style.textMuted)),
           ),
+          _avatar(style, r, MobileSize.avatarRow),
+          const SizedBox(width: MobileSize.iconGap + 4),
           Expanded(
-            child: Text(r.isMe ? '${r.nickname} (나)' : r.nickname,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 16, color: style.textStrong)),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _nick(style, r, 16),
+                  Text(FocusTitle.of(r.totalMinutes).label,
+                      style: TextStyle(fontSize: 12, color: style.accent)),
+                ]),
           ),
           Text('💧 ${r.points}',
               style: TextStyle(

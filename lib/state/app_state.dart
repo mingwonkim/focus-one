@@ -8,6 +8,7 @@ import '../core/design_tokens.dart';
 import '../data/local_store.dart';
 import '../models/blocker_settings.dart';
 import '../models/collection.dart';
+import '../models/focus_title.dart';
 import '../models/task.dart';
 
 /// 타이머 사이클: 대기 → 집중 → 휴식 → 대기
@@ -34,6 +35,7 @@ class AppState extends ChangeNotifier {
   bool autoBreak = true;
   Progress _progress = const Progress(); // 폰: 태그·친구·풍경·물방울
   FocusSession? _lastReward; // 방금 완료한 세션 (보상 시트 표시용, 저장 안 함)
+  FocusTitle? _lastPromotion; // 방금 세션으로 오른 칭호 (보상 시트와 같은 수명)
 
   int _breakTotalSeconds = 5 * 60;
   DateTime? _breakEndsAt; // 휴식 중일 때만 (저장 안 함 — 꺼지면 휴식은 버린다)
@@ -412,11 +414,16 @@ class AppState extends ChangeNotifier {
   void setRankNickname(String? v) =>
       _setProgress(_progress.copyWith(rankNickname: () => v));
 
+  /// 끝까지 완료한 집중의 누적 분 (= 모은 물방울 총량, 칭호 기준)
+  int get focusMinutesTotal => _sessions
+      .where((x) => x.outcome == SessionOutcome.completed)
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  FocusTitle get title => FocusTitle.of(focusMinutesTotal);
+
   /// 랭킹 점수 = 지금까지 모은 물방울 − 비상 탈출에 쓴 물방울. 상점 구매는 빼지 않는다.
   int get rankScore {
-    final earned = _sessions
-        .where((x) => x.outcome == SessionOutcome.completed)
-        .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+    final earned = focusMinutesTotal;
     return (earned - _progress.escapeSpent).clamp(0, earned);
   }
 
@@ -546,6 +553,7 @@ class AppState extends ChangeNotifier {
         : clock.now();
     final focused =
         outcome == SessionOutcome.completed ? a.plannedSec : a.focusedSec(now);
+    final titleBefore = title;
     _sessions.add(FocusSession(
       id: a.id,
       taskId: a.taskId,
@@ -569,6 +577,7 @@ class AppState extends ChangeNotifier {
       _progress = _progress.copyWith(
           owned: owned, drops: _progress.drops + focused ~/ 60);
       _lastReward = _sessions.last;
+      _lastPromotion = title != titleBefore ? title : null;
     }
   }
 
@@ -593,8 +602,10 @@ class AppState extends ChangeNotifier {
       _setProgress(_progress.copyWith(lockEnabled: v));
   int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
   FocusSession? get lastReward => _lastReward;
+  FocusTitle? get lastPromotion => _lastPromotion;
   void clearLastReward() {
     _lastReward = null;
+    _lastPromotion = null;
     notifyListeners();
   }
 
