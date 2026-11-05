@@ -421,19 +421,28 @@ Future<void> showRewardSheet(BuildContext context) {
           child: Text('💧 물방울 +$drops',
               style: TextStyle(fontSize: 16, color: style.textStrong)),
         ),
-        for (final g in s.lastGoalRewards) ...[
+        for (final g in s.lastQuestRewards) ...[
           const SizedBox(height: 8),
           _RewardRow(
             style: style,
             text: switch (g.kind) {
-              GoalKind.daily => '오늘 목표 달성 · 물방울 +${g.drops}',
-              GoalKind.weekly =>
+              QuestKind.firstSession => '오늘 첫 집중 · 물방울 +${g.drops}',
+              QuestKind.dailyGoal => '오늘 목표 달성 · 물방울 +${g.drops}',
+              QuestKind.weeklyGoal =>
                 '이번 주 목표 달성 · 물방울 +${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
             },
           ),
         ],
         const SizedBox(height: 8),
         _RewardRow(style: style, text: '연속 ${s.streakDays}일'),
+        if (c != null &&
+            CompanionStage.of(s.companionMinutes(c.id) - r.minutes) !=
+                s.companionStage(c.id)) ...[
+          const SizedBox(height: 8),
+          _RewardRow(
+              style: style,
+              text: '${c.name}이(가) ${s.companionStage(c.id).label}이 됐어요'),
+        ],
         if (r.taskId.isNotEmpty &&
             s.pendingTasks.any((t) => t.id == r.taskId)) ...[
           const SizedBox(height: 8),

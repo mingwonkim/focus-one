@@ -1,6 +1,7 @@
 // lib/models/growth.dart
 // 폰 v3 성장: 목표·연속일·얼음. 계산은 전부 순수 함수이고 저장은 Progress.growth 한 덩어리.
 // XP·칭호는 저장하지 않는다 — 완료 세션에서 계산한다 (docs/v3/app-design-spec.md §1, §6).
+import 'focus_title.dart';
 import 'task.dart';
 
 /// 하루를 가리키는 키 (기기 시각 기준 yyyy-MM-dd). 문자열 비교가 곧 날짜 비교다.
@@ -69,7 +70,8 @@ class Growth {
   final Set<String> iceDays;
   final GoalPlan daily;
   final GoalPlan weekly;
-  final Set<String> rewarded; // 'daily:<날짜>' · 'weekly:<월요일>'
+  final Set<String> rewarded; // 'first:<날짜>' · 'daily:<날짜>' · 'weekly:<월요일>'
+  final Set<String> unopened; // 아직 안 연 상자
 
   const Growth({
     this.migratedOn,
@@ -79,6 +81,7 @@ class Growth {
     this.daily = const GoalPlan(dailyDefault),
     this.weekly = const GoalPlan(weeklyDefault),
     this.rewarded = const {},
+    this.unopened = const {},
   });
 
   Growth copyWith({
@@ -89,6 +92,7 @@ class Growth {
     GoalPlan? daily,
     GoalPlan? weekly,
     Set<String>? rewarded,
+    Set<String>? unopened,
   }) =>
       Growth(
         migratedOn: migratedOn ?? this.migratedOn,
@@ -98,6 +102,7 @@ class Growth {
         daily: daily ?? this.daily,
         weekly: weekly ?? this.weekly,
         rewarded: rewarded ?? this.rewarded,
+        unopened: unopened ?? this.unopened,
       );
 
   Map<String, dynamic> toJson() => {
@@ -108,6 +113,7 @@ class Growth {
         'daily': daily.toJson(),
         'weekly': weekly.toJson(),
         'rewarded': rewarded.toList(),
+        'unopened': unopened.toList(),
       };
 
   factory Growth.fromJson(Map<String, dynamic>? j) => Growth(
@@ -120,6 +126,7 @@ class Growth {
         weekly: GoalPlan.fromJson(
             j?['weekly'] as Map<String, dynamic>?, weeklyDefault),
         rewarded: {...(j?['rewarded'] as List? ?? const []).cast<String>()},
+        unopened: {...(j?['unopened'] as List? ?? const []).cast<String>()},
       );
 
   /// 이행: 지난 날에는 얼음을 소급해 쓰지 않는다. 여러 번 불러도 같다.
@@ -185,36 +192,107 @@ class Growth {
     return g.copyWith(evaluatedThrough: through);
   }
 
-  /// 이번 달성으로 새로 받을 보상. 받은 키는 다시 나오지 않는다.
+  /// 이번 완료로 새로 받을 보상. 받은 키는 다시 나오지 않고, 상자는 열 때까지 남는다.
+  /// 보상은 달성 순간 확정이며 여는 건 연출일 뿐이다.
   Growth rewardedFor(
     String day, {
     required int dayMinutes,
     required int weekMinutes,
-    required void Function(GoalReward) onReward,
+    required void Function(QuestReward) onReward,
   }) {
     var g = this;
-    final dailyKey = 'daily:$day';
-    if (dayMinutes >= daily.on(day) && !rewarded.contains(dailyKey)) {
-      g = g.copyWith(rewarded: {...g.rewarded, dailyKey});
-      onReward(const GoalReward(GoalKind.daily, dailyRewardDrops, 0));
-    }
-    final week = weekKey(day);
-    final weeklyKey = 'weekly:$week';
-    if (weekMinutes >= weekly.on(week) && !rewarded.contains(weeklyKey)) {
-      final gained = ice < iceMax ? 1 : 0;
+    void grant(QuestKind kind, String key) {
+      if (g.rewarded.contains(key)) return;
+      final gainedIce =
+          kind == QuestKind.weeklyGoal && g.ice < iceMax ? 1 : 0;
       g = g.copyWith(
-          rewarded: {...g.rewarded, weeklyKey}, ice: g.ice + gained);
-      onReward(GoalReward(GoalKind.weekly, weeklyRewardDrops, gained));
+        rewarded: {...g.rewarded, key},
+        unopened: {...g.unopened, key},
+        ice: g.ice + gainedIce,
+      );
+      onReward(QuestReward(kind, key, kind.drops, gainedIce));
+    }
+
+    grant(QuestKind.firstSession, 'first:$day');
+    if (dayMinutes >= daily.on(day)) grant(QuestKind.dailyGoal, 'daily:$day');
+    final week = weekKey(day);
+    if (weekMinutes >= weekly.on(week)) {
+      grant(QuestKind.weeklyGoal, 'weekly:$week');
     }
     return g;
   }
+
+  Growth opened(Iterable<String> keys) =>
+      copyWith(unopened: unopened.difference(keys.toSet()));
 }
 
-enum GoalKind { daily, weekly }
+enum QuestKind {
+  firstSession(5),
+  dailyGoal(Growth.dailyRewardDrops),
+  weeklyGoal(Growth.weeklyRewardDrops);
 
-class GoalReward {
-  final GoalKind kind;
+  const QuestKind(this.drops);
+  final int drops;
+}
+
+class QuestReward {
+  final QuestKind kind;
+  final String key;
   final int drops;
   final int ice;
-  const GoalReward(this.kind, this.drops, this.ice);
+  const QuestReward(this.kind, this.key, this.drops, this.ice);
+}
+
+/// 성장 지도의 칸. 25XP마다 하나, 칭호 문턱은 큰 칸. XP에서 계산하므로 저장하지 않는다.
+class MapNode {
+  final int xp;
+  final FocusTitle? title;
+  const MapNode(this.xp, this.title);
+
+  static const step = 25;
+
+  static final List<MapNode> all = () {
+    final titles = {for (final t in FocusTitle.values) t.minMinutes: t};
+    final xps = <int>{
+      ...titles.keys,
+      for (var x = 0; x <= FocusTitle.master.minMinutes; x += step) x,
+    }.toList()
+      ..sort();
+    return [for (final x in xps) MapNode(x, titles[x])];
+  }();
+
+  /// 아직 닿지 않은 첫 칸. 끝까지 갔으면 마지막 칸.
+  static int currentIndex(int xp) {
+    final i = all.indexWhere((n) => n.xp > xp);
+    return i < 0 ? all.length - 1 : i;
+  }
+}
+
+/// 친구 성장: 그 친구와 끝까지 완료한 누적 분. 능력치 없음, 내려가지 않음.
+enum CompanionStage {
+  basic('만남', 0),
+  sprout('단짝', 120),
+  glow('빛나는 단짝', 600);
+
+  const CompanionStage(this.label, this.minMinutes);
+  final String label;
+  final int minMinutes;
+
+  static CompanionStage of(int minutes) =>
+      values.lastWhere((s) => minutes >= s.minMinutes);
+
+  CompanionStage? get next =>
+      this == glow ? null : values[index + 1];
+}
+
+/// 업적: 재화 없음, 기록에서 계산
+enum Achievement {
+  firstFocus('첫 집중', '집중을 처음 끝까지 해냈어요'),
+  week('7일 연속', '7일 연속 집중했어요'),
+  month('30일 연속', '30일 연속 집중했어요'),
+  allFriends('모든 친구', '친구 16종을 모두 만날 수 있어요');
+
+  const Achievement(this.label, this.detail);
+  final String label;
+  final String detail;
 }

@@ -232,12 +232,37 @@ class AppState extends ChangeNotifier {
     _setProgress(_progress.copyWith(growth: next));
   }
 
-  /// 방금 세션으로 달성한 목표 (보상 시트와 같은 수명)
-  List<GoalReward> get lastGoalRewards => _lastGoalRewards;
-  List<GoalReward> _lastGoalRewards = const [];
+  /// 방금 세션으로 달성한 퀘스트 (보상 시트와 같은 수명)
+  List<QuestReward> get lastQuestRewards => _lastQuestRewards;
+  List<QuestReward> _lastQuestRewards = const [];
+
+  Set<String> get unopenedChests => _growth.unopened;
+  bool isRewarded(String key) => _growth.rewarded.contains(key);
+  String get todayKey => _today;
+  String get thisWeekKey => weekKey(_today);
+
+  void openChests(Iterable<String> keys) => _setProgress(
+      _progress.copyWith(growth: _growth.opened(keys)));
+
+  /// 그 친구와 끝까지 완료한 누적 분
+  int companionMinutes(String id) => _sessions
+      .where((x) =>
+          x.outcome == SessionOutcome.completed && x.companionId == id)
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  CompanionStage companionStage(String id) =>
+      CompanionStage.of(companionMinutes(id));
+
+  bool hasAchievement(Achievement a) => switch (a) {
+        Achievement.firstFocus =>
+          _sessions.any((x) => x.outcome == SessionOutcome.completed),
+        Achievement.week => bestStreak >= 7,
+        Achievement.month => bestStreak >= 30,
+        Achievement.allFriends => Companion.all.every(isUnlocked),
+      };
 
   void _grantGoalRewards(String day) {
-    final gained = <GoalReward>[];
+    final gained = <QuestReward>[];
     final next = _growth.rewardedFor(day,
         dayMinutes: minutesOn(day),
         weekMinutes: weekMinutes(day),
@@ -245,7 +270,7 @@ class AppState extends ChangeNotifier {
     _progress = _progress.copyWith(
         growth: next,
         drops: _progress.drops + gained.fold(0, (sum, r) => sum + r.drops));
-    _lastGoalRewards = gained;
+    _lastQuestRewards = gained;
   }
 
   /// 세션 완료 콜백 (알림/사운드 트리거용, main에서 주입)
@@ -688,7 +713,7 @@ class AppState extends ChangeNotifier {
   void clearLastReward() {
     _lastReward = null;
     _lastPromotion = null;
-    _lastGoalRewards = const [];
+    _lastQuestRewards = const [];
     notifyListeners();
   }
 

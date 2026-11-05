@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:focus_one/core/app_theme.dart';
 import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
+import 'package:focus_one/mobile/growth/companion_page.dart';
 import 'package:focus_one/mobile/growth/growth_pages.dart';
 import 'package:focus_one/mobile/mobile_shell.dart';
 import 'package:focus_one/models/collection.dart';
@@ -35,7 +36,7 @@ void main() {
           tasks: const [],
           inbox: const [],
           sessions: [
-            for (final d in [1, 2, 3, 5, 6, 7, 8, 9, 10])
+            for (final d in [0, 1, 2, 3, 5, 6, 7, 8, 9, 10])
               FocusSession(
                   id: 's$d',
                   taskId: '',
@@ -43,6 +44,7 @@ void main() {
                   minutes: 25,
                   endedAt: ago(d),
                   focusedSec: 1500,
+                  companionId: 'fawn',
                   scene: 'forest',
                   outcome: SessionOutcome.completed),
           ],
@@ -53,6 +55,8 @@ void main() {
               evaluatedThrough: dayKey(ago(1)),
               ice: 1,
               iceDays: {skipped},
+              rewarded: {'first:${dayKey(now)}'},
+              unopened: {'first:${dayKey(now)}'},
             ),
           ),
         )));
@@ -60,7 +64,10 @@ void main() {
     await tester.runAsync(state.init);
     state.autoBreak = false;
 
-    Future<void> shot(Widget home, String name, {bool wait = false}) async {
+    GlobalKey? lastKey;
+    late final Future<void> Function(String) snap;
+
+    Future<void> shot(Widget home, String name, {String? tap}) async {
       final key = GlobalKey();
       const size = Size(402, 874);
       await tester.binding.setSurfaceSize(size);
@@ -85,9 +92,18 @@ void main() {
         ),
       ));
       await tester.pump(const Duration(milliseconds: 500));
+      if (tap != null) {
+        await tester.tap(find.text(tap).last);
+        await tester.pump(const Duration(milliseconds: 500));
+      }
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 300)));
       await tester.pump(const Duration(milliseconds: 500));
+      lastKey = key;
+      await snap(name);
+    }
+
+    Future<void> snapImpl(GlobalKey key, String name) async {
       await tester.runAsync(() async {
         final b = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
         final img = await b.toImage(pixelRatio: 1.5);
@@ -96,11 +112,21 @@ void main() {
       });
     }
 
+    snap = (name) => snapImpl(lastKey!, name);
     for (final scene in [FocusScene.forest, FocusScene.night]) {
       state.setScene(scene);
       await shot(const MobileShell(), '${scene.name}-home');
       await shot(const GoalPage(), '${scene.name}-goal');
       await shot(const StreakPage(), '${scene.name}-streak');
+      await shot(const MobileShell(), '${scene.name}-map', tap: '성장');
+      await tester.tap(find.textContaining('퀘스트').first);
+      await tester.pump(const Duration(milliseconds: 400));
+      await snap('${scene.name}-quests');
+      await tester.tap(find.text('업적').first);
+      await tester.pump(const Duration(milliseconds: 400));
+      await snap('${scene.name}-achievements');
+      await shot(CompanionPage(companion: state.selectedCompanion),
+          '${scene.name}-companion');
     }
     state.dispose();
     await tester.pumpWidget(const SizedBox());

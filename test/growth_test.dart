@@ -6,6 +6,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
+import 'package:focus_one/models/focus_title.dart';
 import 'package:focus_one/models/growth.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
@@ -171,19 +172,22 @@ void main() {
     });
 
     test('목표 달성 보상은 한 번만, 보너스 물방울은 랭킹 점수에 안 들어감', () async {
+      const bonus = 5 + Growth.dailyRewardDrops;
       var st = await boot(monday);
       st = await focus(st, monday, 25);
-      expect(st.lastGoalRewards.map((r) => r.kind), [GoalKind.daily]);
-      expect(st.drops, 25 + Growth.dailyRewardDrops);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          [QuestKind.firstSession, QuestKind.dailyGoal]);
+      expect(st.drops, 25 + bonus);
       expect(st.rankScore, 25);
+      expect(st.unopenedChests, hasLength(2));
 
       st = await focus(st, monday.add(const Duration(hours: 1)), 25);
-      expect(st.lastGoalRewards, isEmpty, reason: '오늘 목표는 이미 받음');
-      expect(st.drops, 50 + Growth.dailyRewardDrops);
+      expect(st.lastQuestRewards, isEmpty, reason: '오늘 것은 이미 받음');
+      expect(st.drops, 50 + bonus);
 
       st.dispose();
       final again = await boot(monday.add(const Duration(hours: 3)));
-      expect(again.drops, 50 + Growth.dailyRewardDrops, reason: '재실행해도 그대로');
+      expect(again.drops, 50 + bonus, reason: '재실행해도 그대로');
       again.dispose();
     });
 
@@ -191,7 +195,7 @@ void main() {
       var st = await boot(monday);
       st = await focus(st, day(0), 60);
       st = await focus(st, day(6), 65);
-      expect(st.lastGoalRewards.map((r) => r.kind), contains(GoalKind.weekly));
+      expect(st.lastQuestRewards.map((r) => r.kind), contains(QuestKind.weeklyGoal));
       expect(st.iceCount, 1, reason: '보유 1개는 지난 공백에 쓰고, 보상 1개는 남는다');
       expect(st.weekMinutes(dayKey(monday)), 125);
       expect(st.weekMinutes(dayKey(day(7))), 0);
@@ -219,6 +223,62 @@ void main() {
         expect(st.weeklyGoal, 135);
       });
       st.dispose();
+    });
+
+    test('상자는 열어도 보상이 다시 나오지 않고, 다시 켜도 안 연 상태가 남는다', () async {
+      var st = await boot(monday);
+      st = await focus(st, monday, 25);
+      final drops = st.drops;
+      final keys = st.unopenedChests.toSet();
+      st.dispose();
+
+      var again = await boot(monday.add(const Duration(hours: 1)));
+      expect(again.unopenedChests, keys);
+      again.openChests(keys);
+      expect(again.unopenedChests, isEmpty);
+      expect(again.drops, drops, reason: '보상은 달성 때 이미 지급');
+      await again.flush();
+      again.dispose();
+      again = await boot(monday.add(const Duration(hours: 2)));
+      expect(again.unopenedChests, isEmpty);
+      again.dispose();
+    });
+
+    test('친구 성장은 그 친구와 끝까지 한 분만, 중단은 빼고', () async {
+      final st = await boot(monday);
+      expect(st.companionStage('fawn'), CompanionStage.basic);
+      var s2 = await focus(st, day(0), 120);
+      expect(s2.companionMinutes('fawn'), 120);
+      expect(s2.companionStage('fawn'), CompanionStage.sprout);
+      expect(s2.companionMinutes('rabbit'), 0);
+      s2.dispose();
+    });
+
+    test('업적: 첫 완료는 끝까지 한 집중만', () async {
+      await LocalStore(file()).save(
+          store([session(day(-1), 5, o: SessionOutcome.abandoned)]));
+      var st = await boot(monday);
+      expect(st.hasAchievement(Achievement.firstFocus), isFalse);
+      st = await focus(st, monday, 25);
+      expect(st.hasAchievement(Achievement.firstFocus), isTrue);
+      expect(st.hasAchievement(Achievement.week), isFalse);
+      st.dispose();
+    });
+  });
+
+  group('성장 지도', () {
+    test('칸은 XP 오름차순이고 칭호 문턱을 모두 포함', () {
+      final xps = MapNode.all.map((n) => n.xp).toList();
+      expect(xps, orderedEquals([...xps]..sort()));
+      for (final t in FocusTitle.values) {
+        expect(MapNode.all.where((n) => n.title == t).single.xp, t.minMinutes);
+      }
+    });
+    test('현재 칸은 아직 닿지 않은 첫 칸, 끝나면 마지막', () {
+      expect(MapNode.all[MapNode.currentIndex(0)].xp, 25);
+      expect(MapNode.all[MapNode.currentIndex(25)].xp, 30);
+      expect(MapNode.all[MapNode.currentIndex(30)].xp, 50);
+      expect(MapNode.currentIndex(999999), MapNode.all.length - 1);
     });
   });
 }

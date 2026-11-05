@@ -1,0 +1,145 @@
+// 성장 탭: 작은 폰·큰 글자 넘침 없음, 상자 열기, 현재 칸이 보임
+import 'dart:io';
+
+import 'package:clock/clock.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+
+import 'package:focus_one/core/design_tokens.dart';
+import 'package:focus_one/data/local_store.dart';
+import 'package:focus_one/mobile/growth/companion_page.dart';
+import 'package:focus_one/mobile/growth/growth_tab.dart';
+import 'package:focus_one/models/collection.dart';
+import 'package:focus_one/models/task.dart';
+import 'package:focus_one/state/app_state.dart';
+
+void main() {
+  late Directory dir;
+  setUp(() => dir = Directory.systemTemp.createTempSync('fo'));
+  tearDown(() {
+    // 앱 상태가 뒤늦게 저장 중일 수 있다 — 임시 폴더라 남아도 무해
+    try {
+      dir.deleteSync(recursive: true);
+    } on FileSystemException {
+      // 무시
+    }
+  });
+
+  Future<AppState> seeded(WidgetTester tester, int minutes) async {
+    final file = File('${dir.path}/d.json');
+    final now = clock.now();
+    await tester.runAsync(() => LocalStore(file).save(StoreData(
+          tasks: const [],
+          inbox: const [],
+          sessions: [
+            if (minutes > 0)
+              FocusSession(
+                  id: 's',
+                  taskId: '',
+                  taskTitle: '',
+                  minutes: minutes,
+                  endedAt: now,
+                  focusedSec: minutes * 60,
+                  scene: 'forest',
+                  companionId: 'fawn',
+                  outcome: SessionOutcome.completed),
+          ],
+        )));
+    final st = AppState(LocalStore(file));
+    await tester.runAsync(st.init);
+    return st;
+  }
+
+  Widget app(AppState st, Size size, double scale, Widget home) => MediaQuery(
+        data: MediaQueryData(size: size, textScaler: TextScaler.linear(scale)),
+        child: ChangeNotifierProvider.value(
+            value: st, child: MaterialApp(home: Scaffold(body: home))),
+      );
+
+  for (final (name, size, scale) in [
+    ('SE', const Size(375, 667), 1.0),
+    ('큰 글자', const Size(375, 667), 1.5),
+  ]) {
+    for (final scene in FocusScene.values) {
+      testWidgets('$name ${scene.name} 세 구역', (tester) async {
+        final st = await seeded(tester, 40);
+        st.setScene(scene);
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(app(st, size, scale, const GrowthTab()));
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        for (final label in ['퀘스트', '업적', '지도']) {
+          await tester.tap(find.textContaining(label).first);
+          await tester.pump();
+          expect(tester.takeException(), isNull, reason: label);
+        }
+        st.dispose();
+      });
+    }
+  }
+
+  testWidgets('지도는 지금 칸 근처에서 시작한다', (tester) async {
+    final st = await seeded(tester, 2400);
+    await tester.binding.setSurfaceSize(const Size(402, 874));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+        app(st, const Size(402, 874), 1, const GrowthTab()));
+    await tester.pump();
+    expect(find.bySemanticsLabel(RegExp('지금 여기')), findsOneWidget);
+    st.dispose();
+  });
+
+  testWidgets('상자를 열면 안 연 상자가 줄고 물방울은 그대로', (tester) async {
+    // 끝날 시각이 지난 진행 세션을 켜면 실제 완료 경로로 보상이 나온다
+    final started = DateTime.now().subtract(const Duration(minutes: 30));
+    final file = File('${dir.path}/d.json');
+    await tester.runAsync(() => LocalStore(file).save(StoreData(
+          tasks: const [],
+          inbox: const [],
+          sessions: const [],
+          activeSession: ActiveSession(
+            id: 'a',
+            taskId: '',
+            taskTitle: '',
+            scene: 'forest',
+            startedAt: started,
+            plannedSec: 1500,
+            resumedAt: started,
+            companionId: 'fawn',
+          ),
+        )));
+    final b = AppState(LocalStore(file));
+    await tester.runAsync(b.init);
+    expect(b.unopenedChests, isNotEmpty);
+    final drops = b.drops;
+    final count = b.unopenedChests.length;
+
+    await tester.binding.setSurfaceSize(const Size(402, 874));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+        app(b, const Size(402, 874), 1, const GrowthTab()));
+    await tester.tap(find.textContaining('퀘스트'));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('상자 열기').first);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(b.unopenedChests.length, count - 1);
+    expect(b.drops, drops);
+    b.dispose();
+  });
+
+  testWidgets('친구 성장 화면', (tester) async {
+    final st = await seeded(tester, 130);
+    await tester.binding.setSurfaceSize(const Size(375, 667));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+        value: st,
+        child: MaterialApp(
+            home: CompanionPage(companion: Companion.byId('fawn')!))));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.text('470분 더 함께하면 빛나는 단짝'), findsOneWidget);
+    st.dispose();
+  });
+}

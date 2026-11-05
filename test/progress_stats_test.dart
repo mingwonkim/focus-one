@@ -79,13 +79,13 @@ void main() {
 
     final b = await boot(t0.add(const Duration(hours: 1)));
     expect(b.ownedCount('fawn'), 1);
-    expect(b.drops, 25 + Growth.dailyRewardDrops); // 25분 = 일일 목표 달성
+    expect(b.drops, 25 + 5 + Growth.dailyRewardDrops); // 25분 = 첫 집중 + 일일 목표
     expect(b.sessions.single.companionId, 'fawn');
     await b.flush();
     b.dispose();
     final c = await boot(t0.add(const Duration(hours: 2)));
     expect(c.ownedCount('fawn'), 1);
-    expect(c.drops, 25 + Growth.dailyRewardDrops);
+    expect(c.drops, 25 + 5 + Growth.dailyRewardDrops);
     expect(c.buyDecor('grass'), isTrue);
     expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
     c.dispose();
@@ -133,11 +133,11 @@ void main() {
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     await a.flush();
     a.dispose();
-    final b = await boot(t0.add(const Duration(hours: 1))); // 25분 완료 → 25개
+    final b = await boot(t0.add(const Duration(hours: 1))); // 25분 완료 → 25개 + 보너스 15
     final t1 = t0.add(const Duration(hours: 1));
     withClock(Clock.fixed(t1), () => b.startTimer(allowNoTask: true));
-    withClock(Clock.fixed(t1.add(const Duration(minutes: 5))), () {
-      expect(b.escapeCost, 40); // 20분 남음
+    withClock(Clock.fixed(t1.add(const Duration(minutes: 1))), () {
+      expect(b.escapeCost, 48); // 24분 남음, 가진 건 40개
       expect(b.escapeSession(), isFalse);
     });
     withClock(Clock.fixed(t1.add(const Duration(minutes: 15, seconds: 30))), () {
@@ -145,7 +145,7 @@ void main() {
       expect(b.escapeSession(), isTrue);
     });
     expect(b.activeSession, isNull);
-    expect(b.drops, 5 + Growth.dailyRewardDrops);
+    expect(b.drops, 5 + 5 + Growth.dailyRewardDrops);
     expect(b.ownedCount('fawn'), 1);
     expect(b.rankScore, 5); // 모은 25 − 탈출 20
     b.dispose();

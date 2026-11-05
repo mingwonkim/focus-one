@@ -9,11 +9,12 @@ import 'duel/duel_page.dart';
 import 'duel/invite.dart';
 import 'focus/focus_home.dart';
 import 'focus/scene_fill.dart';
+import 'growth/growth_tab.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
 
-enum MobileTab { focus, scenery, records, tasks }
+enum MobileTab { focus, growth, scenery, records, tasks }
 
 /// 폰 셸: 탭 4개 + 떠 있는 캡슐 탭바. 화면은 P4부터 채운다.
 class MobileShell extends StatefulWidget {
@@ -64,6 +65,7 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
 
   static const _labels = {
     MobileTab.focus: ('집중', Icons.timer_outlined),
+    MobileTab.growth: ('성장', Icons.route_rounded),
     MobileTab.scenery: ('꾸미기', Icons.park_outlined),
     MobileTab.records: ('기록', Icons.bar_chart_rounded),
     MobileTab.tasks: ('할 일', Icons.check_circle_outline),
@@ -112,6 +114,7 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                   : MobileSize.listMaxWidth,
               child: switch (current) {
                 MobileTab.focus => const FocusHome(),
+                MobileTab.growth => const GrowthTab(),
                 MobileTab.tasks => const TasksTab(),
                 MobileTab.records => const RecordsTab(),
                 MobileTab.scenery => const SceneryTab(),
@@ -159,11 +162,27 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(_labels[t]!.$2,
-                                        size: 22,
-                                        color: t == current
-                                            ? style.accent
-                                            : style.textMuted),
+                                    Stack(clipBehavior: Clip.none, children: [
+                                      Icon(_labels[t]!.$2,
+                                          size: 22,
+                                          color: t == current
+                                              ? style.accent
+                                              : style.textMuted),
+                                      // 안 연 상자 표시
+                                      if (t == MobileTab.growth &&
+                                          state.unopenedChests.isNotEmpty)
+                                        Positioned(
+                                          top: 0,
+                                          right: -2,
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                                color: style.accent,
+                                                shape: BoxShape.circle),
+                                          ),
+                                        ),
+                                    ]),
                                     Text(
                                       _labels[t]!.$1,
                                       style: TextStyle(

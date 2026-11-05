@@ -1,0 +1,678 @@
+// lib/mobile/growth/growth_tab.dart
+// 성장 탭: 지도 · 퀘스트 · 업적. 값은 전부 기록에서 계산하고, 저장되는 건 안 연 상자뿐이다.
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/design_tokens.dart';
+import '../../core/scene_decorations.dart';
+import '../../models/growth.dart';
+import '../../state/app_state.dart';
+import '../focus/sheets.dart';
+import '../widgets/title_avatar.dart';
+import 'growth_pages.dart';
+
+enum _Section { map, quests, achievements }
+
+class GrowthTab extends StatefulWidget {
+  const GrowthTab({super.key});
+
+  @override
+  State<GrowthTab> createState() => _GrowthTabState();
+}
+
+class _GrowthTabState extends State<GrowthTab> {
+  _Section _section = _Section.map;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MobileSize.gutter, 8, MobileSize.gutter, MobileSize.cardGap),
+        child: SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<_Section>(
+            showSelectedIcon: false,
+            segments: [
+              const ButtonSegment(value: _Section.map, label: Text('지도')),
+              ButtonSegment(
+                  value: _Section.quests,
+                  label: Text(s.unopenedChests.isEmpty
+                      ? '퀘스트'
+                      : '퀘스트 ${s.unopenedChests.length}')),
+              const ButtonSegment(
+                  value: _Section.achievements, label: Text('업적')),
+            ],
+            selected: {_section},
+            onSelectionChanged: (v) => setState(() => _section = v.first),
+          ),
+        ),
+      ),
+      Expanded(
+        child: switch (_section) {
+          _Section.map => const _MapView(),
+          _Section.quests => const _QuestsView(),
+          _Section.achievements => const _AchievementsView(),
+        },
+      ),
+    ]);
+  }
+}
+
+BoxDecoration _card(SceneStyle style) => BoxDecoration(
+      color: style.rowBg,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      boxShadow: AppShadow.card(style.rowShadow),
+    );
+
+// ---- 지도 ----
+
+class _MapView extends StatefulWidget {
+  const _MapView();
+
+  @override
+  State<_MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<_MapView> {
+  late final ScrollController _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    final current = MapNode.currentIndex(context.read<AppState>().xp);
+    _scroll = ScrollController(
+        initialScrollOffset:
+            math.max(0, current - 2) * MobileSize.mapRowHeight);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _describe(BuildContext context, AppState s, MapNode n) {
+    final style = s.scene.style;
+    final left = n.xp - s.xp;
+    showFocusSheet(context, n.title?.label ?? '${n.xp} XP', (ctx) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+            MobileSize.gutter, 4, MobileSize.gutter, MobileSize.sectionGap),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (n.title != null) ...[
+            TitleBadge(
+                title: n.title!,
+                textColor: style.textStrong,
+                height: MobileSize.badgeLarge),
+            const SizedBox(height: MobileSize.gridGap),
+          ],
+          Text(
+            left <= 0 ? '이미 지나온 자리예요' : '$left분 더 집중하면 닿아요',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: style.textStrong),
+          ),
+        ]),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final style = s.scene.style;
+    final xp = s.xp;
+    final current = MapNode.currentIndex(xp);
+    final title = s.title;
+    return Column(children: [
+      Container(
+        margin: const EdgeInsets.symmetric(horizontal: MobileSize.gutter),
+        padding: const EdgeInsets.all(MobileSize.cardPadding),
+        decoration: _card(style),
+        child: Row(children: [
+          TitleBadge(
+              title: title,
+              textColor: style.textStrong,
+              height: MobileSize.badgeLarge),
+          const SizedBox(width: MobileSize.gridGap),
+          Expanded(
+            child: Text(
+              xp == 0
+                  ? '첫 집중이 여기에 남아요'
+                  : title.next == null
+                      ? '$xp XP'
+                      : '$xp XP · ${title.next!.label}까지 ${title.remaining(xp)}분',
+              style: TextStyle(fontSize: 13, color: style.textMuted),
+            ),
+          ),
+        ]),
+      ),
+      Expanded(
+        child: ListView.builder(
+          controller: _scroll,
+          itemExtent: MobileSize.mapRowHeight,
+          itemCount: MapNode.all.length,
+          itemBuilder: (context, i) {
+            final n = MapNode.all[i];
+            final prevXp = i == 0 ? 0 : MapNode.all[i - 1].xp;
+            return _MapRow(
+              index: i,
+              node: n,
+              style: style,
+              done: n.xp <= xp,
+              isCurrent: i == current && n.xp > xp,
+              progress: (xp - prevXp) / math.max(1, n.xp - prevXp),
+              companionAsset: s.selectedCompanion.asset,
+              onTap: () => _describe(context, s, n),
+            );
+          },
+        ),
+      ),
+    ]);
+  }
+}
+
+double _mapOffset(int i) => math.sin(i * math.pi / 3) * MobileSize.mapSwing;
+
+class _MapRow extends StatelessWidget {
+  const _MapRow({
+    required this.index,
+    required this.node,
+    required this.style,
+    required this.done,
+    required this.isCurrent,
+    required this.progress,
+    required this.companionAsset,
+    required this.onTap,
+  });
+
+  final int index;
+  final MapNode node;
+  final SceneStyle style;
+  final bool done;
+  final bool isCurrent;
+  final double progress;
+  final String companionAsset;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final big = node.title != null;
+    final size = big ? MobileSize.mapNodeBig : MobileSize.mapNode;
+    final dx = _mapOffset(index);
+    final label = big
+        ? '칭호 ${node.title!.label}, ${node.xp} XP'
+        : '${node.xp} XP';
+    return Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
+      Positioned.fill(
+        child: CustomPaint(
+          painter: _LinkPainter(
+            from: dx,
+            to: _mapOffset(index + 1),
+            color: done ? style.ringProgress : style.ringTrack,
+            last: index == MapNode.all.length - 1,
+          ),
+        ),
+      ),
+      Transform.translate(
+        offset: Offset(dx, 0),
+        child: Semantics(
+          button: true,
+          label: done ? '$label, 지나옴' : (isCurrent ? '$label, 지금 여기' : label),
+          excludeSemantics: true,
+          child: PressScale(
+            onTap: onTap,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: CustomPaint(
+                painter: isCurrent
+                    ? _CurrentPainter(
+                        progress: progress.clamp(0.0, 1.0),
+                        track: style.ringTrack,
+                        color: style.accent)
+                    : null,
+                child: Padding(
+                  padding: EdgeInsets.all(isCurrent ? 6 : 0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: done ? style.ringProgress : style.rowBg,
+                      boxShadow: AppShadow.card(style.rowShadow),
+                    ),
+                    child: Icon(
+                      big
+                          ? Icons.military_tech_rounded
+                          : (done
+                              ? Icons.check_rounded
+                              : Icons.water_drop_rounded),
+                      size: size * 0.46,
+                      color: done
+                          ? AppColors.onPrimary
+                          : (isCurrent ? style.accent : style.textFaint),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      if (big)
+        Transform.translate(
+          offset: Offset(dx + size / 2 + MobileSize.iconGap * 5, 0),
+          child: Text(node.title!.label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: style.textStrong)),
+        ),
+      if (isCurrent)
+        Transform.translate(
+          offset: Offset(dx > 0 ? dx - size - 8 : dx + size + 8, 0),
+          child: ExcludeSemantics(
+            child: Image.asset(companionAsset,
+                width: MobileSize.mapNode, height: MobileSize.mapNode),
+          ),
+        ),
+    ]);
+  }
+}
+
+class _LinkPainter extends CustomPainter {
+  const _LinkPainter(
+      {required this.from,
+      required this.to,
+      required this.color,
+      required this.last});
+  final double from;
+  final double to;
+  final Color color;
+  final bool last;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (last) return;
+    final cx = size.width / 2;
+    final path = Path()
+      ..moveTo(cx + from, size.height / 2)
+      ..cubicTo(cx + from, size.height, cx + to, size.height, cx + to,
+          size.height * 1.5);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = MobileSize.mapLink
+          ..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_LinkPainter o) =>
+      o.from != from || o.to != to || o.color != color || o.last != last;
+}
+
+class _CurrentPainter extends CustomPainter {
+  const _CurrentPainter(
+      {required this.progress, required this.track, required this.color});
+  final double progress;
+  final Color track;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.width / 2 - 2;
+    final p = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4
+      ..color = track;
+    canvas.drawCircle(c, r, p);
+    canvas.drawArc(Rect.fromCircle(center: c, radius: r), -math.pi / 2,
+        2 * math.pi * progress, false, p..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_CurrentPainter o) =>
+      o.progress != progress || o.color != color || o.track != track;
+}
+
+// ---- 퀘스트 ----
+
+class _QuestsView extends StatelessWidget {
+  const _QuestsView();
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final style = s.scene.style;
+    final today = s.todayKey;
+    final firstKey = 'first:$today';
+    final dailyKey = 'daily:$today';
+    final weeklyKey = 'weekly:${s.thisWeekKey}';
+    final older = s.unopenedChests
+        .difference({firstKey, dailyKey, weeklyKey});
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter,
+          MobileSize.sectionGap),
+      children: [
+        if (older.isNotEmpty) ...[
+          PillButton(
+            style: style,
+            width: double.infinity,
+            height: MobileSize.cta,
+            icon: Icons.card_giftcard_rounded,
+            label: '지난 상자 ${older.length}개 열기',
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              s.openChests(older);
+            },
+          ),
+          const SizedBox(height: MobileSize.gridGap),
+        ],
+        _SectionLabel(style: style, text: '오늘'),
+        _QuestCard(
+          style: style,
+          title: '오늘 한 번 끝까지 집중하기',
+          reward: '물방울 ${QuestKind.firstSession.drops}개',
+          done: s.isRewarded(firstKey) ? 1 : 0,
+          goal: 1,
+          unit: '회',
+          chestKey: firstKey,
+        ),
+        const SizedBox(height: MobileSize.cardGap),
+        _QuestCard(
+          style: style,
+          title: '오늘 ${s.dailyGoal}분 집중하기',
+          reward: '물방울 ${QuestKind.dailyGoal.drops}개',
+          done: s.todayMinutes,
+          goal: s.dailyGoal,
+          unit: '분',
+          chestKey: dailyKey,
+        ),
+        const SizedBox(height: MobileSize.sectionGap),
+        _SectionLabel(style: style, text: '이번 주'),
+        _QuestCard(
+          style: style,
+          title: '이번 주 ${s.weeklyGoal}분 집중하기',
+          reward: '물방울 ${QuestKind.weeklyGoal.drops}개와 얼음',
+          done: s.thisWeekMinutes,
+          goal: s.weeklyGoal,
+          unit: '분',
+          chestKey: weeklyKey,
+        ),
+        const SizedBox(height: MobileSize.cardGap),
+        Center(
+          child: TextButton(
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const GoalPage())),
+            child: Text('목표 바꾸기', style: TextStyle(color: style.accent)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.style, required this.text});
+  final SceneStyle style;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: MobileSize.cardGap),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: style.textMuted)),
+      );
+}
+
+class _QuestCard extends StatelessWidget {
+  const _QuestCard({
+    required this.style,
+    required this.title,
+    required this.reward,
+    required this.done,
+    required this.goal,
+    required this.unit,
+    required this.chestKey,
+  });
+
+  final SceneStyle style;
+  final String title;
+  final String reward;
+  final int done;
+  final int goal;
+  final String unit;
+  final String chestKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.read<AppState>();
+    final rewarded = s.isRewarded(chestKey);
+    final unopened = s.unopenedChests.contains(chestKey);
+    return Container(
+      constraints: const BoxConstraints(minHeight: MobileSize.questCard),
+      padding: const EdgeInsets.all(MobileSize.cardPadding),
+      decoration: _card(style),
+      child: Row(children: [
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: style.textStrong)),
+                const SizedBox(height: MobileSize.labelGap),
+                Text(
+                    rewarded
+                        ? (unopened ? '달성! 상자를 눌러 열어요' : '달성 · $reward 받음')
+                        : '보상 $reward',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: rewarded ? style.accent : style.textMuted)),
+                const SizedBox(height: MobileSize.cardGap),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  child: Container(
+                    height: MobileSize.goalBar,
+                    color: style.ringTrack,
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor:
+                          (rewarded ? 1.0 : done / math.max(1, goal)).clamp(0.0, 1.0),
+                      heightFactor: 1,
+                      child: ColoredBox(color: style.ringProgress),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: MobileSize.labelGap),
+                Text('${math.min(done, goal)} / $goal$unit',
+                    style: TextStyle(fontSize: 12, color: style.textMuted)),
+              ]),
+        ),
+        const SizedBox(width: MobileSize.gridGap),
+        Semantics(
+          container: true,
+          button: unopened,
+          label: unopened ? '상자 열기' : (rewarded ? '열린 상자' : '잠긴 상자'),
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: unopened
+                ? () {
+                    HapticFeedback.mediumImpact();
+                    s.openChests([chestKey]);
+                  }
+                : null,
+            child: _Chest(
+              style: style,
+              open: rewarded && !unopened,
+              dim: !rewarded,
+              ready: unopened,
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// 상자: 장면 색으로 그린다. 열릴 때 살짝 튀어 오른다.
+class _Chest extends StatelessWidget {
+  const _Chest(
+      {required this.style,
+      required this.open,
+      required this.dim,
+      required this.ready});
+  final SceneStyle style;
+  final bool open;
+  final bool dim;
+  final bool ready;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return Stack(clipBehavior: Clip.none, children: [
+      TweenAnimationBuilder<double>(
+        key: ValueKey(open),
+        tween: Tween(begin: reduce ? 1 : 0.92, end: 1),
+        duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
+        curve: Curves.easeOutBack,
+        builder: (_, v, child) => Transform.scale(scale: v, child: child),
+        child: CustomPaint(
+          size: const Size.square(MobileSize.chest),
+          painter: _ChestPainter(
+            open: open,
+            body: dim ? style.ringTrack : style.ringProgress,
+            lid: dim ? style.divider : style.accent,
+            mark: dim ? style.textFaint : style.rowBg,
+          ),
+        ),
+      ),
+      if (ready)
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            width: MobileSize.chestDot,
+            height: MobileSize.chestDot,
+            decoration:
+                BoxDecoration(color: style.accent, shape: BoxShape.circle),
+          ),
+        ),
+    ]);
+  }
+}
+
+class _ChestPainter extends CustomPainter {
+  const _ChestPainter(
+      {required this.open,
+      required this.body,
+      required this.lid,
+      required this.mark});
+  final bool open;
+  final Color body;
+  final Color lid;
+  final Color mark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final u = size.width;
+    final bodyRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(u * 0.12, u * 0.42, u * 0.76, u * 0.46),
+        Radius.circular(u * 0.1));
+    canvas.drawRRect(bodyRect, Paint()..color = body);
+    final lidPaint = Paint()..color = lid;
+    if (open) {
+      // 열린 뚜껑과 안의 물방울
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              Rect.fromLTWH(u * 0.12, u * 0.12, u * 0.76, u * 0.2),
+              Radius.circular(u * 0.09)),
+          lidPaint);
+      for (final dx in [0.34, 0.5, 0.66]) {
+        _drop(canvas, Offset(u * dx, u * 0.42), u * 0.075, lidPaint);
+      }
+    } else {
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              Rect.fromLTWH(u * 0.08, u * 0.28, u * 0.84, u * 0.26),
+              Radius.circular(u * 0.11)),
+          lidPaint);
+      _drop(canvas, Offset(u * 0.5, u * 0.62), u * 0.08, Paint()..color = mark);
+    }
+  }
+
+  void _drop(Canvas c, Offset center, double r, Paint p) {
+    c.drawCircle(center, r, p);
+    c.drawPath(
+        Path()
+          ..moveTo(center.dx - r * 0.85, center.dy - r * 0.45)
+          ..lineTo(center.dx, center.dy - r * 1.9)
+          ..lineTo(center.dx + r * 0.85, center.dy - r * 0.45)
+          ..close(),
+        p);
+  }
+
+  @override
+  bool shouldRepaint(_ChestPainter o) =>
+      o.open != open || o.body != body || o.lid != lid || o.mark != mark;
+}
+
+// ---- 업적 ----
+
+class _AchievementsView extends StatelessWidget {
+  const _AchievementsView();
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final style = s.scene.style;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter,
+          MobileSize.sectionGap),
+      children: [
+        for (final a in Achievement.values) ...[
+          Container(
+            padding: const EdgeInsets.all(MobileSize.cardPadding),
+            decoration: _card(style),
+            child: Row(children: [
+              Icon(
+                s.hasAchievement(a)
+                    ? Icons.emoji_events_rounded
+                    : Icons.lock_outline_rounded,
+                color: s.hasAchievement(a) ? style.accent : style.textFaint,
+              ),
+              const SizedBox(width: MobileSize.gridGap),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.label,
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: style.textStrong)),
+                      Text(a.detail,
+                          style:
+                              TextStyle(fontSize: 13, color: style.textMuted)),
+                    ]),
+              ),
+            ]),
+          ),
+          const SizedBox(height: MobileSize.cardGap),
+        ],
+      ],
+    );
+  }
+}
