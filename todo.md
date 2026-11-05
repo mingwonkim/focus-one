@@ -132,7 +132,7 @@
 - 사용자 11/06 취침 전 지시: 4단계·5단계·개인정보 처리방침 갱신. 실서버 db push·스토어 제출은 하지 않고 준비만
 - [x] 4단계 코드: 리그 SQL(로컬 pg 50개 검증, tool/test_league_sql.sh), 세션 예약·제출 재시도(league_sync), 리그 화면 — 테스트 102개
 - [ ] 사용자: 실서버 반영 `supabase db push` (20261107000000_league.sql). 전엔 리그 탭이 "연결이 안 돼요" 표시, 다른 기능은 영향 없음
-- [ ] 사용자: 처리방침 사이트 배포 `cd ~/CodingProjects/looinlabs && WRANGLER_SEND_METRICS=false npx wrangler@4 deploy` (Claude 실행은 Production Deploy 규칙에 막힘. 빌드·커밋·푸시는 완료)
+- [ ] 사용자: 처리방침 사이트 배포 `cd ~/CodingProjects/looinlabs && WRANGLER_SEND_METRICS=false npx wrangler@4 deploy` (Claude 실행은 Production Deploy 규칙에 막힘. 빌드·커밋·푸시는 완료, 로컬이 원격보다 뒤처져 있어 rebase함)
 - [ ] 출시 때: ASC 앱 개인정보 항목 재점검(리그·친구 데이터)
 - [ ] 5단계: 실기기 전력·접근성·회귀
 - [ ] 스토어 프리뷰 문구 점검 (tool/store/store_test.dart '선명해져요'는 유지됨, 링 차오름은 재촬영 필요)
