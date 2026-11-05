@@ -65,3 +65,9 @@
 - 2026-10-12 앱 이름 FocusOne → **Tocko** (같은 분야 'Focus One' 앱 다수, 스토어 검색·상표 충돌 회피). 보이는 이름만 변경 — 번들 ID com.looinlabs.focusone·패키지·저장소·Supabase 프로젝트명은 유지(Family Controls 승인이 번들 ID에 묶임). 후보 비교: Focusling(길다), Onlee(타이머 느낌 없음), Fokko.
 - 2026-10-12 앱 이름 최종 **Fokko** (Tocko에서 변경, 사용자 결정). 스토어 'Fokko: ADHD 집중 타이머 & 앱 잠금', 사이트 looinlabs.com/fokko, Android com.looinlabs.fokko, ASC 키 ~/.config/fokko/.
 - 2026-10-17 스토어 에셋은 Windows에서도 생성: flutter test로 실제 MobileShell을 기기 크기로 렌더(tool/store, 폰트 Pretendard+Noto Color Emoji를 FONTS로). 영상도 프레임 렌더 → ffmpeg. 함정: CustomPainter의 TextPainter는 테마 글꼴을 상속 안 함(테스트에선 □) → records 막대 라벨에 DefaultTextStyle 전달. 시드는 ID가 마이크로초 시각이라 Windows에선 연달아 만들면 태그 ID가 겹침.
+
+## 2026-11-05 1:1 대결·카톡 초대
+- 대결 = 이번 주(월~일 KST) `daily_points.gained` 합. points(물방울−비상 탈출) 대신 gained: "집중 시간 대결"이라 감점 제외.
+- 친구 식별자는 상대 초대 코드(6자, 0·O·1·I 제외). user_id는 앱에 안 보냄. 대결엔 명예의 전당 참여(닉네임)가 필요 — 친구 목록에 닉네임이 있어야 해서.
+- 카톡: 사용자 선택 = 카카오 SDK 메시지 카드. 키 전엔 공유 시트 폴백(코드+App Store id6821653231 링크). 카톡 버튼 executionParams invite=<코드> → receiveKakaoScheme → pendingInvite → 셸이 집중 끝난 뒤 DuelPage(initialCode).
+- 꾸미기 보관함·도감·상점: 사용자 선택 = 탭바 바로 위 고정.
