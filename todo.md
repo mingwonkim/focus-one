@@ -97,12 +97,12 @@
   - [ ] 사용자 디자인 검토 (미리보기: flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>)
   - [x] `supabase db push` (11/04 Claude, CLI 연결돼 있음) — 출시된 1.0.x가 쓰는 옛 submit_score·ranking은 남기게 고친 뒤 반영. 실서버에서 옛·새 ranking·past_winners 응답 확인
   - [ ] 실기기: 공유 시트 PNG(카톡·사진 저장), 승급 시트 확인
-  - [ ] 개인정보 처리방침에 아바타(친구 id) 추가 — 출시 전
+  - [x] 개인정보 처리방침에 아바타(친구 id) 추가 — 11/06 문서 수정
 - [x] 2차 (11/05): 꾸미기 보관함·도감·상점 탭바 위 고정 / 칭호 배지(메달+링 색)·10단계 사다리·다음 목표 카드(남은 시간·%·다음 테두리) / 승급 시트에 배지·다음 목표
 - [x] 1:1 대결 (11/05, 이번 주 월~일 집중 분 = daily_points.gained, 친구 여럿, 전적): 서버 20261105000000_friend_duels.sql(초대 코드·친구·duels·끊기, 로컬 pg 검증), 기록 탭 대결 카드 + 대결 화면(줄다리기 막대·코드 입력·길게 눌러 끊기), 카톡 초대(kakao_flutter_sdk_share, 키 없으면 공유 시트로 코드+스토어 링크), 초대 링크로 열리면 대결 화면 자동 수락. 테스트 39개 통과
   - [x] `supabase db push` 20261105000000_friend_duels.sql — 11/06 사용자 실행 완료
   - [x] 카카오 개발자 앱 생성(사용자) → 네이티브 앱 키 받으면: invite.dart kakaoNativeKey, Info.plist CFBundleURLTypes kakao<키>, AndroidManifest intent-filter kakao<키>://kakaolink — 11/06 완료
-  - [ ] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 출시 전
+  - [x] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 11/06 문서 수정
 
 ## ▶ 재부팅 후 이어서 (2026-11-05 기준, 브랜치 mobile-v1, 전부 푸시됨 abe590a)
 1. [x] 사용자: `supabase db push` (또는 Claude에게 "db push 해도 돼") — 대결 마이그레이션 20261105000000_friend_duels.sql. 전엔 대결 카드 "불러오지 못했어요" — 11/06 사용자 실행 완료. 실서버 RPC 4개 존재·비로그인 차단(401) 확인, 로그인 상태 동작은 실기기에서 확인
@@ -110,7 +110,7 @@
 3. [x] Claude: 키 받으면 invite.dart kakaoNativeKey + Info.plist CFBundleURLTypes kakao<키> + AndroidManifest intent-filter(scheme kakao<키>, host kakaolink) → 빌드·아이폰 설치(폰 잠금 해제 필요) — 11/06 코드 반영(analyze 0, 테스트 39개), 아이폰 설치 완료(flutter install 실패 → xcrun devicectl device install app 성공)
 4. [ ] 사용자: 디자인 검토 2차 — 미리보기 다시 만들기: `flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>` (scratchpad 이미지는 재부팅 시 사라짐) — 11/06 재생성 17장, 사용자 검토 대기
 5. [ ] 실기기 확인: 공유 시트·승급 시트·소리·대결 카드
-6. [ ] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가
+6. [x] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가 — 11/06 looinlabs 커밋, 배포는 사용자
 - 참고: 로컬 Postgres 테스트 DB는 scratchpad에 있어 재부팅 후 사라짐 — 필요 시 다시 만듦
 
 ## 2026-11-06 — v3 성장하는 재미 (design-pipeline, 브랜치 growth-v3, worktree ../focus-one-v3)
@@ -132,6 +132,8 @@
 - 사용자 11/06 취침 전 지시: 4단계·5단계·개인정보 처리방침 갱신. 실서버 db push·스토어 제출은 하지 않고 준비만
 - [x] 4단계 코드: 리그 SQL(로컬 pg 50개 검증, tool/test_league_sql.sh), 세션 예약·제출 재시도(league_sync), 리그 화면 — 테스트 102개
 - [ ] 사용자: 실서버 반영 `supabase db push` (20261107000000_league.sql). 전엔 리그 탭이 "연결이 안 돼요" 표시, 다른 기능은 영향 없음
+- [ ] 사용자: 처리방침 사이트 배포 `cd ~/CodingProjects/looinlabs && WRANGLER_SEND_METRICS=false npx wrangler@4 deploy` (Claude 실행은 Production Deploy 규칙에 막힘. 빌드·커밋·푸시는 완료)
+- [ ] 출시 때: ASC 앱 개인정보 항목 재점검(리그·친구 데이터)
 - [ ] 5단계: 실기기 전력·접근성·회귀
 - [ ] 스토어 프리뷰 문구 점검 (tool/store/store_test.dart '선명해져요'는 유지됨, 링 차오름은 재촬영 필요)
 - 사용자 확정 전 main 머지 금지

@@ -173,7 +173,7 @@ class _RankingPageState extends State<RankingPage> {
         line(Icons.storefront_outlined, '상점에서 쓴 물방울은 점수에서 빠지지 않아요'),
         line(Icons.schedule_rounded, '하루 최대 12시간까지 점수에 들어가요'),
         line(Icons.military_tech_outlined, '칭호 테두리는 참여한 뒤 쌓은 집중 시간으로 보여요'),
-        line(Icons.person_outline_rounded, '닉네임과 점수만 올라가요. 가입은 필요 없어요'),
+        line(Icons.person_outline_rounded, '닉네임, 친구 그림, 점수가 올라가요. 가입은 필요 없어요'),
         line(Icons.delete_outline_rounded, '언제든 나가면 서버에서 모두 지워져요'),
         const SizedBox(height: MobileSize.sectionGap),
         Container(
