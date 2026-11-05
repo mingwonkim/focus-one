@@ -12,6 +12,7 @@ import 'focus/scene_fill.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
+import 'widgets/jelly.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
 
@@ -131,20 +132,11 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                 padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter, 8),
                 child: Container(
                   height: MobileSize.tabBar,
-                  padding: const EdgeInsets.fromLTRB(
-                      MobileSize.chunkyBorder,
-                      MobileSize.chunkyBorder,
-                      MobileSize.chunkyBorder,
-                      MobileSize.chunkyBorder + MobileSize.chunkyLipSecondary),
-                  decoration: BoxDecoration(
-                    color: style.secondaryLip,
-                    borderRadius: BorderRadius.circular(AppRadius.full),
-                  ),
-                  child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: style.rowBg,
                     borderRadius: BorderRadius.circular(AppRadius.full),
+                    boxShadow: jellyShadow(style.secondaryLip),
                   ),
                   child: Row(
                     children: [
@@ -161,7 +153,9 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                               onTap: () => _tabs.value = t,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: t == current ? style.divider : null,
+                                  gradient: t == current
+                                      ? jellyGradient(style.divider)
+                                      : null,
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.full),
                                 ),
@@ -176,10 +170,7 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                                     Text(
                                       _labels[t]!.$1,
                                       style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: t == current
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
+                                        fontSize: 12,
                                         color: t == current
                                             ? style.textStrong
                                             : style.textMuted,
@@ -192,7 +183,6 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                           ),
                         ),
                     ],
-                  ),
                   ),
                 ),
               ),

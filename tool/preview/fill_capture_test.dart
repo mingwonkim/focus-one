@@ -1,10 +1,11 @@
-// v3 1차안 미리보기: 집중 차오름 4장면 × 진행률 + 대기 화면 (macOS 전용: AppleGothic). CI 대상 아님.
+// v3 1차안 미리보기: 집중 차오름 4장면 × 진행률 + 대기 화면 (macOS 전용). CI 대상 아님.
 // 실행: flutter test tool/preview/fill_capture_test.dart --dart-define=OUT=<dir>
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +22,12 @@ const out = String.fromEnvironment('OUT', defaultValue: '/tmp');
 void main() {
   testWidgets('fill capture', (tester) async {
     await tester.runAsync(loadFont);
+    await tester.runAsync(() async {
+      final bytes = File('assets/fonts/Jua-Regular.ttf').readAsBytesSync();
+      await (FontLoader('Jua')
+            ..addFont(Future.value(ByteData.view(bytes.buffer))))
+          .load();
+    });
     final dir = Directory.systemTemp.createTempSync('fo');
     addTearDown(() => dir.deleteSync(recursive: true));
     final state = AppState(LocalStore(File('${dir.path}/d.json')));
@@ -36,7 +43,7 @@ void main() {
           theme: AppTheme.of(state.scene).copyWith(
               textTheme: AppTheme.of(state.scene)
                   .textTheme
-                  .apply(fontFamily: 'AppleGothic')),
+                  .apply(fontFamily: 'Jua')),
           home: RepaintBoundary(
             key: key,
             child: MediaQuery(
@@ -46,7 +53,7 @@ void main() {
                       ? const EdgeInsets.only(top: 20)
                       : const EdgeInsets.only(top: 59, bottom: 34)),
               child: DefaultTextStyle.merge(
-                  style: const TextStyle(fontFamily: 'AppleGothic'),
+                  style: const TextStyle(fontFamily: 'Jua'),
                   child: const MobileShell()),
             ),
           ),

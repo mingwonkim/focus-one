@@ -168,6 +168,17 @@ class _RingPainter extends CustomPainter {
     if (sweep > 0) {
       canvas.drawArc(Rect.fromCircle(center: c, radius: r), -math.pi / 2, sweep,
           false, p..color = color);
+      // 젤리 관처럼 바깥쪽에 광택 한 줄
+      canvas.drawArc(
+          Rect.fromCircle(center: c, radius: r + stroke * 0.2),
+          -math.pi / 2,
+          sweep,
+          false,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = stroke * JellyLook.ringGloss
+            ..color = AppColors.onPrimary.withValues(alpha: JellyLook.ringGlossAlpha));
     }
     if (knob != null) {
       final a = -math.pi / 2 + sweep;

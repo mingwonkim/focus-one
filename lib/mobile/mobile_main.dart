@@ -118,7 +118,10 @@ class MobileApp extends StatelessWidget {
     return MaterialApp(
       title: 'Fokko',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.of(scene),
+      theme: () {
+        final t = AppTheme.of(scene);
+        return t.copyWith(textTheme: t.textTheme.apply(fontFamily: 'Jua'));
+      }(),
       builder: (context, child) => _TabletScale(child: child!),
       home: const MobileShell(),
     );

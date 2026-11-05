@@ -9,7 +9,7 @@ import '../../core/design_tokens.dart';
 import '../../models/growth.dart';
 import '../../state/app_state.dart';
 import '../adaptive.dart';
-import '../widgets/chunky.dart';
+import '../widgets/jelly.dart';
 
 Widget _page(BuildContext context, String title, List<Widget> children) {
   final style = context.watch<AppState>().scene.style;
@@ -20,7 +20,7 @@ Widget _page(BuildContext context, String title, List<Widget> children) {
       foregroundColor: style.textStrong,
       surfaceTintColor: Colors.transparent,
       title: Text(title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          style: const TextStyle(fontSize: 20, )),
     ),
     body: SafeArea(
       top: false,
@@ -128,7 +128,7 @@ class _GoalCard extends StatelessWidget {
     final style = context.watch<AppState>().scene.style;
     final value = plan.nextMinutes ?? goal;
     final reached = done >= goal;
-    return ChunkySurface(
+    return JellySurface(
       style: style,
       padding: const EdgeInsets.all(MobileSize.cardPadding),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -137,24 +137,23 @@ class _GoalCard extends StatelessWidget {
             child: Text(title,
                 style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
                     color: style.textStrong)),
           ),
           Text(reached ? '달성' : '$done / $goal분',
               style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
                   color: style.accent)),
         ]),
         const SizedBox(height: MobileSize.cardGap),
-        ChunkyProgress(style: style, value: goal == 0 ? 0 : done / goal),
+        JellyProgress(style: style, value: goal == 0 ? 0 : done / goal),
         const SizedBox(height: MobileSize.cardGap),
         Text(reward, style: TextStyle(fontSize: 13, color: style.textMuted)),
         const SizedBox(height: MobileSize.cardPadding),
         Row(children: [
-          ChunkyButton(
+          JellyButton(
             style: style,
             primary: false,
+            onCard: true,
             icon: Icons.remove_rounded,
             semanticLabel: '$title 5분 줄이기',
             onTap: value <= min ? null : () => onChange(value - Growth.goalStep),
@@ -171,7 +170,6 @@ class _GoalCard extends StatelessWidget {
                   Text('$value분',
                       style: TextStyle(
                           fontSize: 24,
-                          fontWeight: FontWeight.w800,
                           color: style.textStrong)),
                   if (plan.nextMinutes != null)
                     Text('$later 적용',
@@ -180,9 +178,10 @@ class _GoalCard extends StatelessWidget {
               ),
             ),
           ),
-          ChunkyButton(
+          JellyButton(
             style: style,
             primary: false,
+            onCard: true,
             icon: Icons.add_rounded,
             semanticLabel: '$title 5분 늘리기',
             onTap: value >= max ? null : () => onChange(value + Growth.goalStep),
@@ -218,23 +217,21 @@ class StreakPage extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 40,
-              fontWeight: FontWeight.w800,
               color: style.textStrong)),
       const SizedBox(height: MobileSize.labelGap),
       Text(_message(s),
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w500,
               color: style.textMuted)),
       const SizedBox(height: MobileSize.sectionGap),
-      ChunkySurface(
+      JellySurface(
         style: style,
         padding: const EdgeInsets.all(MobileSize.cardPadding),
         child: _Week(state: s),
       ),
       const SizedBox(height: MobileSize.gridGap),
-      ChunkySurface(
+      JellySurface(
         style: style,
         padding: const EdgeInsets.all(MobileSize.cardPadding),
         child: Row(children: [
@@ -247,12 +244,11 @@ class StreakPage extends StatelessWidget {
           Text('${s.bestStreak}일',
               style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w800,
                   color: style.textStrong)),
         ]),
       ),
       const SizedBox(height: MobileSize.gridGap),
-      ChunkySurface(
+      JellySurface(
         style: style,
         padding: const EdgeInsets.all(MobileSize.cardPadding),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -261,7 +257,6 @@ class StreakPage extends StatelessWidget {
               child: Text('얼음',
                   style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w800,
                       color: style.textStrong)),
             ),
             for (var i = 0; i < Growth.iceMax; i++)
@@ -276,9 +271,10 @@ class StreakPage extends StatelessWidget {
           Text('하루 빠져도 얼음이 연속일을 지켜줘요. 자동으로 쓰여요.',
               style: TextStyle(fontSize: 13, color: style.textMuted)),
           const SizedBox(height: MobileSize.gridGap),
-          ChunkyButton(
+          JellyButton(
             style: style,
             primary: false,
+            onCard: true,
             expand: true,
             icon: Icons.water_drop_rounded,
             label: s.iceCount >= Growth.iceMax
@@ -316,7 +312,6 @@ class _Week extends StatelessWidget {
               Text(_labels[i],
                   style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
                       color: style.textMuted)),
               const SizedBox(height: MobileSize.labelGap),
               Container(

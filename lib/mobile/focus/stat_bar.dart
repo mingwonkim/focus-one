@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
 import '../../state/app_state.dart';
 import '../growth/growth_pages.dart';
+import '../widgets/jelly.dart';
 
 class StatBar extends StatelessWidget {
   const StatBar({super.key, required this.state});
@@ -25,19 +26,22 @@ class StatBar extends StatelessWidget {
                 ? null
                 : () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => page)),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: MobileSize.statBar),
-              padding: const EdgeInsets.symmetric(horizontal: MobileSize.iconGap),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(icon, size: MobileSize.statIcon, color: color),
-                const SizedBox(width: MobileSize.labelGap),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: style.textStrong,
-                        fontFeatures: const [FontFeature.tabularFigures()])),
-              ]),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: MobileSize.labelGap),
+              child: JellySurface(
+                style: style,
+                radius: AppRadius.full,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(icon, size: MobileSize.statIcon, color: color),
+                  const SizedBox(width: MobileSize.labelGap),
+                  Text(value,
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: style.textStrong,
+                          fontFeatures: const [FontFeature.tabularFigures()])),
+                ]),
+              ),
             ),
           ),
         );
@@ -46,7 +50,7 @@ class StatBar extends StatelessWidget {
       child: Wrap(
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: MobileSize.gridGap,
+        spacing: MobileSize.cardGap,
         children: [
           item(Icons.local_fire_department_rounded, AppColors.flame,
               '${state.streakDays}', '연속 집중일', page: const StreakPage()),

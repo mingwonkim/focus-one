@@ -110,11 +110,11 @@ class SceneStyle {
   final String footerLabel; // "오늘 심은 나무"
   final String footerUnit; // "그루"
 
-  // 폰 v3 입체 버튼 (docs/v3/app-design-spec.md §4)
+  // 폰 v3 젤리 버튼
   final Color mobileFace; // 주 버튼 윗면
-  final Color mobileBottom; // 주 버튼 아랫단
+  final Color mobileBottom; // 주 버튼 그림자
   final Color mobileFg; // 주 버튼 글자·아이콘
-  final Color secondaryLip; // 보조 버튼·카드 테두리와 아랫단
+  final Color secondaryLip; // 보조 버튼·카드 그림자
 
   // 폰 v3 집중 중 화면 전체 차오름
   final Color fill; // 뒤층·연한 나무·밤 시작색·커피 표면
@@ -328,6 +328,7 @@ abstract class AppDuration {
   static const enter = Duration(milliseconds: 200);
   static const transition = Duration(milliseconds: 280);
   static const titleSpin = Duration(seconds: 6); // 높은 칭호 테두리 한 바퀴
+  static const jellyRelease = Duration(milliseconds: 520); // 눌렀다 튕겨 돌아옴
 }
 
 /// 칭호 테두리 한 단계. 장면과 무관한 고정 색 = 칭호의 정체성.
@@ -372,13 +373,8 @@ abstract class MobileSize {
   static const double ringInset = 32;
   static const double row = 48;
   static const double cta = 52;
-  static const double chunkyHeight = 56; // 입체 버튼 전체 (윗면 50 + 아랫단 6)
-  static const double chunkyLip = 6;
-  static const double chunkyLipSecondary = 3;
-  static const double chunkyPress = 4; // 누르면 내려가는 거리
-  static const double chunkyRadius = 16;
-  static const double chunkyBorder = 2;
-  static const double statBar = 48; // 탭 영역
+  static const double jellyHeight = 56;
+  static const double jellyRadius = 28;
   static const double statIcon = 22;
   static const double progressBar = 14; // 두꺼운 진행 막대
   static const double streakFlame = 72;
@@ -414,6 +410,22 @@ abstract class MobileSize {
   static const double badge = 24; // 칭호 배지 (행)
   static const double badgeLarge = 34; // 칭호 배지 (프로필·승급)
   static const double ladderDot = 8; // 칭호 사다리 점
+}
+
+/// 폰 v3 젤리 질감
+abstract class JellyLook {
+  static const topLighten = 0.32; // 위쪽을 흰색 쪽으로
+  static const shadowAlpha = 0.45;
+  static const shadowBlur = 14.0;
+  static const shadowY = 6.0;
+  static const glossAlpha = 0.38;
+  static const glossInset = 6.0;
+  static const glossSide = 0.7; // 양끝 비움 (반경 대비)
+  static const glossHeight = 8.0;
+  static const squashX = 0.05;
+  static const squashY = 0.09;
+  static const ringGloss = 0.3; // 링 위 광택 굵기 비율
+  static const ringGlossAlpha = 0.4;
 }
 
 /// 폰 v3 집중 중 차오름 모션 (docs/v3/app-design-spec.md §5). 전력 예산 때문에 프레임을 제한한다.

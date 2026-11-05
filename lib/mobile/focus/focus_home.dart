@@ -10,7 +10,7 @@ import '../../features/mini/widgets/focus_ring.dart' show formatClock;
 import '../../state/app_state.dart';
 import '../adaptive.dart';
 import '../lock/lock_page.dart';
-import '../widgets/chunky.dart';
+import '../widgets/jelly.dart';
 import 'mobile_ring.dart';
 import 'sheets.dart';
 import 'stat_bar.dart';
@@ -103,13 +103,12 @@ class _FocusHomeState extends State<FocusHome> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: idle ? null : style.rowBg,
-          borderRadius: BorderRadius.circular(MobileSize.chunkyRadius),
+          borderRadius: BorderRadius.circular(MobileSize.jellyRadius),
         ),
         child: Text(
           formatClock(idle ? _minutes * 60 : s.remainingSeconds),
           style: TextStyle(
             fontSize: tablet ? 64 : 56,
-            fontWeight: FontWeight.w700,
             height: 64 / 56,
             color: style.textStrong,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -153,7 +152,6 @@ class _FocusHomeState extends State<FocusHome> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
                     color: style.textMuted),
               ),
             ),
@@ -238,7 +236,7 @@ class _TaskCard extends StatelessWidget {
             ? '${state.currentTag?.name ?? '태그'}로 집중 중'
             : a.taskTitle)
         : state.currentTask?.title;
-    final card = ChunkySurface(
+    final card = JellySurface(
           style: style,
           minHeight: MobileSize.taskCard,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -257,7 +255,6 @@ class _TaskCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
                         color: style.textStrong),
                   ),
                 ],
@@ -283,7 +280,7 @@ class _ToolRow extends StatelessWidget {
     final s = state;
     final style = s.scene.style;
     return SizedBox(
-      height: MobileSize.chunkyHeight,
+      height: MobileSize.jellyHeight,
       child: Row(children: [
         _Chip(
           state: s,
@@ -292,7 +289,7 @@ class _ToolRow extends StatelessWidget {
           onTap: () => s.setScene(s.scene.next),
         ),
         const Spacer(),
-        ChunkyButton(
+        JellyButton(
           style: style,
           primary: false,
           icon: s.soundEnabled
@@ -302,7 +299,7 @@ class _ToolRow extends StatelessWidget {
           onTap: () => showSoundSheet(context),
         ),
         const SizedBox(width: 8),
-        ChunkyButton(
+        JellyButton(
           style: style,
           primary: false,
           icon: s.lockEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
@@ -354,9 +351,10 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = state.scene.style;
-    final chip = ChunkySurface(
+    final chip = JellySurface(
       style: style,
-      minHeight: MobileSize.row - MobileSize.chunkyBorder * 2 - MobileSize.chunkyLipSecondary,
+      minHeight: MobileSize.row,
+      radius: AppRadius.full,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         if (leading != null) ...[leading!, const SizedBox(width: 6)],
@@ -370,7 +368,6 @@ class _Chip extends StatelessWidget {
         Text(label,
             style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
                 color: style.textStrong)),
         if (onTap != null && leading == null) ...[
           const SizedBox(width: 2),
@@ -436,7 +433,7 @@ class _Controls extends StatelessWidget {
     final s = state;
     final style = s.scene.style;
     // 핵심 기능이라 아이콘만 두지 않고 라벨을 붙인다
-    final memo = ChunkyButton(
+    final memo = JellyButton(
       style: style,
       primary: false,
       icon: Icons.edit_note_rounded,
@@ -446,7 +443,7 @@ class _Controls extends StatelessWidget {
     if (s.phase == FocusPhase.breakTime) {
       return Row(children: [
         Expanded(
-          child: ChunkyButton(
+          child: JellyButton(
               style: style,
               expand: true,
               icon: Icons.skip_next_rounded,
@@ -458,7 +455,7 @@ class _Controls extends StatelessWidget {
     if (s.activeSession == null) {
       return Row(children: [
         Expanded(
-          child: ChunkyButton(
+          child: JellyButton(
             style: style,
             expand: true,
             icon: Icons.play_arrow_rounded,
@@ -475,7 +472,7 @@ class _Controls extends StatelessWidget {
     final canCancel =
         !s.isRunning || s.totalSeconds - s.remainingSeconds < 10;
     return Row(children: [
-      ChunkyButton(
+      JellyButton(
         style: style,
         primary: false,
         icon: canCancel ? Icons.close_rounded : Icons.water_drop_outlined,
@@ -489,7 +486,7 @@ class _Controls extends StatelessWidget {
       // 예전 버전에서 일시정지해 둔 세션만 '계속'으로 이어갈 수 있다.
       Expanded(
         child: s.isRunning
-            ? ChunkyButton(
+            ? JellyButton(
                 style: style,
                 primary: false, // 차오름과 같은 색이 되지 않게 흰 면
                 expand: true,
@@ -497,7 +494,7 @@ class _Controls extends StatelessWidget {
                 label: '딴생각 메모',
                 onTap: () => showMemoSheet(context),
               )
-            : ChunkyButton(
+            : JellyButton(
                 style: style,
                 expand: true,
                 icon: Icons.play_arrow_rounded,
