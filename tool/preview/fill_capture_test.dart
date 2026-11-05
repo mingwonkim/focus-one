@@ -53,6 +53,10 @@ void main() {
         ),
       ));
       await tester.pump(const Duration(milliseconds: 500));
+      // 친구 그림 디코딩 대기 (안 기다리면 첫 장면 그림이 비어 찍힌다)
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 300)));
+      await tester.pump();
       await tester.runAsync(() async {
         final b = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
         final img = await b.toImage(pixelRatio: 1.5);
