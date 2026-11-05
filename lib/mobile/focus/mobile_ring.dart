@@ -16,8 +16,8 @@ class MobileRing extends StatelessWidget {
     super.key,
     required this.scene,
     required this.companion,
-    required this.reveal, // 친구 불투명도 0~1
     required this.progress, // 집중: 지난 비율 0→1 / 휴식: 남은 비율 / 대기: 설정 위치 0~1
+    required this.reveal, // 친구 불투명도 0~1
     this.onMinutes, // null이면 드래그 불가(진행 중)
     this.minutes = 25, // 대기 중 현재 설정 (12시 경계 넘김 방지·스크린리더 값)
     this.size = MobileSize.ring,
@@ -168,17 +168,6 @@ class _RingPainter extends CustomPainter {
     if (sweep > 0) {
       canvas.drawArc(Rect.fromCircle(center: c, radius: r), -math.pi / 2, sweep,
           false, p..color = color);
-      // 젤리 관처럼 바깥쪽에 광택 한 줄
-      canvas.drawArc(
-          Rect.fromCircle(center: c, radius: r + stroke * 0.2),
-          -math.pi / 2,
-          sweep,
-          false,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round
-            ..strokeWidth = stroke * JellyLook.ringGloss
-            ..color = AppColors.onPrimary.withValues(alpha: JellyLook.ringGlossAlpha));
     }
     if (knob != null) {
       final a = -math.pi / 2 + sweep;

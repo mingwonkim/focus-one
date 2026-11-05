@@ -601,12 +601,16 @@ class PillButton extends StatelessWidget {
               Icon(icon, size: height * 0.5, color: style.pillFg),
               if (width >= 96) ...[
                 const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: style.pillFg,
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: style.pillFg,
+                    ),
                   ),
                 ),
               ],

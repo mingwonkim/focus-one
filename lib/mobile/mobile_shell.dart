@@ -12,7 +12,6 @@ import 'focus/scene_fill.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
-import 'widgets/jelly.dart';
 
 enum MobileTab { focus, scenery, records, tasks }
 
@@ -131,12 +130,12 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                 child: Padding(
                 padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter, 8),
                 child: Container(
-                  height: MobileSize.tabBar,
+                  height: 64,
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: style.rowBg,
                     borderRadius: BorderRadius.circular(AppRadius.full),
-                    boxShadow: jellyShadow(style.secondaryLip),
+                    boxShadow: AppShadow.card(style.rowShadow),
                   ),
                   child: Row(
                     children: [
@@ -153,9 +152,7 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                               onTap: () => _tabs.value = t,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  gradient: t == current
-                                      ? jellyGradient(style.divider)
-                                      : null,
+                                  color: t == current ? style.divider : null,
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.full),
                                 ),
@@ -170,7 +167,10 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                                     Text(
                                       _labels[t]!.$1,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: 11,
+                                        fontWeight: t == current
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
                                         color: t == current
                                             ? style.textStrong
                                             : style.textMuted,

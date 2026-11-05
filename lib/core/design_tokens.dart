@@ -8,9 +8,6 @@ abstract class AppColors {
   static const onPrimary = Color(0xFFFFFFFF);
   static const error = Color(0xFFFF3B30); // iOS 레드
   static const success = Color(0xFF34C759); // iOS 그린
-  static const flame = Color(0xFFFF7A1A); // 연속일 불꽃
-  static const drop = Color(0xFF2E9BE6); // 물방울
-  static const ice = Color(0xFF4FB6E8); // 연속일 얼음
 }
 
 /// 화면 분위기 모드: 숲 / 밤 / 바다 / 일상. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
@@ -71,10 +68,7 @@ class SceneStyle {
     required this.sceneLabel,
     required this.footerLabel,
     required this.footerUnit,
-    required this.mobileFace,
-    required this.mobileBottom,
-    required this.mobileFg,
-    required this.secondaryLip,
+    required this.fillShade,
     required this.fill,
     required this.fillDeep,
     required this.fillCrest,
@@ -110,13 +104,8 @@ class SceneStyle {
   final String footerLabel; // "오늘 심은 나무"
   final String footerUnit; // "그루"
 
-  // 폰 v3 젤리 버튼
-  final Color mobileFace; // 주 버튼 윗면
-  final Color mobileBottom; // 주 버튼 그림자
-  final Color mobileFg; // 주 버튼 글자·아이콘
-  final Color secondaryLip; // 보조 버튼·카드 그림자
-
   // 폰 v3 집중 중 화면 전체 차오름
+  final Color fillShade; // 숲: 짙은 나무·땅
   final Color fill; // 뒤층·연한 나무·밤 시작색·커피 표면
   final Color fillDeep; // 앞층·진한 나무·우주 끝색·커피 바닥
   final Color fillCrest; // 물마루·얼음·별 등 밝은 점
@@ -150,10 +139,7 @@ class SceneStyle {
     sceneLabel: '숲',
     footerLabel: '오늘 심은 나무',
     footerUnit: '그루',
-    mobileFace: Color(0xFF22B894),
-    mobileBottom: Color(0xFF14715D),
-    mobileFg: Color(0xFF12382C),
-    secondaryLip: Color(0xFFC4E0CF),
+    fillShade: Color(0xFF14715D),
     fill: Color(0xFF83DCC1),
     fillDeep: Color(0xFF22B894),
     fillCrest: Color(0xFFD9F5E7),
@@ -187,10 +173,7 @@ class SceneStyle {
     sceneLabel: '밤',
     footerLabel: '오늘 모은 별',
     footerUnit: '개',
-    mobileFace: Color(0xFFF0C75E),
-    mobileBottom: Color(0xFF9A7428),
-    mobileFg: Color(0xFF14131A),
-    secondaryLip: Color(0xFF3D3A49),
+    fillShade: Color(0xFF9A7428),
     fill: Color(0xFF3F42A6),
     fillDeep: Color(0xFF04040A),
     fillCrest: Color(0xFFF4F1FF),
@@ -225,10 +208,7 @@ class SceneStyle {
     sceneLabel: '바다',
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
-    mobileFace: Color(0xFF36BDEB),
-    mobileBottom: Color(0xFF227A9D),
-    mobileFg: Color(0xFF123447),
-    secondaryLip: Color(0xFFC5DFEF),
+    fillShade: Color(0xFF227A9D),
     fill: Color(0xFF72CCE9),
     fillDeep: Color(0xFF36BDEB),
     fillCrest: Color(0xFFE4F7FD),
@@ -263,12 +243,9 @@ class SceneStyle {
     sceneLabel: '일상',
     footerLabel: '오늘 마신 커피',
     footerUnit: '잔',
-    mobileFace: Color(0xFFF68D78),
-    mobileBottom: Color(0xFFAC5948),
-    mobileFg: Color(0xFF49271F),
-    secondaryLip: Color(0xFFF3CABD),
+    fillShade: Color(0xFFAC5948),
     fill: Color(0xFF8F5220),
-    fillDeep: Color(0xFF2E170C),
+    fillDeep: Color(0xFF7A4720), // 진한 알약 버튼이 묻히지 않는 밝기
     fillCrest: Color(0xFFF4FBFF),
   );
 }
@@ -328,7 +305,6 @@ abstract class AppDuration {
   static const enter = Duration(milliseconds: 200);
   static const transition = Duration(milliseconds: 280);
   static const titleSpin = Duration(seconds: 6); // 높은 칭호 테두리 한 바퀴
-  static const jellyRelease = Duration(milliseconds: 520); // 눌렀다 튕겨 돌아옴
 }
 
 /// 칭호 테두리 한 단계. 장면과 무관한 고정 색 = 칭호의 정체성.
@@ -373,11 +349,9 @@ abstract class MobileSize {
   static const double ringInset = 32;
   static const double row = 48;
   static const double cta = 52;
-  static const double jellyHeight = 56;
-  static const double jellyRadius = 28;
   static const double statIcon = 22;
-  static const double progressBar = 14; // 두꺼운 진행 막대
-  static const double streakFlame = 72;
+  static const double goalBar = 8;
+  static const double streakIcon = 56;
   static const double weekCell = 36;
   static const double taskCard = 72;
   static const double tabBar = 64;
@@ -410,22 +384,6 @@ abstract class MobileSize {
   static const double badge = 24; // 칭호 배지 (행)
   static const double badgeLarge = 34; // 칭호 배지 (프로필·승급)
   static const double ladderDot = 8; // 칭호 사다리 점
-}
-
-/// 폰 v3 젤리 질감
-abstract class JellyLook {
-  static const topLighten = 0.32; // 위쪽을 흰색 쪽으로
-  static const shadowAlpha = 0.45;
-  static const shadowBlur = 14.0;
-  static const shadowY = 6.0;
-  static const glossAlpha = 0.38;
-  static const glossInset = 6.0;
-  static const glossSide = 0.7; // 양끝 비움 (반경 대비)
-  static const glossHeight = 8.0;
-  static const squashX = 0.05;
-  static const squashY = 0.09;
-  static const ringGloss = 0.3; // 링 위 광택 굵기 비율
-  static const ringGlossAlpha = 0.4;
 }
 
 /// 폰 v3 집중 중 차오름 모션 (docs/v3/app-design-spec.md §5). 전력 예산 때문에 프레임을 제한한다.

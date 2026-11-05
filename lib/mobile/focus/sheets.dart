@@ -370,10 +370,7 @@ class _RewardRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.lg)),
         child: Text(text,
             textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: style.textStrong)),
+            style: TextStyle(fontSize: 16, color: style.textStrong)),
       );
 }
 
@@ -429,14 +426,14 @@ Future<void> showRewardSheet(BuildContext context) {
           _RewardRow(
             style: style,
             text: switch (g.kind) {
-              GoalKind.daily => '오늘 목표 달성 💧+${g.drops}',
+              GoalKind.daily => '오늘 목표 달성 · 물방울 +${g.drops}',
               GoalKind.weekly =>
-                '이번 주 목표 달성 💧+${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
+                '이번 주 목표 달성 · 물방울 +${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
             },
           ),
         ],
         const SizedBox(height: 8),
-        _RewardRow(style: style, text: '🔥 연속 ${s.streakDays}일'),
+        _RewardRow(style: style, text: '연속 ${s.streakDays}일'),
         if (r.taskId.isNotEmpty &&
             s.pendingTasks.any((t) => t.id == r.taskId)) ...[
           const SizedBox(height: 8),

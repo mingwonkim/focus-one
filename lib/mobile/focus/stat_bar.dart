@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
 import '../../state/app_state.dart';
 import '../growth/growth_pages.dart';
-import '../widgets/jelly.dart';
 
 class StatBar extends StatelessWidget {
   const StatBar({super.key, required this.state});
@@ -14,8 +13,7 @@ class StatBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = state.scene.style;
-    Widget item(IconData icon, Color color, String value, String label,
-            {Widget? page}) =>
+    Widget item(IconData icon, String value, String label, {Widget? page}) =>
         Semantics(
           button: page != null,
           label: '$label $value',
@@ -26,22 +24,19 @@ class StatBar extends StatelessWidget {
                 ? null
                 : () => Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => page)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: MobileSize.labelGap),
-              child: JellySurface(
-                style: style,
-                radius: AppRadius.full,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(icon, size: MobileSize.statIcon, color: color),
-                  const SizedBox(width: MobileSize.labelGap),
-                  Text(value,
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: style.textStrong,
-                          fontFeatures: const [FontFeature.tabularFigures()])),
-                ]),
-              ),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: MobileSize.touchMin),
+              padding: const EdgeInsets.symmetric(horizontal: MobileSize.iconGap),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon, size: MobileSize.statIcon, color: style.accent),
+                const SizedBox(width: MobileSize.labelGap),
+                Text(value,
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: style.textStrong,
+                        fontFeatures: const [FontFeature.tabularFigures()])),
+              ]),
             ),
           ),
         );
@@ -50,13 +45,14 @@ class StatBar extends StatelessWidget {
       child: Wrap(
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: MobileSize.cardGap,
+        spacing: MobileSize.iconGap,
         children: [
-          item(Icons.local_fire_department_rounded, AppColors.flame,
-              '${state.streakDays}', '연속 집중일', page: const StreakPage()),
-          item(Icons.water_drop_rounded, AppColors.drop, '${state.drops}', '물방울'),
-          item(Icons.timer_rounded, style.accent,
-              '${state.todayMinutes}/${state.dailyGoal}분', '오늘 목표',
+          item(Icons.local_fire_department_rounded, '${state.streakDays}',
+              '연속 집중일',
+              page: const StreakPage()),
+          item(Icons.water_drop_rounded, '${state.drops}', '물방울'),
+          item(Icons.timer_rounded, '${state.todayMinutes}/${state.dailyGoal}분',
+              '오늘 목표',
               page: const GoalPage()),
         ],
       ),

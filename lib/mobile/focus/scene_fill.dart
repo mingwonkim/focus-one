@@ -186,7 +186,7 @@ class SceneFillPainter extends CustomPainter {
     // 땅도 함께 차오르고 짙어진다
     final ground = fillSurfaceY(size.height, progress, margin: 40);
     c.drawPath(_wave(size, ground, 8, 0.6, 2 * math.pi / size.width),
-        Paint()..color = Color.lerp(s.fill, s.mobileBottom, progress)!);
+        Paint()..color = Color.lerp(s.fill, s.fillShade, progress)!);
     const rows = FillMotion.forestRows;
     for (var r = rows - 1; r >= 0; r--) {
       final fy = r / (rows - 1); // 0 맨 아래 → 1 맨 위
@@ -204,7 +204,7 @@ class SceneFillPainter extends CustomPainter {
             size.width;
         // 먼 줄은 밝게, 가까운 줄은 짙게. 처음엔 연한 색으로 시작한다.
         final target = Color.lerp(
-            s.fillDeep, s.mobileBottom, (1 - fy) * 0.75 + jitter * 0.25)!;
+            s.fillDeep, s.fillShade, (1 - fy) * 0.75 + jitter * 0.25)!;
         final root = Offset(
             x, size.height * (1 - fy) + h * 0.12 + (jitter - 0.5) * 16 * unit);
         _tree(c, root, h * (0.25 + 0.75 * grow), sway * (0.6 + jitter),
@@ -223,7 +223,7 @@ class SceneFillPainter extends CustomPainter {
         RRect.fromRectAndRadius(
             Rect.fromLTWH(-h * 0.06, -h * 0.5, h * 0.12, h * 0.5),
             Radius.circular(h * 0.04)),
-        Paint()..color = Color.lerp(s.fill, s.mobileBottom, grow)!);
+        Paint()..color = Color.lerp(s.fill, s.fillShade, grow)!);
     c.drawCircle(Offset(0, -h * 0.68), h * 0.32, paint);
     c.drawCircle(Offset(-h * 0.2, -h * 0.48), h * 0.24, paint);
     c.drawCircle(Offset(h * 0.2, -h * 0.48), h * 0.24, paint);

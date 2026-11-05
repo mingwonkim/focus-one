@@ -44,12 +44,12 @@ void main() {
     final state = AppState(LocalStore(File('${dir.path}/d.json')));
     await tester.pumpWidget(ChangeNotifierProvider.value(
         value: state, child: const MaterialApp(home: GoalPage())));
-    await tester.tap(find.bySemanticsLabel('일일 목표 5분 늘리기'));
+    await tester.tap(find.byTooltip('일일 목표 5분 늘리기'));
     await tester.pump();
     expect(state.dailyGoal, Growth.dailyDefault + 5);
-    await tester.tap(find.bySemanticsLabel('일일 목표 5분 줄이기'));
+    await tester.tap(find.byTooltip('일일 목표 5분 줄이기'));
     await tester.pump();
-    await tester.tap(find.bySemanticsLabel('일일 목표 5분 줄이기'));
+    await tester.tap(find.byTooltip('일일 목표 5분 줄이기'));
     await tester.pump();
     expect(state.dailyGoal, Growth.dailyDefault + 5, reason: '낮춘 값은 오늘 적용 안 됨');
     expect(find.text('내일부터 적용'), findsOneWidget);

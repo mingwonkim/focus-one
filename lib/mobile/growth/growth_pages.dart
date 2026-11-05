@@ -6,10 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/design_tokens.dart';
+import '../../core/scene_decorations.dart';
 import '../../models/growth.dart';
 import '../../state/app_state.dart';
 import '../adaptive.dart';
-import '../widgets/jelly.dart';
+
+BoxDecoration _card(SceneStyle style) => BoxDecoration(
+      color: style.rowBg,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      boxShadow: AppShadow.card(style.rowShadow),
+    );
 
 Widget _page(BuildContext context, String title, List<Widget> children) {
   final style = context.watch<AppState>().scene.style;
@@ -128,34 +134,35 @@ class _GoalCard extends StatelessWidget {
     final style = context.watch<AppState>().scene.style;
     final value = plan.nextMinutes ?? goal;
     final reached = done >= goal;
-    return JellySurface(
-      style: style,
+    return Container(
       padding: const EdgeInsets.all(MobileSize.cardPadding),
+      decoration: _card(style),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(
             child: Text(title,
                 style: TextStyle(
                     fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: style.textStrong)),
           ),
           Text(reached ? '달성' : '$done / $goal분',
               style: TextStyle(
                   fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: style.accent)),
         ]),
         const SizedBox(height: MobileSize.cardGap),
-        JellyProgress(style: style, value: goal == 0 ? 0 : done / goal),
+        _Bar(style: style, value: goal == 0 ? 0 : done / goal),
         const SizedBox(height: MobileSize.cardGap),
         Text(reward, style: TextStyle(fontSize: 13, color: style.textMuted)),
         const SizedBox(height: MobileSize.cardPadding),
         Row(children: [
-          JellyButton(
+          RoundIconButton(
             style: style,
-            primary: false,
-            onCard: true,
+            size: MobileSize.touchMin,
             icon: Icons.remove_rounded,
-            semanticLabel: '$title 5분 줄이기',
+            tooltip: '$title 5분 줄이기',
             onTap: value <= min ? null : () => onChange(value - Growth.goalStep),
           ),
           Expanded(
@@ -170,6 +177,7 @@ class _GoalCard extends StatelessWidget {
                   Text('$value분',
                       style: TextStyle(
                           fontSize: 24,
+                          fontWeight: FontWeight.w600,
                           color: style.textStrong)),
                   if (plan.nextMinutes != null)
                     Text('$later 적용',
@@ -178,12 +186,11 @@ class _GoalCard extends StatelessWidget {
               ),
             ),
           ),
-          JellyButton(
+          RoundIconButton(
             style: style,
-            primary: false,
-            onCard: true,
+            size: MobileSize.touchMin,
             icon: Icons.add_rounded,
-            semanticLabel: '$title 5분 늘리기',
+            tooltip: '$title 5분 늘리기',
             onTap: value >= max ? null : () => onChange(value + Growth.goalStep),
           ),
         ]),
@@ -210,32 +217,31 @@ class StreakPage extends StatelessWidget {
       const SizedBox(height: MobileSize.cardGap),
       Center(
         child: Icon(Icons.local_fire_department_rounded,
-            size: MobileSize.streakFlame,
-            color: s.streakDays > 0 ? AppColors.flame : style.textFaint),
+            size: MobileSize.streakIcon,
+            color: s.streakDays > 0 ? style.accent : style.textFaint),
       ),
       Text('${s.streakDays}일',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 40,
+              fontWeight: FontWeight.w600,
               color: style.textStrong)),
       const SizedBox(height: MobileSize.labelGap),
       Text(_message(s),
           textAlign: TextAlign.center,
-          style: TextStyle(
-              fontSize: 16,
-              color: style.textMuted)),
+          style: TextStyle(fontSize: 15, color: style.textMuted)),
       const SizedBox(height: MobileSize.sectionGap),
-      JellySurface(
-        style: style,
+      Container(
         padding: const EdgeInsets.all(MobileSize.cardPadding),
+        decoration: _card(style),
         child: _Week(state: s),
       ),
       const SizedBox(height: MobileSize.gridGap),
-      JellySurface(
-        style: style,
+      Container(
         padding: const EdgeInsets.all(MobileSize.cardPadding),
+        decoration: _card(style),
         child: Row(children: [
-          const Icon(Icons.emoji_events_rounded, color: AppColors.flame),
+          Icon(Icons.emoji_events_rounded, color: style.accent),
           const SizedBox(width: MobileSize.iconGap),
           Expanded(
             child: Text('최고 기록',
@@ -244,19 +250,21 @@ class StreakPage extends StatelessWidget {
           Text('${s.bestStreak}일',
               style: TextStyle(
                   fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   color: style.textStrong)),
         ]),
       ),
       const SizedBox(height: MobileSize.gridGap),
-      JellySurface(
-        style: style,
+      Container(
         padding: const EdgeInsets.all(MobileSize.cardPadding),
+        decoration: _card(style),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(
               child: Text('얼음',
                   style: TextStyle(
                       fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: style.textStrong)),
             ),
             for (var i = 0; i < Growth.iceMax; i++)
@@ -264,18 +272,17 @@ class StreakPage extends StatelessWidget {
                 padding: const EdgeInsets.only(left: MobileSize.labelGap),
                 child: Icon(Icons.ac_unit_rounded,
                     size: 24,
-                    color: i < s.iceCount ? AppColors.ice : style.divider),
+                    color: i < s.iceCount ? style.accent : style.divider),
               ),
           ]),
           const SizedBox(height: MobileSize.labelGap),
           Text('하루 빠져도 얼음이 연속일을 지켜줘요. 자동으로 쓰여요.',
               style: TextStyle(fontSize: 13, color: style.textMuted)),
           const SizedBox(height: MobileSize.gridGap),
-          JellyButton(
+          PillButton(
             style: style,
-            primary: false,
-            onCard: true,
-            expand: true,
+            width: double.infinity,
+            height: MobileSize.cta,
             icon: Icons.water_drop_rounded,
             label: s.iceCount >= Growth.iceMax
                 ? '얼음이 가득 찼어요'
@@ -310,16 +317,14 @@ class _Week extends StatelessWidget {
             final iced = state.iceDays.contains(d);
             return Column(children: [
               Text(_labels[i],
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: style.textMuted)),
+                  style: TextStyle(fontSize: 13, color: style.textMuted)),
               const SizedBox(height: MobileSize.labelGap),
               Container(
                 width: MobileSize.weekCell,
                 height: MobileSize.weekCell,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: on ? AppColors.flame : (iced ? AppColors.ice : style.divider),
+                  color: on ? style.ringProgress : style.divider,
                   border: d == today
                       ? Border.all(color: style.accent, width: 2)
                       : null,
@@ -330,7 +335,7 @@ class _Week extends StatelessWidget {
                             ? Icons.local_fire_department_rounded
                             : Icons.ac_unit_rounded,
                         size: 20,
-                        color: AppColors.onPrimary,
+                        color: on ? AppColors.onPrimary : style.accent,
                         semanticLabel: on ? '집중함' : '얼음으로 지킴')
                     : null,
               ),
@@ -339,4 +344,25 @@ class _Week extends StatelessWidget {
         ),
     ]);
   }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({required this.style, required this.value});
+  final SceneStyle style;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: Container(
+          height: MobileSize.goalBar,
+          color: style.ringTrack,
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            heightFactor: 1,
+            child: ColoredBox(color: style.ringProgress),
+          ),
+        ),
+      );
 }

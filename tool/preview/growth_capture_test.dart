@@ -1,11 +1,10 @@
-// v3 2단계 미리보기: 홈 스탯·목표·연속일·보상 시트 (macOS 전용). CI 대상 아님.
+// v3 2단계 미리보기: 홈 스탯·목표·연속일·보상 시트 (macOS 전용: AppleGothic). CI 대상 아님.
 // 실행: flutter test tool/preview/growth_capture_test.dart --dart-define=OUT=<dir>
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -26,12 +25,6 @@ const out = String.fromEnvironment('OUT', defaultValue: '/tmp');
 void main() {
   testWidgets('growth capture', (tester) async {
     await tester.runAsync(loadFont);
-    await tester.runAsync(() async {
-      final bytes = File('assets/fonts/Jua-Regular.ttf').readAsBytesSync();
-      await (FontLoader('Jua')
-            ..addFont(Future.value(ByteData.view(bytes.buffer))))
-          .load();
-    });
     final dir = Directory.systemTemp.createTempSync('fo');
     addTearDown(() => dir.deleteSync(recursive: true));
     final now = DateTime.now();
@@ -78,14 +71,14 @@ void main() {
           theme: AppTheme.of(state.scene).copyWith(
               textTheme: AppTheme.of(state.scene)
                   .textTheme
-                  .apply(fontFamily: 'Jua')),
+                  .apply(fontFamily: 'AppleGothic')),
           home: RepaintBoundary(
             key: key,
             child: MediaQuery(
               data: const MediaQueryData(
                   size: size, padding: EdgeInsets.only(top: 59, bottom: 34)),
               child: DefaultTextStyle.merge(
-                  style: const TextStyle(fontFamily: 'Jua'),
+                  style: const TextStyle(fontFamily: 'AppleGothic'),
                   child: home),
             ),
           ),

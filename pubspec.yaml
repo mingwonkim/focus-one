@@ -48,19 +48,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # Jua(OFL, assets/fonts/Jua-OFL.txt)는 한 굵기뿐. 가짜 굵게가 생기지 않게 굵기마다 같은 파일.
-  fonts:
-    - family: Jua
-      fonts:
-        - asset: assets/fonts/Jua-Regular.ttf
-        - asset: assets/fonts/Jua-Regular.ttf
-          weight: 500
-        - asset: assets/fonts/Jua-Regular.ttf
-          weight: 600
-        - asset: assets/fonts/Jua-Regular.ttf
-          weight: 700
-        - asset: assets/fonts/Jua-Regular.ttf
-          weight: 800
   assets:
     - assets/sounds/
     - assets/tray_icon.png
