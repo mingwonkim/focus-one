@@ -147,20 +147,17 @@ class SceneFillPainter extends CustomPainter {
     return path;
   }
 
-  void _ocean(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.waveBackAmp * 2;
-    final y = fillSurfaceY(size.height, progress, margin: m);
+  /// 바다·커피 공통 출렁임: 뒤 물결 + 앞 물결 + 앞 물결 머리의 밝은 선
+  void _swell(Canvas c, Size size, double t, double y, Paint back, Paint front,
+      Color crestColor) {
     final k = 2 * math.pi / size.width;
-    final back = 2 * math.pi * t / FillMotion.waveBackPeriod;
-    final front = 2 * math.pi * t / FillMotion.waveFrontPeriod;
-    c.drawPath(_wave(size, y - 8, FillMotion.waveBackAmp, back, k * 1.2),
-        Paint()..color = s.fill);
-    final path = _wave(size, y + 6, FillMotion.waveFrontAmp, -front, k * 1.7);
-    c.drawPath(path, Paint()..color = s.fillDeep);
-    // 앞 물결 머리의 밝은 선
+    final b = 2 * math.pi * t / FillMotion.waveBackPeriod;
+    final f = 2 * math.pi * t / FillMotion.waveFrontPeriod;
+    c.drawPath(_wave(size, y - 8, FillMotion.waveBackAmp, b, k * 1.2), back);
+    c.drawPath(_wave(size, y + 6, FillMotion.waveFrontAmp, -f, k * 1.7), front);
     final crest = Path();
     for (var x = 0.0; x <= size.width + 8; x += 8) {
-      final py = y + 6 + FillMotion.waveFrontAmp * math.sin(k * 1.7 * x - front);
+      final py = y + 6 + FillMotion.waveFrontAmp * math.sin(k * 1.7 * x - f);
       x == 0 ? crest.moveTo(x, py) : crest.lineTo(x, py);
     }
     c.drawPath(
@@ -169,7 +166,14 @@ class SceneFillPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round
-          ..color = s.fillCrest);
+          ..color = crestColor);
+  }
+
+  void _ocean(Canvas c, Size size, double t, SceneStyle s) {
+    const m = FillMotion.waveBackAmp * 2;
+    final y = fillSurfaceY(size.height, progress, margin: m);
+    _swell(c, size, t, y, Paint()..color = s.fill, Paint()..color = s.fillDeep,
+        s.fillCrest);
   }
 
   /// 먼 줄부터 그려 가까운 나무가 덮는다. 나무는 아래 줄부터 차례로, 연한 색에서 진한 색으로 물들며 자란다.
@@ -269,28 +273,23 @@ class SceneFillPainter extends CustomPainter {
     (0.92, 214.0, 42.0, 0.3),
   ];
 
-  /// 잔 안을 들여다본 모습: 빨대 → 맑은 커피 → 떠 있는 얼음
+  /// 잔 안을 들여다본 모습: 바다처럼 출렁이는 커피 + 떠 있는 얼음
   void _coffee(Canvas c, Size size, double t, SceneStyle s) {
     const m = 72.0;
     final y = fillSurfaceY(size.height, progress, margin: m);
-    final k = 2 * math.pi / size.width;
-    final phase = 2 * math.pi * t / FillMotion.coffeePeriod;
-    // 빨대: 커피 위로 나온 부분만 보인다
-    c.drawLine(
-        Offset(size.width * 0.70, -8),
-        Offset(size.width * 0.84, size.height + 8),
-        Paint()
-          ..color = s.mobileFace
-          ..strokeWidth = FillMotion.strawWidth);
-    final liquid = _wave(size, y, FillMotion.coffeeAmp, phase, k);
-    c.drawPath(
-        liquid,
+    _swell(
+        c,
+        size,
+        t,
+        y,
+        Paint()..color = Color.lerp(s.fill, s.fillCrest, 0.28)!,
         Paint()
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [s.fill, s.fillDeep],
-          ).createShader(Rect.fromLTRB(0, y, size.width, size.height + 1)));
+          ).createShader(Rect.fromLTRB(0, y, size.width, size.height + 1)),
+        Color.lerp(s.fill, s.fillCrest, 0.6)!);
     final bob = 2 * math.pi * t / FillMotion.iceBobPeriod;
     final fill = Paint()..color = s.fillCrest.withValues(alpha: 0.42);
     final edge = Paint()

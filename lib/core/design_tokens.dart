@@ -419,11 +419,8 @@ abstract class FillMotion {
   static const waveBackPeriod = 7.0; // 초
   static const waveFrontAmp = 6.0;
   static const waveFrontPeriod = 4.0;
-  static const coffeeAmp = 3.0;
-  static const coffeePeriod = 6.0;
   static const iceBob = 3.0; // 얼음이 위아래로 떠다니는 폭
   static const iceBobPeriod = 5.0;
-  static const strawWidth = 16.0;
   static const treeSwayDeg = 2.0;
   static const treeSwayPeriod = 6.0;
   static const forestRows = 9; // 아래(가까움)부터 위(멀리)까지 줄
