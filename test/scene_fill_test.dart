@@ -38,8 +38,8 @@ void main() {
     await tester.binding.delayed(const Duration(milliseconds: 100));
     expect(tester.binding.hasScheduledFrame, isTrue, reason: '보일 땐 움직인다');
     await tester.pump();
+    // paused면 프레임 자체가 꺼져 검사가 안 되므로 프레임이 살아 있는 inactive로 본다
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     await tester.binding.delayed(const Duration(seconds: 1));
     expect(tester.binding.hasScheduledFrame, isFalse, reason: '안 보이면 멈춘다');
