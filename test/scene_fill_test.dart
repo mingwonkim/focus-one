@@ -1,4 +1,6 @@
 // 차오름 높이: 시작은 화면 아래, 끝은 화면 위까지 빈틈 없이
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,6 +29,49 @@ void main() {
     });
   }
 
+  testWidgets('앱이 안 보이면 다시 그리지 않고, 돌아오면 다시 움직인다', (tester) async {
+    await tester.pumpWidget(const Directionality(
+      textDirection: TextDirection.ltr,
+      child: SceneFill(scene: FocusScene.ocean, progress: 0.5),
+    ));
+    await tester.pump();
+    await tester.binding.delayed(const Duration(milliseconds: 100));
+    expect(tester.binding.hasScheduledFrame, isTrue, reason: '보일 땐 움직인다');
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    await tester.binding.delayed(const Duration(seconds: 1));
+    expect(tester.binding.hasScheduledFrame, isFalse, reason: '안 보이면 멈춘다');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.binding.delayed(const Duration(milliseconds: 100));
+    expect(tester.binding.hasScheduledFrame, isTrue, reason: '돌아오면 다시');
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('한 프레임 그리기 비용 (전력 대리 지표)', () {
+    const size = Size(402, 874);
+    for (final scene in FocusScene.values) {
+      final time = ValueNotifier<double>(1.5);
+      final painter =
+          SceneFillPainter(scene: scene, progress: 1, time: time);
+      final watch = Stopwatch()..start();
+      const frames = 240;
+      for (var i = 0; i < frames; i++) {
+        final recorder = ui.PictureRecorder();
+        painter.paint(Canvas(recorder), size);
+        recorder.endRecording().dispose();
+      }
+      watch.stop();
+      final ms = watch.elapsedMicroseconds / 1000 / frames;
+      // ignore: avoid_print
+      print('fill ${scene.name}: ${ms.toStringAsFixed(3)} ms/frame');
+      expect(ms, lessThan(FillMotion.frame.inMilliseconds / 2));
+      time.dispose();
+    }
+  });
+
   testWidgets('동작 줄이기면 움직임 타이머를 돌리지 않는다', (tester) async {
     await tester.pumpWidget(const MediaQuery(
       data: MediaQueryData(disableAnimations: true),
@@ -35,7 +80,8 @@ void main() {
         child: SceneFill(scene: FocusScene.ocean, progress: 0.5),
       ),
     ));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.binding.delayed(const Duration(seconds: 1));
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 }
