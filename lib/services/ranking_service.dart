@@ -15,6 +15,19 @@ typedef RankRow = ({
   bool isMe,
 });
 
+/// 친구 1명과의 이번 주 대결. code = 상대 초대 코드(끊기용)
+typedef Duel = ({
+  String code,
+  String nickname,
+  String avatar,
+  int totalMinutes,
+  int myWeek,
+  int theirWeek,
+  int wins,
+  int losses,
+  int draws,
+});
+
 class RankingService {
   // 공개용(publishable) 키 — 앱에 들어가도 되는 값. 권한은 서버 함수가 판단.
   static const _url = 'https://bvnwdbbjkrjdqgqyidhp.supabase.co';
@@ -57,6 +70,43 @@ class RankingService {
     final rows =
         await _db.rpc('past_winners', params: {'p_period': period.name}) as List;
     return [for (final r in rows.cast<Map<String, dynamic>>()) _row(r)];
+  }
+
+  /// 내 초대 코드 (카톡 초대 링크에 실림)
+  Future<String> inviteCode() async {
+    await _signIn();
+    return await _db.rpc('my_invite_code') as String;
+  }
+
+  /// 초대 수락 → 상대 닉네임. 서버 오류: bad code / own code / join first / too many friends
+  Future<String> acceptInvite(String code) async {
+    await _signIn();
+    return await _db.rpc('accept_invite', params: {'p_code': code}) as String;
+  }
+
+  /// 친구별 이번 주 1:1 대결 + 지난 주까지 전적
+  Future<List<Duel>> duels() async {
+    await _signIn();
+    final rows = await _db.rpc('duels') as List;
+    return [
+      for (final r in rows.cast<Map<String, dynamic>>())
+        (
+          code: r['code'] as String,
+          nickname: r['nickname'] as String,
+          avatar: r['avatar'] as String? ?? '',
+          totalMinutes: (r['total_minutes'] as num).toInt(),
+          myWeek: (r['my_week'] as num).toInt(),
+          theirWeek: (r['their_week'] as num).toInt(),
+          wins: (r['wins'] as num).toInt(),
+          losses: (r['losses'] as num).toInt(),
+          draws: (r['draws'] as num).toInt(),
+        )
+    ];
+  }
+
+  Future<void> removeFriend(String code) async {
+    await _signIn();
+    await _db.rpc('remove_friend', params: {'p_code': code});
   }
 
   /// 익명 계정과 점수를 서버에서 완전히 지운다 (leave_ranking이 auth.users 삭제 → cascade)

@@ -98,6 +98,11 @@
   - [x] `supabase db push` (11/04 Claude, CLI 연결돼 있음) — 출시된 1.0.x가 쓰는 옛 submit_score·ranking은 남기게 고친 뒤 반영. 실서버에서 옛·새 ranking·past_winners 응답 확인
   - [ ] 실기기: 공유 시트 PNG(카톡·사진 저장), 승급 시트 확인
   - [ ] 개인정보 처리방침에 아바타(친구 id) 추가 — 출시 전
+- [x] 2차 (11/05): 꾸미기 보관함·도감·상점 탭바 위 고정 / 칭호 배지(메달+링 색)·10단계 사다리·다음 목표 카드(남은 시간·%·다음 테두리) / 승급 시트에 배지·다음 목표
+- [x] 1:1 대결 (11/05, 이번 주 월~일 집중 분 = daily_points.gained, 친구 여럿, 전적): 서버 20261105000000_friend_duels.sql(초대 코드·친구·duels·끊기, 로컬 pg 검증), 기록 탭 대결 카드 + 대결 화면(줄다리기 막대·코드 입력·길게 눌러 끊기), 카톡 초대(kakao_flutter_sdk_share, 키 없으면 공유 시트로 코드+스토어 링크), 초대 링크로 열리면 대결 화면 자동 수락. 테스트 39개 통과
+  - [ ] `supabase db push` 20261105000000_friend_duels.sql — Claude 실행이 권한 분류기에 막힘(Production Deploy), 사용자 허락 필요
+  - [ ] 카카오 개발자 앱 생성(사용자) → 네이티브 앱 키 받으면: invite.dart kakaoNativeKey, Info.plist CFBundleURLTypes kakao<키>, AndroidManifest intent-filter kakao<키>://kakaolink
+  - [ ] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 출시 전
 
 ## 다음 세션
 - [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공

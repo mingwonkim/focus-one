@@ -52,6 +52,8 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- 카톡 친구 초대 (카카오 SDK가 카톡 설치 확인) -->
+        <package android:name="com.kakao.talk" />
         <!-- 잠글 앱 선택: 홈 화면 앱 목록만 조회 (QUERY_ALL_PACKAGES 불필요) -->
         <intent>
             <action android:name="android.intent.action.MAIN"/>

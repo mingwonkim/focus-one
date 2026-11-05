@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../core/design_tokens.dart';
 import '../state/app_state.dart';
 import 'adaptive.dart';
+import 'duel/duel_page.dart';
+import 'duel/invite.dart';
 import 'focus/focus_home.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
@@ -25,9 +27,28 @@ class _MobileShellState extends State<MobileShell> {
   final _tabs = ValueNotifier(MobileTab.focus);
 
   @override
+  void initState() {
+    super.initState();
+    pendingInvite.addListener(_onInvite);
+  }
+
+  @override
   void dispose() {
+    pendingInvite.removeListener(_onInvite);
     _tabs.dispose();
     super.dispose();
+  }
+
+  void _onInvite() => setState(() {});
+
+  /// 카톡 초대로 열렸으면 대결 화면으로 (집중·휴식 중이면 끝난 뒤에)
+  void _openInvite() {
+    final code = pendingInvite.value;
+    if (code == null) return;
+    pendingInvite.value = null;
+    _tabs.value = MobileTab.records;
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => DuelPage(initialCode: code)));
   }
 
   static const _labels = {
@@ -50,6 +71,9 @@ class _MobileShellState extends State<MobileShell> {
     final hideBar = state.phase != FocusPhase.idle;
     final tab = context.watch<ValueNotifier<MobileTab>>().value;
     final current = hideBar ? MobileTab.focus : tab;
+    if (!hideBar && pendingInvite.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openInvite());
+    }
     return Scaffold(
       backgroundColor: style.cardBg,
       body: SafeArea(

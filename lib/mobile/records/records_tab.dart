@@ -7,6 +7,7 @@ import '../../models/task.dart';
 import '../../state/app_state.dart';
 import '../../state/stats.dart';
 import '../focus/sheets.dart' show tagColor;
+import '../duel/duel_page.dart';
 import 'profile_card.dart';
 
 enum _Period { day, week, month, year }
@@ -124,6 +125,7 @@ class _RecordsTabState extends State<RecordsTab> {
         ),
         const SizedBox(height: 16),
         const ProfileCard(), // 칭호·명예의 전당·자랑하기
+        const DuelCard(), // 이번 주 1:1 대결·카톡 초대
         // 연속일 + 최근 7일 점
         card(Row(children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

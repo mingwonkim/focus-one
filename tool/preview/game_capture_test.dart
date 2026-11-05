@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:focus_one/core/app_theme.dart';
 import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
+import 'package:focus_one/mobile/duel/duel_page.dart';
 import 'package:focus_one/mobile/focus/sheets.dart';
 import 'package:focus_one/mobile/records/profile_card.dart';
 import 'package:focus_one/mobile/records/ranking_page.dart';
@@ -37,6 +38,15 @@ class _FakeRanking extends RankingService {
         r(4, '집중러', 'fawn', 610, 3000, me: true),
         r(5, '하루한시간', '', 420, 500),
         r(6, '시험기간', 'fox', 300, 160),
+      ];
+  @override
+  Future<List<Duel>> duels() async => [
+        (code: 'AAAAAA', nickname: '새벽집중', avatar: 'owl', totalMinutes: 9500,
+          myWeek: 200, theirWeek: 130, wins: 2, losses: 1, draws: 0),
+        (code: 'BBBBBB', nickname: '도토리', avatar: 'squirrel', totalMinutes: 2600,
+          myWeek: 40, theirWeek: 95, wins: 0, losses: 3, draws: 0),
+        (code: 'CCCCCC', nickname: '하루한시간', avatar: 'fox', totalMinutes: 160,
+          myWeek: 0, theirWeek: 0, wins: 0, losses: 0, draws: 1),
       ];
   @override
   Future<List<RankRow>> pastWinners(RankPeriod period) async => [
@@ -144,6 +154,21 @@ void main() {
                               aspectRatio: 4 / 5, child: ShareCard())))),
               const Size(402, 500),
               'share_${scene.name}');
+        }
+        for (final scene in [FocusScene.forest, FocusScene.night]) {
+          s.setScene(scene);
+          await shot(s, const DuelPage(), phone, 'duel_${scene.name}',
+              then: () => tester.pump(const Duration(milliseconds: 300)));
+          await shot(
+              s,
+              Scaffold(
+                  backgroundColor: scene.style.cardBg,
+                  body: const SingleChildScrollView(
+                      padding: EdgeInsets.all(MobileSize.gutter),
+                      child: DuelCard())),
+              const Size(402, 640),
+              'duelcard_${scene.name}',
+              then: () => tester.pump(const Duration(milliseconds: 300)));
         }
         s.setScene(FocusScene.forest);
         await shot(s, const RankingPage(), phone, 'hall_forest',

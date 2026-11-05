@@ -11,6 +11,7 @@ import '../services/ranking_service.dart';
 import '../services/focus_lock_service.dart';
 import '../services/session_notifier.dart';
 import '../state/app_state.dart';
+import 'duel/invite.dart';
 import 'mobile_shell.dart';
 
 /// 폰(iOS/Android) 진입점. 데스크탑 전용 서비스는 만들지 않는다.
@@ -94,6 +95,12 @@ Future<void> runMobile() async {
     appState.addListener(sync);
     sync();
   } catch (_) {}
+
+  try {
+    await initKakao(); // 카톡 초대 카드 + 초대 링크로 열렸을 때 받기
+  } catch (e) {
+    debugPrint('kakao init: $e');
+  }
 
   runApp(
       MultiProvider(providers: [
