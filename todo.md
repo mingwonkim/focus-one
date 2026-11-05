@@ -101,13 +101,13 @@
 - [x] 2차 (11/05): 꾸미기 보관함·도감·상점 탭바 위 고정 / 칭호 배지(메달+링 색)·10단계 사다리·다음 목표 카드(남은 시간·%·다음 테두리) / 승급 시트에 배지·다음 목표
 - [x] 1:1 대결 (11/05, 이번 주 월~일 집중 분 = daily_points.gained, 친구 여럿, 전적): 서버 20261105000000_friend_duels.sql(초대 코드·친구·duels·끊기, 로컬 pg 검증), 기록 탭 대결 카드 + 대결 화면(줄다리기 막대·코드 입력·길게 눌러 끊기), 카톡 초대(kakao_flutter_sdk_share, 키 없으면 공유 시트로 코드+스토어 링크), 초대 링크로 열리면 대결 화면 자동 수락. 테스트 39개 통과
   - [ ] `supabase db push` 20261105000000_friend_duels.sql — Claude 실행이 권한 분류기에 막힘(Production Deploy), 사용자 허락 필요
-  - [ ] 카카오 개발자 앱 생성(사용자) → 네이티브 앱 키 받으면: invite.dart kakaoNativeKey, Info.plist CFBundleURLTypes kakao<키>, AndroidManifest intent-filter kakao<키>://kakaolink
+  - [x] 카카오 개발자 앱 생성(사용자) → 네이티브 앱 키 받으면: invite.dart kakaoNativeKey, Info.plist CFBundleURLTypes kakao<키>, AndroidManifest intent-filter kakao<키>://kakaolink — 11/06 완료
   - [ ] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 출시 전
 
 ## ▶ 재부팅 후 이어서 (2026-11-05 기준, 브랜치 mobile-v1, 전부 푸시됨 abe590a)
 1. [ ] 사용자: `supabase db push` (또는 Claude에게 "db push 해도 돼") — 대결 마이그레이션 20261105000000_friend_duels.sql. 전엔 대결 카드 "불러오지 못했어요" — 11/06 dry-run 통과(이것 1개만 대상), Claude 실행은 분류기에 다시 막힘 → `! supabase db push` 필요
-2. [ ] 사용자: developers.kakao.com 앱 생성 → 플랫폼 iOS(번들 com.looinlabs.focusone, 앱스토어 ID 6821653231)·Android(패키지 com.looinlabs.fokko + 키 해시)·Web(https://looinlabs.com) → 네이티브 앱 키 Claude에게 — 11/06 Claude가 computer use로 진행 중, 카카오 로그인 대기
-3. [ ] Claude: 키 받으면 invite.dart kakaoNativeKey + Info.plist CFBundleURLTypes kakao<키> + AndroidManifest intent-filter(scheme kakao<키>, host kakaolink) → 빌드·아이폰 설치(폰 잠금 해제 필요)
+2. [x] 사용자: developers.kakao.com 앱 생성 → 플랫폼 iOS(번들 com.looinlabs.focusone, 앱스토어 ID 6821653231)·Android(패키지 com.looinlabs.fokko + 키 해시)·Web(https://looinlabs.com) → 네이티브 앱 키 Claude에게 — 11/06 computer use로 완료: 앱 ID 1639218, 업로드·디버그 키 해시 등록. Play 출시 때 Play 앱 서명 키 해시 추가 필요
+3. [ ] Claude: 키 받으면 invite.dart kakaoNativeKey + Info.plist CFBundleURLTypes kakao<키> + AndroidManifest intent-filter(scheme kakao<키>, host kakaolink) → 빌드·아이폰 설치(폰 잠금 해제 필요) — 11/06 코드 반영(analyze 0, 테스트 39개), 아이폰 설치 남음
 4. [ ] 사용자: 디자인 검토 2차 — 미리보기 다시 만들기: `flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>` (scratchpad 이미지는 재부팅 시 사라짐) — 11/06 재생성 17장, 사용자 검토 대기
 5. [ ] 실기기 확인: 공유 시트·승급 시트·소리·대결 카드
 6. [ ] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가

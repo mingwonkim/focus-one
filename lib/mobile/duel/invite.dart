@@ -6,7 +6,7 @@ import 'package:kakao_flutter_sdk_share/kakao_flutter_sdk_share.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// developers.kakao.com 앱 → 앱 키 → 네이티브 앱 키. iOS Info.plist·Android Manifest의 kakao<키> 스킴과 같아야 한다.
-const kakaoNativeKey = '';
+const kakaoNativeKey = '6a8ada13600885965d103fff15c630f2';
 
 final storeUrl = Uri.parse('https://apps.apple.com/kr/app/id6821653231');
 final _siteUrl = Uri.parse('https://looinlabs.com/fokko'); // 카카오 앱 플랫폼에 등록한 도메인

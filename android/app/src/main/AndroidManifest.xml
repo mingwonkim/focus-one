@@ -26,6 +26,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- 카톡 초대 카드 버튼 → 앱 열림 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="kakao6a8ada13600885965d103fff15c630f2" android:host="kakaolink"/>
+            </intent-filter>
         </activity>
         <!-- 집중 중 앱 잠금 (접근성 서비스: 패키지 이름만 확인) -->
         <service
