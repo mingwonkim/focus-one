@@ -1,5 +1,5 @@
 // lib/mobile/focus/scene_fill.dart
-// 집중 중 화면 전체 차오름: 바다 파도 · 숲 풀과 나무 · 밤 달빛과 별 · 일상 커피.
+// 집중 중 화면 전체 변화: 바다 파도 · 숲이 물들며 자람 · 밤 우주처럼 어두워짐 · 일상 커피.
 // 높이는 남은 시간(시계)에서만 나온다. 움직임은 약 24fps로 제한하고 앱이 안 보이면 멈춘다.
 import 'dart:async';
 import 'dart:math' as math;
@@ -106,23 +106,17 @@ class SceneFillPainter extends CustomPainter {
   final double progress;
   final ValueListenable<double> time;
 
-  // 고정 좌표 (x 비율, 아래에서부터 높이 비율)
-  static const _trees = [
-    // 가운데는 링 자리라 양옆에만
-    (0.11, 0.14, 1.0),
-    (0.90, 0.27, 0.85),
-    (0.08, 0.46, 0.8),
-    (0.92, 0.60, 0.9),
-    (0.12, 0.74, 0.75),
-  ];
-  static final _grass = [
-    for (var i = 0; i < 16; i++)
-      ((i * 0.381966 + 0.07) % 1.0, (i * 0.618034 + 0.03) % 1.0)
-  ];
+  // 별 고정 좌표 (x 비율, y 비율)
   static final _stars = [
-    for (var i = 0; i < 24; i++)
+    for (var i = 0; i < 48; i++)
       ((i * 0.754877 + 0.11) % 1.0, (i * 0.569840 + 0.05) % 1.0)
   ];
+
+  /// 0~1 고정 난수 (같은 나무는 항상 같은 값)
+  static double _hash(int a, int b) {
+    final v = math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+    return v - v.floorToDouble();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -178,97 +172,99 @@ class SceneFillPainter extends CustomPainter {
           ..color = s.fillCrest);
   }
 
+  /// 먼 줄부터 그려 가까운 나무가 덮는다. 나무는 아래 줄부터 차례로, 연한 색에서 진한 색으로 물들며 자란다.
   void _forest(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.grassHeight;
-    final y = fillSurfaceY(size.height, progress, margin: m);
+    final unit = size.width / 402;
     final sway = FillMotion.treeSwayDeg *
         math.pi /
         180 *
         math.sin(2 * math.pi * t / FillMotion.treeSwayPeriod);
-    // 땅: 위가 살짝 둥근 언덕
-    final k = 2 * math.pi / size.width;
-    c.drawPath(_wave(size, y, 8, 0.6, k * 0.8), Paint()..color = s.fill);
-    final blade = Paint()
-      ..color = s.fillDeep
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-    for (final (fx, fy) in _grass) {
-      final rootY = size.height * (1 - fy * progress);
-      if (rootY > size.height) continue;
-      _tuft(c, Offset(fx * size.width, rootY),
-          FillMotion.grassHeight * ((progress - fy * progress + 0.2).clamp(0.0, 1.0) * 0.5 + 0.5), sway, blade);
-    }
-    for (final (fx, fy, scale) in _trees) {
-      // 땅이 뿌리 높이를 지나면 그때부터 자란다
-      final grow = ((progress - fy) / 0.22).clamp(0.0, 1.0);
-      if (grow <= 0) continue;
-      _tree(c, Offset(fx * size.width, size.height * (1 - fy)),
-          FillMotion.treeHeight * scale * grow, sway, s);
+    // 땅도 함께 차오르고 짙어진다
+    final ground = fillSurfaceY(size.height, progress, margin: 40);
+    c.drawPath(_wave(size, ground, 8, 0.6, 2 * math.pi / size.width),
+        Paint()..color = Color.lerp(s.fill, s.mobileBottom, progress)!);
+    const rows = FillMotion.forestRows;
+    for (var r = rows - 1; r >= 0; r--) {
+      final fy = r / (rows - 1); // 0 맨 아래 → 1 맨 위
+      final h = (FillMotion.treeNear +
+              (FillMotion.treeFar - FillMotion.treeNear) * fy) *
+          unit;
+      final cols = 4 + (fy * 2).round();
+      for (var i = 0; i <= cols; i++) {
+        final jitter = _hash(r, i);
+        final start = fy * 0.8 + jitter * 0.04;
+        final grow = ((progress - start) / FillMotion.treeGrow).clamp(0.0, 1.0);
+        if (grow <= 0) continue;
+        final x = (i + (r.isOdd ? 0.5 : 0.0) + (jitter - 0.5) * 0.4) /
+            cols *
+            size.width;
+        // 먼 줄은 밝게, 가까운 줄은 짙게. 처음엔 연한 색으로 시작한다.
+        final target = Color.lerp(
+            s.fillDeep, s.mobileBottom, (1 - fy) * 0.75 + jitter * 0.25)!;
+        final root = Offset(
+            x, size.height * (1 - fy) + h * 0.12 + (jitter - 0.5) * 16 * unit);
+        _tree(c, root, h * (0.25 + 0.75 * grow), sway * (0.6 + jitter),
+            Color.lerp(s.fill, target, grow)!, s, grow);
+      }
     }
   }
 
-  void _tuft(Canvas c, Offset root, double h, double sway, Paint p) {
-    for (final a in [-0.32, 0.0, 0.32]) {
-      final tip = root +
-          Offset(math.sin(a + sway * 4) * h, -math.cos(a + sway * 4) * h);
-      c.drawLine(root, tip, p);
-    }
-  }
-
-  void _tree(Canvas c, Offset root, double h, double sway, SceneStyle s) {
+  void _tree(Canvas c, Offset root, double h, double sway, Color leaf,
+      SceneStyle s, double grow) {
     c.save();
     c.translate(root.dx, root.dy);
     c.rotate(sway);
+    final paint = Paint()..color = leaf;
     c.drawRRect(
         RRect.fromRectAndRadius(
-            Rect.fromLTWH(-h * 0.07, -h * 0.5, h * 0.14, h * 0.5),
-            Radius.circular(h * 0.05)),
-        Paint()..color = s.mobileBottom);
-    c.drawCircle(Offset(0, -h * 0.66), h * 0.34, Paint()..color = s.fillDeep);
-    c.drawCircle(Offset(-h * 0.18, -h * 0.5), h * 0.22, Paint()..color = s.fillDeep);
-    c.drawCircle(Offset(h * 0.18, -h * 0.5), h * 0.22, Paint()..color = s.fillDeep);
-    c.drawCircle(Offset(-h * 0.1, -h * 0.76), h * 0.1, Paint()..color = s.fillCrest);
+            Rect.fromLTWH(-h * 0.06, -h * 0.5, h * 0.12, h * 0.5),
+            Radius.circular(h * 0.04)),
+        Paint()..color = Color.lerp(s.fill, s.mobileBottom, grow)!);
+    c.drawCircle(Offset(0, -h * 0.68), h * 0.32, paint);
+    c.drawCircle(Offset(-h * 0.2, -h * 0.48), h * 0.24, paint);
+    c.drawCircle(Offset(h * 0.2, -h * 0.48), h * 0.24, paint);
     c.restore();
   }
 
+  /// 경계선 없이 화면 전체가 남색에서 우주 검정으로. 어두워질수록 별이 늘어난다.
   void _night(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.waveBackAmp;
-    final y = fillSurfaceY(size.height, progress, margin: m);
-    final k = 2 * math.pi / size.width;
-    c.drawPath(_wave(size, y, m, 2 * math.pi * t / FillMotion.waveBackPeriod, k),
-        Paint()..color = s.fill);
+    final fade = (progress / FillMotion.nightFadeIn).clamp(0.0, 1.0);
+    final sky = Color.lerp(
+        Color.lerp(s.cardBg, s.fill, fade),
+        s.fillDeep,
+        ((progress - FillMotion.nightFadeIn) / (1 - FillMotion.nightFadeIn))
+            .clamp(0.0, 1.0))!;
+    c.drawRect(Offset.zero & size, Paint()..color = sky);
     final star = Paint();
     for (var i = 0; i < _stars.length; i++) {
+      final show = ((progress - i / _stars.length * 0.9) / 0.1).clamp(0.0, 1.0);
+      if (show <= 0) continue;
       final (fx, fy) = _stars[i];
-      final sy = fy * size.height;
-      if (sy < y) continue; // 달빛이 지난 자리만
-      final a = 0.85 +
-          0.15 * math.sin(2 * math.pi * t / FillMotion.starPeriod + i);
-      c.drawCircle(Offset(fx * size.width, sy), FillMotion.starRadius,
-          star..color = s.fillCrest.withValues(alpha: a));
-    }
-    // 끝 무렵 위쪽에 달이 드러난다
-    final moon = Offset(size.width * 0.78, size.height * 0.1);
-    if (moon.dy > y) {
-      c.drawCircle(moon, FillMotion.moonRadius, Paint()..color = s.fillCrest);
-      c.drawCircle(moon + const Offset(-12, -6), FillMotion.moonRadius * 0.82,
-          Paint()..color = s.fill);
+      final twinkle =
+          0.8 + 0.2 * math.sin(2 * math.pi * t / FillMotion.starPeriod + i);
+      c.drawCircle(
+          Offset(fx * size.width, fy * size.height),
+          FillMotion.starRadius * (0.6 + 0.8 * _hash(i, 7)),
+          star..color = s.fillCrest.withValues(alpha: show * twinkle));
     }
   }
 
+  /// 크레마 띠 + 표면은 밝고 바닥으로 갈수록 진한 커피
   void _coffee(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.cremaAmp * 4;
+    const m = FillMotion.cremaAmp * 8;
     final y = fillSurfaceY(size.height, progress, margin: m);
     final k = 2 * math.pi / size.width;
     final phase = 2 * math.pi * t / FillMotion.cremaPeriod;
-    // 위쪽 크레마 띠 → 아래 커피
     c.drawPath(_wave(size, y, FillMotion.cremaAmp, phase, k),
         Paint()..color = s.fillCrest);
-    c.drawPath(_wave(size, y + 14, FillMotion.cremaAmp, phase, k),
-        Paint()..color = s.fill);
-    c.drawPath(_wave(size, y + 14 + size.height * 0.25, FillMotion.cremaAmp, phase, k),
-        Paint()..color = s.fillDeep);
+    c.drawPath(
+        _wave(size, y + 12, FillMotion.cremaAmp, phase, k),
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [s.fill, s.fillDeep],
+          ).createShader(Rect.fromLTRB(0, y, size.width, size.height + 1)));
   }
 
   @override

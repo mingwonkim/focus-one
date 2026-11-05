@@ -119,7 +119,8 @@
 - [x] astra 설계서 docs/v3/app-design-spec.md — 5단계 구현 순서, 리그는 3등급 지연 정산
 - [x] Mobbin 레퍼런스 docs/v3/refs/app-growth.md — 7개 영역, 듀오링고 구조 + TIDE·Oura 전체 화면
 - [x] 1단계 1차안 구현: 집중 화면 차오름 4장면(lib/mobile/focus/scene_fill.dart) + 입체 버튼·카드(widgets/chunky.dart) + 스탯 바 — analyze 0, 테스트 45개. 미리보기: flutter test tool/preview/fill_capture_test.dart --dart-define=OUT=<dir>
-- [ ] 사용자 검토 대기 (1차안). 실기기 설치·전력 측정 미실시
+- [x] 피드백 1 반영: 숲 물들며 자라는 숲 / 밤 우주처럼 어두워짐 / 일상 커피 차오름
+- [ ] 사용자 검토 대기 (1차안 수정본). 실기기 설치·전력 측정 미실시
 - [ ] 이후 단계는 설계서 구현 순서대로, 사용자 확정 전 main 머지 금지
 
 ## 다음 세션

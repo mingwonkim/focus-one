@@ -115,8 +115,8 @@ class SceneStyle {
   final Color secondaryLip; // 보조 버튼·카드 테두리와 아랫단
 
   // 폰 v3 집중 중 화면 전체 차오름
-  final Color fill; // 뒤층
-  final Color fillDeep; // 앞층
+  final Color fill; // 뒤층·연한 나무·밤 시작색·커피 표면
+  final Color fillDeep; // 앞층·진한 나무·우주 끝색·커피 바닥
   final Color fillCrest; // 물마루·크레마·별 등 밝은 점
 
   static const forest = SceneStyle(
@@ -189,8 +189,8 @@ class SceneStyle {
     mobileFg: Color(0xFF14131A),
     secondaryLip: Color(0xFF3D3A49),
     fill: Color(0xFF343558),
-    fillDeep: Color(0xFF272848),
-    fillCrest: Color(0xFFF0C75E),
+    fillDeep: Color(0xFF04040A),
+    fillCrest: Color(0xFFF4F1FF),
   );
 
   static const ocean = SceneStyle(
@@ -263,8 +263,8 @@ class SceneStyle {
     mobileBottom: Color(0xFFAC5948),
     mobileFg: Color(0xFF49271F),
     secondaryLip: Color(0xFFF3CABD),
-    fill: Color(0xFFA65F49),
-    fillDeep: Color(0xFF8A4A36),
+    fill: Color(0xFF8A5433),
+    fillDeep: Color(0xFF4F2C1A),
     fillCrest: Color(0xFFE9C9A6),
   );
 }
@@ -420,11 +420,13 @@ abstract class FillMotion {
   static const cremaPeriod = 6.0;
   static const treeSwayDeg = 2.0;
   static const treeSwayPeriod = 6.0;
-  static const treeHeight = 112.0;
-  static const grassHeight = 26.0;
+  static const forestRows = 9; // 아래(가까움)부터 위(멀리)까지 줄
+  static const treeNear = 170.0; // 맨 앞 줄 나무 높이 (폭 402 기준)
+  static const treeFar = 84.0; // 맨 뒤 줄
+  static const treeGrow = 0.2; // 한 그루가 다 자라는 데 걸리는 진행 비율
+  static const nightFadeIn = 0.04; // 평소 바탕 → 남색으로 넘어가는 구간
   static const starPeriod = 8.0;
-  static const starRadius = 2.2;
-  static const moonRadius = 34.0;
+  static const starRadius = 1.8;
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)
