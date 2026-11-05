@@ -10,12 +10,13 @@ import '../../models/collection.dart';
 
 /// 폰 집중 링: 장면 풍경 + 데려올 친구 + 굵은 링.
 /// 대기 중엔 링을 드래그해 시간 선택(12시=10분, 한 바퀴=180분, 5분 단위, 단계마다 햅틱).
-/// 집중 중엔 지난 비율만큼 링이 찬다.
+/// 집중 중엔 지난 비율만큼 링이 차고 친구가 점점 선명해진다.
 class MobileRing extends StatelessWidget {
   const MobileRing({
     super.key,
     required this.scene,
     required this.companion,
+    required this.reveal, // 친구 불투명도 0~1
     required this.progress, // 집중: 지난 비율 0→1 / 휴식: 남은 비율 / 대기: 설정 위치 0~1
     this.onMinutes, // null이면 드래그 불가(진행 중)
     this.minutes = 25, // 대기 중 현재 설정 (12시 경계 넘김 방지·스크린리더 값)
@@ -25,6 +26,7 @@ class MobileRing extends StatelessWidget {
   final FocusScene scene;
   final Companion companion;
   final double progress;
+  final double reveal;
   final ValueChanged<int>? onMinutes;
   final int minutes;
   final double size;
@@ -92,7 +94,12 @@ class MobileRing extends StatelessWidget {
                         painter: SceneDialPainter(scene, withCreatures: false)),
                     Padding(
                       padding: EdgeInsets.all(size * 0.08),
-                      child: Image.asset(companion.asset, fit: BoxFit.contain),
+                      child: AnimatedOpacity(
+                        opacity: reveal.clamp(0.0, 1.0),
+                        duration: reduce ? Duration.zero : AppDuration.tick,
+                        child:
+                            Image.asset(companion.asset, fit: BoxFit.contain),
+                      ),
                     ),
                   ],
                 ),

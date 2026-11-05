@@ -68,6 +68,8 @@ class _FocusHomeState extends State<FocusHome> {
     final progress = idle
         ? MobileRing.fractionOf(_minutes)
         : (active != null ? 1 - s.progress : s.progress);
+    // 대기: 데려올 친구를 또렷하게 보여 주고, 시작하면 흐려졌다가 집중할수록 선명해짐
+    final reveal = idle ? 1.0 : 0.25 + 0.75 * (1 - s.progress);
 
     final header = Column(children: [
       // 진행 중엔 숨기되 자리는 유지 — 시작해도 링 위치가 그대로다
@@ -90,6 +92,7 @@ class _FocusHomeState extends State<FocusHome> {
         scene: s.scene,
         companion: companion,
         progress: progress,
+        reveal: reveal,
         size: ringSize,
         minutes: _minutes,
         onMinutes: idle ? (m) => _setMinutes(s, m) : null,
@@ -145,7 +148,7 @@ class _FocusHomeState extends State<FocusHome> {
                 s.phase == FocusPhase.breakTime
                     ? '잠깐 쉬어가요'
                     : (s.isRunning
-                        ? '${companion.name}도 함께 집중 중'
+                        ? '집중할수록 ${companion.name}이(가) 선명해져요'
                         : '잠시 멈춤'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
