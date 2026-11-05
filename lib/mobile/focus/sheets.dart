@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
+import '../../models/growth.dart';
 import '../../models/focus_title.dart';
 import '../../state/app_state.dart';
 import '../share/share_card.dart';
@@ -355,6 +356,27 @@ class _MemoBodyState extends State<_MemoBody> {
 }
 
 /// 보상: 친구 팝(.85→1 easeOutBack) + 햅틱, 물방울
+class _RewardRow extends StatelessWidget {
+  const _RewardRow({required this.style, required this.text});
+  final SceneStyle style;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minHeight: MobileSize.row),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+            color: style.cardBg,
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
+        child: Text(text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: style.textStrong)),
+      );
+}
+
 Future<void> showRewardSheet(BuildContext context) {
   final s = context.read<AppState>();
   final r = s.lastReward;
@@ -402,6 +424,19 @@ Future<void> showRewardSheet(BuildContext context) {
           child: Text('💧 물방울 +$drops',
               style: TextStyle(fontSize: 16, color: style.textStrong)),
         ),
+        for (final g in s.lastGoalRewards) ...[
+          const SizedBox(height: 8),
+          _RewardRow(
+            style: style,
+            text: switch (g.kind) {
+              GoalKind.daily => '오늘 목표 달성 💧+${g.drops}',
+              GoalKind.weekly =>
+                '이번 주 목표 달성 💧+${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
+            },
+          ),
+        ],
+        const SizedBox(height: 8),
+        _RewardRow(style: style, text: '🔥 연속 ${s.streakDays}일'),
         if (r.taskId.isNotEmpty &&
             s.pendingTasks.any((t) => t.id == r.taskId)) ...[
           const SizedBox(height: 8),

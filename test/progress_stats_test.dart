@@ -7,6 +7,7 @@ import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
 import 'package:focus_one/models/focus_title.dart';
+import 'package:focus_one/models/growth.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
 import 'package:focus_one/state/stats.dart';
@@ -78,13 +79,13 @@ void main() {
 
     final b = await boot(t0.add(const Duration(hours: 1)));
     expect(b.ownedCount('fawn'), 1);
-    expect(b.drops, 25);
+    expect(b.drops, 25 + Growth.dailyRewardDrops); // 25분 = 일일 목표 달성
     expect(b.sessions.single.companionId, 'fawn');
     await b.flush();
     b.dispose();
     final c = await boot(t0.add(const Duration(hours: 2)));
     expect(c.ownedCount('fawn'), 1);
-    expect(c.drops, 25);
+    expect(c.drops, 25 + Growth.dailyRewardDrops);
     expect(c.buyDecor('grass'), isTrue);
     expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
     c.dispose();
@@ -144,7 +145,7 @@ void main() {
       expect(b.escapeSession(), isTrue);
     });
     expect(b.activeSession, isNull);
-    expect(b.drops, 5);
+    expect(b.drops, 5 + Growth.dailyRewardDrops);
     expect(b.ownedCount('fawn'), 1);
     expect(b.rankScore, 5); // 모은 25 − 탈출 20
     b.dispose();

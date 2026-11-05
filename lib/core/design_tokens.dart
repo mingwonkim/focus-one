@@ -10,6 +10,7 @@ abstract class AppColors {
   static const success = Color(0xFF34C759); // iOS 그린
   static const flame = Color(0xFFFF7A1A); // 연속일 불꽃
   static const drop = Color(0xFF2E9BE6); // 물방울
+  static const ice = Color(0xFF4FB6E8); // 연속일 얼음
 }
 
 /// 화면 분위기 모드: 숲 / 밤 / 바다 / 일상. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
@@ -377,8 +378,11 @@ abstract class MobileSize {
   static const double chunkyPress = 4; // 누르면 내려가는 거리
   static const double chunkyRadius = 16;
   static const double chunkyBorder = 2;
-  static const double statBar = 40;
+  static const double statBar = 48; // 탭 영역
   static const double statIcon = 22;
+  static const double progressBar = 14; // 두꺼운 진행 막대
+  static const double streakFlame = 72;
+  static const double weekCell = 36;
   static const double taskCard = 72;
   static const double tabBar = 64;
   static const double sheetRadius = 24;

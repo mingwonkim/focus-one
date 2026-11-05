@@ -23,7 +23,7 @@ class MobileShell extends StatefulWidget {
   State<MobileShell> createState() => _MobileShellState();
 }
 
-class _MobileShellState extends State<MobileShell> {
+class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
   /// 다른 탭에서 "바로 집중" 등으로 탭을 바꿀 수 있게 Provider로 내려준다
   final _tabs = ValueNotifier(MobileTab.focus);
 
@@ -31,10 +31,20 @@ class _MobileShellState extends State<MobileShell> {
   void initState() {
     super.initState();
     pendingInvite.addListener(_onInvite);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// 앱을 켜 둔 채 날짜가 바뀌었을 수 있다
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AppState>().settleGrowth();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     pendingInvite.removeListener(_onInvite);
     _tabs.dispose();
     super.dispose();

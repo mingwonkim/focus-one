@@ -2,6 +2,7 @@
 // 폰 v1: 태그 · 친구(수집) · 장식 · 풍경 배치 · 재화(물방울).
 // 경제 규칙은 docs/mobile/app-design-spec.md §6 — 완료한 실집중 1분당 물방울 1, 세션당 친구 1.
 import '../core/design_tokens.dart';
+import 'growth.dart';
 
 class Tag {
   final String id;
@@ -123,6 +124,7 @@ class Progress {
   final String soundId; // 'scene'(장면 기본) | 장면별 상황 소리 id | 'white' | 'brown'
   final int escapeSpent; // 비상 탈출에 쓴 물방울 누계 — 랭킹 점수에서 뺀다
   final String? rankNickname; // 랭킹 참여 닉네임 (null = 참여 안 함)
+  final Growth growth; // 목표·연속일·얼음 (v3)
 
   const Progress({
     this.tags = const [Tag(id: 'general', name: '미분류')],
@@ -135,6 +137,7 @@ class Progress {
     this.soundId = 'scene',
     this.escapeSpent = 0,
     this.rankNickname,
+    this.growth = const Growth(),
   });
 
   Progress copyWith({
@@ -148,6 +151,7 @@ class Progress {
     String? soundId,
     int? escapeSpent,
     String? Function()? rankNickname,
+    Growth? growth,
   }) =>
       Progress(
         tags: tags ?? this.tags,
@@ -163,6 +167,7 @@ class Progress {
         escapeSpent: escapeSpent ?? this.escapeSpent,
         rankNickname:
             rankNickname != null ? rankNickname() : this.rankNickname,
+        growth: growth ?? this.growth,
       );
 
   Map<String, dynamic> toJson() => {
@@ -177,6 +182,7 @@ class Progress {
         'soundId': soundId,
         'escapeSpent': escapeSpent,
         'rankNickname': rankNickname,
+        'growth': growth.toJson(),
       };
 
   factory Progress.fromJson(Map<String, dynamic> j) => Progress(
@@ -200,5 +206,6 @@ class Progress {
         soundId: j['soundId'] as String? ?? 'scene',
         escapeSpent: j['escapeSpent'] as int? ?? 0,
         rankNickname: j['rankNickname'] as String?,
+        growth: Growth.fromJson(j['growth'] as Map<String, dynamic>?),
       );
 }

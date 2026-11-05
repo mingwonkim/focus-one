@@ -9,6 +9,7 @@ import '../data/local_store.dart';
 import '../models/blocker_settings.dart';
 import '../models/collection.dart';
 import '../models/focus_title.dart';
+import '../models/growth.dart';
 import '../models/task.dart';
 
 /// 타이머 사이클: 대기 → 집중 → 휴식 → 대기
@@ -154,24 +155,97 @@ class AppState extends ChangeNotifier {
         .fold(0, (sum, s) => sum + s.minutes);
   }
 
-  /// 연속 집중일 스트릭
-  int get streakDays {
-    if (_sessions.isEmpty) return 0;
-    final days = _sessions
-        .map((s) => DateTime(s.endedAt.year, s.endedAt.month, s.endedAt.day))
-        .toSet();
-    var streak = 0;
-    var cursor = DateTime.now();
-    cursor = DateTime(cursor.year, cursor.month, cursor.day);
-    // 오늘 기록이 없으면 어제부터 카운트
-    if (!days.contains(cursor)) {
-      cursor = cursor.subtract(const Duration(days: 1));
+  // ---- 성장: 목표·연속일·얼음 (v3) ----
+  Growth get _growth => _progress.growth;
+  Set<String> get _activeDays => _growth.activeDays(_sessions);
+  String get _today => dayKey(clock.now());
+
+  int get streakDays => _growth.streak(_today, _activeDays);
+  int get bestStreak => _growth.bestStreak(_activeDays);
+  int get iceCount => _growth.ice;
+  Set<String> get iceDays => _growth.iceDays;
+  Set<String> get activeDays => _activeDays;
+  bool get focusedToday => _activeDays.contains(_today);
+
+  int get dailyGoal => _growth.daily.on(_today);
+  int get weeklyGoal => _growth.weekly.on(weekKey(_today));
+  GoalPlan get dailyPlan => _growth.daily;
+  GoalPlan get weeklyPlan => _growth.weekly;
+  int get todayMinutes => minutesOn(_today);
+  int get thisWeekMinutes => weekMinutes(_today);
+
+  /// XP = 끝까지 완료한 집중 분. 칭호와 같은 값이라 따로 저장하지 않는다.
+  int get xp => focusMinutesTotal;
+
+  int _completedMinutes(bool Function(String day) inRange) => _sessions
+      .where((x) =>
+          x.outcome == SessionOutcome.completed && inRange(dayKey(x.endedAt)))
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  int minutesOn(String day) => _completedMinutes((d) => d == day);
+
+  int weekMinutes(String day) {
+    final from = weekKey(day);
+    final to = addDays(from, 6);
+    return _completedMinutes(
+        (d) => d.compareTo(from) >= 0 && d.compareTo(to) <= 0);
+  }
+
+  static int _fitGoal(int v, int min, int max) =>
+      ((v / Growth.goalStep).round() * Growth.goalStep).clamp(min, max);
+
+  void setDailyGoal(int minutes) {
+    final today = _today;
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            daily: _growth.daily.changed(
+                _fitGoal(minutes, Growth.dailyMin, Growth.dailyMax),
+                today: today,
+                from: addDays(today, 1)))));
+  }
+
+  void setWeeklyGoal(int minutes) {
+    final week = weekKey(_today);
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            weekly: _growth.weekly.changed(
+                _fitGoal(minutes, Growth.weeklyMin, Growth.weeklyMax),
+                today: week,
+                from: addDays(week, 7)))));
+  }
+
+  bool buyIce() {
+    if (_growth.ice >= Growth.iceMax || _progress.drops < Growth.icePrice) {
+      return false;
     }
-    while (days.contains(cursor)) {
-      streak++;
-      cursor = cursor.subtract(const Duration(days: 1));
-    }
-    return streak;
+    _setProgress(_progress.copyWith(
+        drops: _progress.drops - Growth.icePrice,
+        growth: _growth.copyWith(ice: _growth.ice + 1)));
+    return true;
+  }
+
+  /// 어제까지 빠진 날을 얼음으로 메운다. 진행 중 세션이 남았으면 그 기록이 먼저라 미룬다.
+  void settleGrowth() {
+    if (_active != null) return;
+    final next = _growth.settled(_today, _activeDays);
+    if (identical(next, _growth)) return;
+    _setProgress(_progress.copyWith(growth: next));
+  }
+
+  /// 방금 세션으로 달성한 목표 (보상 시트와 같은 수명)
+  List<GoalReward> get lastGoalRewards => _lastGoalRewards;
+  List<GoalReward> _lastGoalRewards = const [];
+
+  void _grantGoalRewards(String day) {
+    final gained = <GoalReward>[];
+    final next = _growth.rewardedFor(day,
+        dayMinutes: minutesOn(day),
+        weekMinutes: weekMinutes(day),
+        onReward: gained.add);
+    _progress = _progress.copyWith(
+        growth: next,
+        drops: _progress.drops + gained.fold(0, (sum, r) => sum + r.drops));
+    _lastGoalRewards = gained;
   }
 
   /// 세션 완료 콜백 (알림/사운드 트리거용, main에서 주입)
@@ -188,6 +262,7 @@ class AppState extends ChangeNotifier {
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
     _progress = data.progress;
+    _progress = _progress.copyWith(growth: _growth.migrated(_today));
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
@@ -203,6 +278,8 @@ class AppState extends ChangeNotifier {
         _startTicker();
       }
     }
+    settleGrowth();
+    _persist();
     notifyListeners();
   }
 
@@ -452,6 +529,7 @@ class AppState extends ChangeNotifier {
     _cancelSession();
     final task = _tasks.where((t) => t.id == active.taskId).firstOrNull;
     if (task != null) onSessionComplete?.call(task, active.plannedSec ~/ 60);
+    settleGrowth();
     if (startBreak && autoBreak) {
       _startBreak(); // 집중이 끝나면 자동으로 휴식 — 차단도 이때 풀린다
     } else {
@@ -578,6 +656,10 @@ class AppState extends ChangeNotifier {
           owned: owned, drops: _progress.drops + focused ~/ 60);
       _lastReward = _sessions.last;
       _lastPromotion = title != titleBefore ? title : null;
+      // 빠진 날을 먼저 판단한다 — 이번 보상으로 받은 얼음이 지난 공백에 쓰이지 않게
+      _progress = _progress.copyWith(
+          growth: _growth.settled(dayKey(now), _activeDays));
+      _grantGoalRewards(dayKey(now));
     }
   }
 
@@ -606,6 +688,7 @@ class AppState extends ChangeNotifier {
   void clearLastReward() {
     _lastReward = null;
     _lastPromotion = null;
+    _lastGoalRewards = const [];
     notifyListeners();
   }
 

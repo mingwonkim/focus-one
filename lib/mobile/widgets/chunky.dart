@@ -111,6 +111,29 @@ class _ChunkyButtonState extends State<ChunkyButton> {
   }
 }
 
+/// 두꺼운 진행 막대. 넘친 값은 가득으로 보여 준다.
+class ChunkyProgress extends StatelessWidget {
+  const ChunkyProgress({super.key, required this.style, required this.value});
+
+  final SceneStyle style;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: Container(
+          height: MobileSize.progressBar,
+          color: style.divider,
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            heightFactor: 1,
+            child: ColoredBox(color: style.mobileFace),
+          ),
+        ),
+      );
+}
+
 /// 카드·칩: 두꺼운 테두리 + 아랫단. 불투명 받침이라 차오름 위에서도 글자가 읽힌다.
 class ChunkySurface extends StatelessWidget {
   const ChunkySurface({
