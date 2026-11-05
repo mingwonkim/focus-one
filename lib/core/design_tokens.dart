@@ -8,6 +8,8 @@ abstract class AppColors {
   static const onPrimary = Color(0xFFFFFFFF);
   static const error = Color(0xFFFF3B30); // iOS 레드
   static const success = Color(0xFF34C759); // iOS 그린
+  static const flame = Color(0xFFFF7A1A); // 연속일 불꽃
+  static const drop = Color(0xFF2E9BE6); // 물방울
 }
 
 /// 화면 분위기 모드: 숲 / 밤 / 바다 / 일상. 각 모드는 스타일 + 앰비언트 사운드를 가진다.
@@ -68,6 +70,13 @@ class SceneStyle {
     required this.sceneLabel,
     required this.footerLabel,
     required this.footerUnit,
+    required this.mobileFace,
+    required this.mobileBottom,
+    required this.mobileFg,
+    required this.secondaryLip,
+    required this.fill,
+    required this.fillDeep,
+    required this.fillCrest,
   });
 
   final Brightness brightness;
@@ -99,6 +108,17 @@ class SceneStyle {
   final String footerLabel; // "오늘 심은 나무"
   final String footerUnit; // "그루"
 
+  // 폰 v3 입체 버튼 (docs/v3/app-design-spec.md §4)
+  final Color mobileFace; // 주 버튼 윗면
+  final Color mobileBottom; // 주 버튼 아랫단
+  final Color mobileFg; // 주 버튼 글자·아이콘
+  final Color secondaryLip; // 보조 버튼·카드 테두리와 아랫단
+
+  // 폰 v3 집중 중 화면 전체 차오름
+  final Color fill; // 뒤층
+  final Color fillDeep; // 앞층
+  final Color fillCrest; // 물마루·크레마·별 등 밝은 점
+
   static const forest = SceneStyle(
     brightness: Brightness.light,
     cardBg: Color(0xFFEEF7F1),
@@ -127,6 +147,13 @@ class SceneStyle {
     sceneLabel: '숲',
     footerLabel: '오늘 심은 나무',
     footerUnit: '그루',
+    mobileFace: Color(0xFF22B894),
+    mobileBottom: Color(0xFF14715D),
+    mobileFg: Color(0xFF12382C),
+    secondaryLip: Color(0xFFC4E0CF),
+    fill: Color(0xFF83DCC1),
+    fillDeep: Color(0xFF22B894),
+    fillCrest: Color(0xFFD9F5E7),
   );
 
   // 밤: spec은 라벤더(#C2B4ED)였으나 달·별 일러스트와 맞춰 달빛 골드 유지 — docs/v2/app-deviations.md
@@ -157,6 +184,13 @@ class SceneStyle {
     sceneLabel: '밤',
     footerLabel: '오늘 모은 별',
     footerUnit: '개',
+    mobileFace: Color(0xFFF0C75E),
+    mobileBottom: Color(0xFF9A7428),
+    mobileFg: Color(0xFF14131A),
+    secondaryLip: Color(0xFF3D3A49),
+    fill: Color(0xFF343558),
+    fillDeep: Color(0xFF272848),
+    fillCrest: Color(0xFFF0C75E),
   );
 
   static const ocean = SceneStyle(
@@ -187,6 +221,13 @@ class SceneStyle {
     sceneLabel: '바다',
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
+    mobileFace: Color(0xFF36BDEB),
+    mobileBottom: Color(0xFF227A9D),
+    mobileFg: Color(0xFF123447),
+    secondaryLip: Color(0xFFC5DFEF),
+    fill: Color(0xFF72CCE9),
+    fillDeep: Color(0xFF36BDEB),
+    fillCrest: Color(0xFFE4F7FD),
   );
 
   // 일상: 피치·코랄 파스텔 (베이지 금지). 대비: accent #A3452F / cardBg ≈ 5.9:1
@@ -218,6 +259,13 @@ class SceneStyle {
     sceneLabel: '일상',
     footerLabel: '오늘 마신 커피',
     footerUnit: '잔',
+    mobileFace: Color(0xFFF68D78),
+    mobileBottom: Color(0xFFAC5948),
+    mobileFg: Color(0xFF49271F),
+    secondaryLip: Color(0xFFF3CABD),
+    fill: Color(0xFFA65F49),
+    fillDeep: Color(0xFF8A4A36),
+    fillCrest: Color(0xFFE9C9A6),
   );
 }
 
@@ -314,11 +362,20 @@ abstract class TitleRings {
 /// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)
 abstract class MobileSize {
   static const double gutter = 20; // 좌우 여백 (SE는 16)
-  static const double ring = 232; // SE 184, 큰 화면 264
+  static const double ring = 232; // 큰 화면 264
+  static const double ringSmall = 150; // SE: 스탯 바가 늘어 시간이 가려지지 않게
   static const double ringStroke = 24;
   static const double ringInset = 32;
   static const double row = 48;
   static const double cta = 52;
+  static const double chunkyHeight = 56; // 입체 버튼 전체 (윗면 50 + 아랫단 6)
+  static const double chunkyLip = 6;
+  static const double chunkyLipSecondary = 3;
+  static const double chunkyPress = 4; // 누르면 내려가는 거리
+  static const double chunkyRadius = 16;
+  static const double chunkyBorder = 2;
+  static const double statBar = 40;
+  static const double statIcon = 22;
   static const double taskCard = 72;
   static const double tabBar = 64;
   static const double sheetRadius = 24;
@@ -350,6 +407,24 @@ abstract class MobileSize {
   static const double badge = 24; // 칭호 배지 (행)
   static const double badgeLarge = 34; // 칭호 배지 (프로필·승급)
   static const double ladderDot = 8; // 칭호 사다리 점
+}
+
+/// 폰 v3 집중 중 차오름 모션 (docs/v3/app-design-spec.md §5). 전력 예산 때문에 프레임을 제한한다.
+abstract class FillMotion {
+  static const frame = Duration(milliseconds: 42); // 약 24fps
+  static const waveBackAmp = 10.0;
+  static const waveBackPeriod = 7.0; // 초
+  static const waveFrontAmp = 6.0;
+  static const waveFrontPeriod = 4.0;
+  static const cremaAmp = 3.0;
+  static const cremaPeriod = 6.0;
+  static const treeSwayDeg = 2.0;
+  static const treeSwayPeriod = 6.0;
+  static const treeHeight = 112.0;
+  static const grassHeight = 26.0;
+  static const starPeriod = 8.0;
+  static const starRadius = 2.2;
+  static const moonRadius = 34.0;
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

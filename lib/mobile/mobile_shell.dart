@@ -8,6 +8,7 @@ import 'adaptive.dart';
 import 'duel/duel_page.dart';
 import 'duel/invite.dart';
 import 'focus/focus_home.dart';
+import 'focus/scene_fill.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
@@ -76,7 +77,17 @@ class _MobileShellState extends State<MobileShell> {
     }
     return Scaffold(
       backgroundColor: style.cardBg,
-      body: SafeArea(
+      body: Stack(fit: StackFit.expand, children: [
+        // 집중 중 화면 전체 차오름 (SafeArea 밖). 휴식은 가득 찬 채 멈춘다.
+        if (hideBar)
+          SceneFill(
+            scene: FocusScene.values.asNameMap()[state.activeSession?.scene] ??
+                state.scene,
+            progress:
+                state.phase == FocusPhase.breakTime ? 1 : 1 - state.progress,
+            animate: state.isRunning,
+          ),
+        SafeArea(
         // 탭 전환 페이드 120ms (동작 줄이기면 즉시)
         child: AnimatedSwitcher(
           duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
@@ -99,6 +110,7 @@ class _MobileShellState extends State<MobileShell> {
           ),
         ),
       ),
+      ]),
       extendBody: true,
       bottomNavigationBar: hideBar
           ? null
@@ -108,12 +120,21 @@ class _MobileShellState extends State<MobileShell> {
                 child: Padding(
                 padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter, 8),
                 child: Container(
-                  height: 64,
-                  padding: const EdgeInsets.all(6),
+                  height: MobileSize.tabBar,
+                  padding: const EdgeInsets.fromLTRB(
+                      MobileSize.chunkyBorder,
+                      MobileSize.chunkyBorder,
+                      MobileSize.chunkyBorder,
+                      MobileSize.chunkyBorder + MobileSize.chunkyLipSecondary),
+                  decoration: BoxDecoration(
+                    color: style.secondaryLip,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Container(
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: style.rowBg,
                     borderRadius: BorderRadius.circular(AppRadius.full),
-                    boxShadow: AppShadow.card(style.rowShadow),
                   ),
                   child: Row(
                     children: [
@@ -147,8 +168,8 @@ class _MobileShellState extends State<MobileShell> {
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: t == current
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
                                         color: t == current
                                             ? style.textStrong
                                             : style.textMuted,
@@ -161,6 +182,7 @@ class _MobileShellState extends State<MobileShell> {
                           ),
                         ),
                     ],
+                  ),
                   ),
                 ),
               ),
