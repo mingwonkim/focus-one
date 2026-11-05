@@ -104,6 +104,15 @@
   - [ ] 카카오 개발자 앱 생성(사용자) → 네이티브 앱 키 받으면: invite.dart kakaoNativeKey, Info.plist CFBundleURLTypes kakao<키>, AndroidManifest intent-filter kakao<키>://kakaolink
   - [ ] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 출시 전
 
+## ▶ 재부팅 후 이어서 (2026-11-05 기준, 브랜치 mobile-v1, 전부 푸시됨 abe590a)
+1. [ ] 사용자: `supabase db push` (또는 Claude에게 "db push 해도 돼") — 대결 마이그레이션 20261105000000_friend_duels.sql. 전엔 대결 카드 "불러오지 못했어요"
+2. [ ] 사용자: developers.kakao.com 앱 생성 → 플랫폼 iOS(번들 com.looinlabs.focusone, 앱스토어 ID 6821653231)·Android(패키지 com.looinlabs.fokko + 키 해시)·Web(https://looinlabs.com) → 네이티브 앱 키 Claude에게
+3. [ ] Claude: 키 받으면 invite.dart kakaoNativeKey + Info.plist CFBundleURLTypes kakao<키> + AndroidManifest intent-filter(scheme kakao<키>, host kakaolink) → 빌드·아이폰 설치(폰 잠금 해제 필요)
+4. [ ] 사용자: 디자인 검토 2차 — 미리보기 다시 만들기: `flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>` (scratchpad 이미지는 재부팅 시 사라짐)
+5. [ ] 실기기 확인: 공유 시트·승급 시트·소리·대결 카드
+6. [ ] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가
+- 참고: 로컬 Postgres 테스트 DB는 scratchpad에 있어 재부팅 후 사라짐 — 필요 시 다시 만듦
+
 ## 다음 세션
 - [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
 - [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
