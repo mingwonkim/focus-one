@@ -78,7 +78,7 @@
 - [x] 1.0.1 빌드 6 업로드·처리 VALID·버전 연결 (10/18, family-controls 확인)
 - [x] 1.0.1 새 기능 문구 + 심사 제출 (10/18, tool/asc_submit.py, WAITING_FOR_REVIEW)
 - [x] 1.0.1 1차 거절(10/20, 2.3.4: 앱 프리뷰에 기기 테두리) → 프리뷰를 앱 화면 전체+상태바 문구로 재생성·업로드 → 10/25 재제출
-- [ ] 1.0.1 심사 결과 확인
+- [x] 1.0.1 심사 결과 확인 — 승인·스토어 출시 (10/27, iTunes lookup 1.0.1, ASC 제출 COMPLETE)
 - [ ] Android 휴식 알림 실기기 확인
 - [ ] P7 모션 GIF·최종 미리보기 → 사용자 확정 → main 머지
 - [ ] Android 출시: Play **조직 계정**(develop@looinlabs.com)으로 (2026-10-13 결정, 개인 계정 14일 테스트 대신)
@@ -89,7 +89,7 @@
   - [ ] Play 조직 계정 가입($25 사용자 결제) → 서비스 계정 API 키 ~/.config/fokko/
   - [ ] Play 스토어 자료(문구·스크린샷 1080×1920·그래픽 1024×500·아이콘 512)·접근성 선언·시연 영상
   - [ ] 첫 AAB 업로드 → 심사 제출
-- [ ] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사
+- [x] iOS 출시: Family Controls 배포 권한 승인 대기(10/11 신청) → 아카이브 → TestFlight → 심사 — 1.0.0 출시(10/18)
 
 ## 2026-11-04 — 소리 튐 + 게임화
 - [x] 소리 갑자기 커짐: 원인 = 음원 안 큰 소리 구간(중앙값 +11~16dB) + 반복 경계 음량 단차(+6dB) + 리미터 지연 5ms 무음(4개). 2초 원형 레벨러·지연 보정으로 전체 재처리 → 최대−중앙 ≤8dB, 경계 ≤3dB
@@ -105,10 +105,10 @@
   - [ ] 개인정보 처리방침에 친구 대결(초대 코드·친구 관계) 추가 — 출시 전
 
 ## ▶ 재부팅 후 이어서 (2026-11-05 기준, 브랜치 mobile-v1, 전부 푸시됨 abe590a)
-1. [ ] 사용자: `supabase db push` (또는 Claude에게 "db push 해도 돼") — 대결 마이그레이션 20261105000000_friend_duels.sql. 전엔 대결 카드 "불러오지 못했어요"
-2. [ ] 사용자: developers.kakao.com 앱 생성 → 플랫폼 iOS(번들 com.looinlabs.focusone, 앱스토어 ID 6821653231)·Android(패키지 com.looinlabs.fokko + 키 해시)·Web(https://looinlabs.com) → 네이티브 앱 키 Claude에게
+1. [ ] 사용자: `supabase db push` (또는 Claude에게 "db push 해도 돼") — 대결 마이그레이션 20261105000000_friend_duels.sql. 전엔 대결 카드 "불러오지 못했어요" — 11/06 dry-run 통과(이것 1개만 대상), Claude 실행은 분류기에 다시 막힘 → `! supabase db push` 필요
+2. [ ] 사용자: developers.kakao.com 앱 생성 → 플랫폼 iOS(번들 com.looinlabs.focusone, 앱스토어 ID 6821653231)·Android(패키지 com.looinlabs.fokko + 키 해시)·Web(https://looinlabs.com) → 네이티브 앱 키 Claude에게 — 11/06 Claude가 computer use로 진행 중, 카카오 로그인 대기
 3. [ ] Claude: 키 받으면 invite.dart kakaoNativeKey + Info.plist CFBundleURLTypes kakao<키> + AndroidManifest intent-filter(scheme kakao<키>, host kakaolink) → 빌드·아이폰 설치(폰 잠금 해제 필요)
-4. [ ] 사용자: 디자인 검토 2차 — 미리보기 다시 만들기: `flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>` (scratchpad 이미지는 재부팅 시 사라짐)
+4. [ ] 사용자: 디자인 검토 2차 — 미리보기 다시 만들기: `flutter test tool/preview/game_capture_test.dart --dart-define=OUT=<dir>` (scratchpad 이미지는 재부팅 시 사라짐) — 11/06 재생성 17장, 사용자 검토 대기
 5. [ ] 실기기 확인: 공유 시트·승급 시트·소리·대결 카드
 6. [ ] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가
 - 참고: 로컬 Postgres 테스트 DB는 scratchpad에 있어 재부팅 후 사라짐 — 필요 시 다시 만듦
