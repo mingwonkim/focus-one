@@ -7,6 +7,7 @@ import '../core/app_theme.dart';
 import '../core/design_tokens.dart';
 import '../data/local_store.dart';
 import '../services/mobile_sound_service.dart';
+import '../services/league_sync.dart';
 import '../services/ranking_service.dart';
 import '../services/focus_lock_service.dart';
 import '../services/session_notifier.dart';
@@ -94,6 +95,7 @@ Future<void> runMobile() async {
 
     appState.addListener(sync);
     sync();
+    LeagueSync(appState, ranking).start();
   } catch (_) {}
 
   try {

@@ -81,3 +81,4 @@
 - 3단계: 보상은 달성 순간 확정 지급, 상자는 unopened 키만 지우는 연출. 칸·칭호·친구 단계·업적은 저장 안 하고 기록에서 계산.
 - 테스트 함정: testWidgets 안(가짜 시간)에서 시작한 저장을 runAsync로 기다리면 영원히 안 끝남 → 저장 파일에 상태를 넣고 init으로 시작.
 - Semantics 라벨이 옆 글자와 합쳐지면 낭독기·bySemanticsLabel에서 안 보임 → 눌리는 항목엔 container: true.
+- 4단계: 리그 점수는 verified_daily만(서버 시계). 구 daily_points·submit_score와 섞지 않음. 서버는 실제 집중을 증명 못 함: 시작~예정 종료가 지났다는 것만 안다. 크론 없이 조회·제출 때 지연 정산.

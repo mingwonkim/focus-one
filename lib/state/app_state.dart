@@ -513,8 +513,26 @@ class AppState extends ChangeNotifier {
   }
 
   String? get rankNickname => _progress.rankNickname;
-  void setRankNickname(String? v) =>
-      _setProgress(_progress.copyWith(rankNickname: () => v));
+  void setRankNickname(String? v) => _setProgress(_progress.copyWith(
+      rankNickname: () => v,
+      // 랭킹에서 나가면 서버 계정이 지워져 리그도 함께 끝난다
+      growth: v == null
+          ? _growth.copyWith(leagueJoined: false, leagueOutbox: const {})
+          : null));
+
+  bool get leagueJoined => _growth.leagueJoined;
+  Set<String> get leagueOutbox => _growth.leagueOutbox;
+
+  void setLeagueJoined(bool v) {
+    if (v == _growth.leagueJoined) return;
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            leagueJoined: v, leagueOutbox: v ? null : const {})));
+  }
+
+  void leagueSent(String sessionId) => _setProgress(_progress.copyWith(
+      growth: _growth.copyWith(
+          leagueOutbox: _growth.leagueOutbox.difference({sessionId}))));
 
   /// 끝까지 완료한 집중의 누적 분 (= 모은 물방울 총량, 칭호 기준)
   int get focusMinutesTotal => _sessions
@@ -685,6 +703,11 @@ class AppState extends ChangeNotifier {
       _progress = _progress.copyWith(
           growth: _growth.settled(dayKey(now), _activeDays));
       _grantGoalRewards(dayKey(now));
+      if (_growth.leagueJoined) {
+        _progress = _progress.copyWith(
+            growth: _growth
+                .copyWith(leagueOutbox: {..._growth.leagueOutbox, a.id}));
+      }
     }
   }
 

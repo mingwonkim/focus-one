@@ -360,6 +360,9 @@ abstract class MobileSize {
   static const double chest = 72;
   static const double chestDot = 12;
   static const double companionLarge = 144;
+  static const double leagueIcon = 28;
+  static const double leagueIconLarge = 40;
+  static const double leagueRank = 28;
   static const double streakIcon = 56;
   static const double weekCell = 36;
   static const double taskCard = 72;

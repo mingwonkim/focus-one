@@ -72,6 +72,8 @@ class Growth {
   final GoalPlan weekly;
   final Set<String> rewarded; // 'first:<날짜>' · 'daily:<날짜>' · 'weekly:<월요일>'
   final Set<String> unopened; // 아직 안 연 상자
+  final bool leagueJoined; // 서버 리그 참여 (서버가 원본, 화면 열 때 맞춘다)
+  final Set<String> leagueOutbox; // 끝났지만 서버에 아직 못 보낸 세션 id
 
   const Growth({
     this.migratedOn,
@@ -82,6 +84,8 @@ class Growth {
     this.weekly = const GoalPlan(weeklyDefault),
     this.rewarded = const {},
     this.unopened = const {},
+    this.leagueJoined = false,
+    this.leagueOutbox = const {},
   });
 
   Growth copyWith({
@@ -93,6 +97,8 @@ class Growth {
     GoalPlan? weekly,
     Set<String>? rewarded,
     Set<String>? unopened,
+    bool? leagueJoined,
+    Set<String>? leagueOutbox,
   }) =>
       Growth(
         migratedOn: migratedOn ?? this.migratedOn,
@@ -103,6 +109,8 @@ class Growth {
         weekly: weekly ?? this.weekly,
         rewarded: rewarded ?? this.rewarded,
         unopened: unopened ?? this.unopened,
+        leagueJoined: leagueJoined ?? this.leagueJoined,
+        leagueOutbox: leagueOutbox ?? this.leagueOutbox,
       );
 
   Map<String, dynamic> toJson() => {
@@ -114,6 +122,8 @@ class Growth {
         'weekly': weekly.toJson(),
         'rewarded': rewarded.toList(),
         'unopened': unopened.toList(),
+        'leagueJoined': leagueJoined,
+        'leagueOutbox': leagueOutbox.toList(),
       };
 
   factory Growth.fromJson(Map<String, dynamic>? j) => Growth(
@@ -127,6 +137,8 @@ class Growth {
             j?['weekly'] as Map<String, dynamic>?, weeklyDefault),
         rewarded: {...(j?['rewarded'] as List? ?? const []).cast<String>()},
         unopened: {...(j?['unopened'] as List? ?? const []).cast<String>()},
+        leagueJoined: j?['leagueJoined'] as bool? ?? false,
+        leagueOutbox: {...(j?['leagueOutbox'] as List? ?? const []).cast<String>()},
       );
 
   /// 이행: 지난 날에는 얼음을 소급해 쓰지 않는다. 여러 번 불러도 같다.

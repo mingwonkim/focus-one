@@ -1,5 +1,5 @@
 // lib/mobile/growth/growth_tab.dart
-// 성장 탭: 지도 · 퀘스트 · 업적. 값은 전부 기록에서 계산하고, 저장되는 건 안 연 상자뿐이다.
+// 성장 탭: 지도 · 퀘스트 · 리그 · 업적. 값은 전부 기록에서 계산하고, 저장되는 건 안 연 상자뿐이다.
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -13,8 +13,9 @@ import '../../state/app_state.dart';
 import '../focus/sheets.dart';
 import '../widgets/title_avatar.dart';
 import 'growth_pages.dart';
+import 'league_view.dart';
 
-enum _Section { map, quests, achievements }
+enum _Section { map, quests, league, achievements }
 
 class GrowthTab extends StatefulWidget {
   const GrowthTab({super.key});
@@ -44,6 +45,7 @@ class _GrowthTabState extends State<GrowthTab> {
                   label: Text(s.unopenedChests.isEmpty
                       ? '퀘스트'
                       : '퀘스트 ${s.unopenedChests.length}')),
+              const ButtonSegment(value: _Section.league, label: Text('리그')),
               const ButtonSegment(
                   value: _Section.achievements, label: Text('업적')),
             ],
@@ -56,6 +58,7 @@ class _GrowthTabState extends State<GrowthTab> {
         child: switch (_section) {
           _Section.map => const _MapView(),
           _Section.quests => const _QuestsView(),
+          _Section.league => const LeagueView(),
           _Section.achievements => const _AchievementsView(),
         },
       ),
