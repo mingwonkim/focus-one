@@ -174,7 +174,11 @@ class _GoalCard extends StatelessWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => _input(context, value),
-                child: Column(children: [
+                child: Container(
+                  constraints:
+                      const BoxConstraints(minHeight: MobileSize.touchMin),
+                  alignment: Alignment.center,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Text('$value분',
                       style: TextStyle(
                           fontSize: 24,
@@ -183,7 +187,8 @@ class _GoalCard extends StatelessWidget {
                   if (plan.nextMinutes != null)
                     Text('$later 적용',
                         style: TextStyle(fontSize: 13, color: style.textMuted)),
-                ]),
+                  ]),
+                ),
               ),
             ),
           ),

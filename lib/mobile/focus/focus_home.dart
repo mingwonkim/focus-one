@@ -442,6 +442,8 @@ class _Controls extends StatelessWidget {
     final memo = Semantics(
       button: true,
       label: '딴생각 메모',
+      onTap: () => showMemoSheet(context),
+      excludeSemantics: true,
       child: PressScale(
         onTap: () => showMemoSheet(context),
         child: Container(

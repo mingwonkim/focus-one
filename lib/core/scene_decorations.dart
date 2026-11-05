@@ -585,7 +585,10 @@ class PillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
+      enabled: onTap != null,
       label: label,
+      onTap: onTap,
+      excludeSemantics: true, // 안쪽 글자와 겹쳐 두 번 읽히지 않게
       child: PressScale(
         onTap: onTap,
         child: Container(
@@ -641,19 +644,26 @@ class RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: PressScale(
-        onTap: onTap,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: style.rowBg,
-            boxShadow: AppShadow.card(style.rowShadow),
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: tooltip,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: tooltip,
+        child: PressScale(
+          onTap: onTap,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: style.rowBg,
+              boxShadow: AppShadow.card(style.rowShadow),
+            ),
+            child: Icon(icon, size: size * 0.45, color: style.textStrong),
           ),
-          child: Icon(icon, size: size * 0.45, color: style.textStrong),
         ),
       ),
     );

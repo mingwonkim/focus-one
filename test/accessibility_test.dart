@@ -74,4 +74,38 @@ void main() {
       });
     }
   }
+
+  testWidgets('집중 홈 버튼 이름은 한 번만, 원형 버튼도 버튼으로 읽힌다', (tester) async {
+    final handle = tester.ensureSemantics();
+    final dir = Directory.systemTemp.createTempSync('fo');
+    addTearDown(() {
+      try {
+        dir.deleteSync(recursive: true);
+      } on FileSystemException {
+        // 임시 폴더
+      }
+    });
+    final st = AppState(LocalStore(File('${dir.path}/d.json')));
+    await tester.binding.setSurfaceSize(const Size(402, 874));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(ChangeNotifierProvider.value(
+      value: st,
+      child: const MaterialApp(home: Scaffold(body: SafeArea(child: FocusHome()))),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    SemanticsData node(String label) =>
+        tester.getSemantics(find.bySemanticsLabel(label)).getSemanticsData();
+    for (final label in ['시작', '딴생각 메모', '집중 소리', '앱 잠금']) {
+      final d = node(label);
+      expect(d.label, label);
+      expect(d.flagsCollection.isButton, isTrue, reason: label);
+      expect(d.hasAction(SemanticsAction.tap), isTrue, reason: label);
+    }
+    await tester.tap(find.bySemanticsLabel('시작'));
+    await tester.pump();
+    expect(st.activeSession, isNotNull);
+    st.stopTimer();
+    st.dispose();
+    handle.dispose();
+  });
 }
