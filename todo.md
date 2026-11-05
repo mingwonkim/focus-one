@@ -113,6 +113,14 @@
 6. [ ] 출시 전: 개인정보 처리방침에 아바타·초대 코드·친구 관계 추가
 - 참고: 로컬 Postgres 테스트 DB는 scratchpad에 있어 재부팅 후 사라짐 — 필요 시 다시 만듦
 
+## 2026-11-06 — v3 성장하는 재미 (design-pipeline, 브랜치 growth-v3, worktree ../focus-one-v3)
+- 결정: 첫 화면 집중 시작 유지 + 성장 지도 별도 탭 / 원 유지 + 화면 전체 차오름(바다 파도·숲 풀과 나무·밤 달빛과 별·일상 커피) / 듀오링고 구조 최대한(하트 제외, 고유 자산 복제 금지) / 일일·주간 목표 직접 설정 / 이미지 codex
+- [x] PRD docs/v3/PRD.md
+- [ ] astra 설계서 docs/v3/app-design-spec.md (실행 중)
+- [ ] Mobbin 레퍼런스 docs/v3/refs/ (사용자 인증 대기)
+- [ ] 1단계 1차안: 집중 화면 차오름 + 입체 UI 스킨 → 사용자 검토 게이트
+- [ ] 이후 단계는 설계서 구현 순서대로, 사용자 확정 전 main 머지 금지
+
 ## 다음 세션
 - [x] GitHub Actions 빌드 통과 확인 — 실패는 10/07 미사용 import 1회(다음 커밋에서 해결), 이후 main 4회 연속 성공
 - [x] GitHub Actions에서 아이콘 단계(Windows bash·.deb Icon) 통과 확인 — 66f0fb8 성공
