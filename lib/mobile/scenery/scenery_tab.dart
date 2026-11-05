@@ -161,34 +161,6 @@ class _SceneryTabState extends State<SceneryTab> {
               _picked = null;
             }),
           ),
-          const SizedBox(height: MobileSize.cardGap),
-          Row(children: [
-            for (final (label, icon, page) in [
-              ('보관함', Icons.inventory_2_outlined, const StoragePage()),
-              ('도감', Icons.menu_book_outlined, const DexPage()),
-              ('상점', Icons.storefront_outlined, const ShopPage()),
-            ]) ...[
-              Expanded(
-                child: _Pill(
-                  style: style,
-                  height: MobileSize.cta,
-                  onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => page)),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(icon, size: 20, color: style.textStrong),
-                        const SizedBox(width: MobileSize.iconGap),
-                        Text(label,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: style.textStrong)),
-                      ]),
-                ),
-              ),
-              if (label != '상점') const SizedBox(width: 8),
-            ],
-          ]),
         ] else ...[
           Row(children: [
             Expanded(
@@ -275,12 +247,49 @@ class _SceneryTabState extends State<SceneryTab> {
           ]),
         ],
     ];
+    // 보관함·도감·상점: 탭바 바로 위 고정 (편집 중엔 숨김)
+    final shortcuts = Padding(
+      padding: const EdgeInsets.fromLTRB(MobileSize.gutter, MobileSize.cardGap,
+          MobileSize.gutter, MobileSize.cardGap),
+      child: Row(children: [
+        for (final (label, icon, page) in [
+          ('보관함', Icons.inventory_2_outlined, const StoragePage()),
+          ('도감', Icons.menu_book_outlined, const DexPage()),
+          ('상점', Icons.storefront_outlined, const ShopPage()),
+        ]) ...[
+          Expanded(
+            child: _Pill(
+              style: style,
+              height: MobileSize.cta,
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => page)),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 20, color: style.textStrong),
+                    const SizedBox(width: MobileSize.iconGap),
+                    Text(label,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: style.textStrong)),
+                  ]),
+            ),
+          ),
+          if (label != '상점') const SizedBox(width: 8),
+        ],
+      ]),
+    );
     const pad = EdgeInsets.fromLTRB(
         MobileSize.gutter, 8, MobileSize.gutter, MobileSize.contentBottomGap);
     return LayoutBuilder(builder: (_, box) {
       // 폰·iPad 세로: 한 열 (iPad는 가운데 720)
       if (box.maxWidth < MobileSize.twoPaneBreak || box.maxWidth < box.maxHeight) {
-        return MaxWidth(child: ListView(padding: pad, children: kids));
+        final list = MaxWidth(child: ListView(padding: pad, children: kids));
+        if (editing) return list;
+        return Column(children: [
+          Expanded(child: list),
+          MaxWidth(child: shortcuts),
+        ]);
       }
       // iPad 가로: 왼쪽 풍경(높이에 맞춘 정사각), 오른쪽 조작부
       return Padding(
@@ -292,7 +301,14 @@ class _SceneryTabState extends State<SceneryTab> {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               kids[2], // 높이에 맞춘 정사각
               const SizedBox(width: MobileSize.sectionGap),
-              Expanded(child: ListView(padding: EdgeInsets.zero, children: kids.sublist(4))),
+              Expanded(
+                child: Column(children: [
+                  Expanded(
+                      child: ListView(
+                          padding: EdgeInsets.zero, children: kids.sublist(4))),
+                  if (!editing) shortcuts,
+                ]),
+              ),
             ]),
           ),
         ]),

@@ -316,8 +316,10 @@ class _RankingPageState extends State<RankingPage> {
               first ? MobileSize.avatarLarge : MobileSize.avatar + 8),
           const SizedBox(height: MobileSize.iconGap),
           _nick(style, r, first ? 16 : 14, center: true),
-          Text(FocusTitle.of(r.totalMinutes).label,
-              style: TextStyle(fontSize: 12, color: style.accent)),
+          const SizedBox(height: 2),
+          TitleBadge(
+              title: FocusTitle.of(r.totalMinutes), textColor: style.textStrong),
+          const SizedBox(height: 2),
           Text('💧 ${r.points}',
               style: TextStyle(
                   fontSize: 14,
@@ -395,8 +397,10 @@ class _RankingPageState extends State<RankingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _nick(style, r, 16),
-                  Text(FocusTitle.of(r.totalMinutes).label,
-                      style: TextStyle(fontSize: 12, color: style.accent)),
+                  const SizedBox(height: 2),
+                  TitleBadge(
+                      title: FocusTitle.of(r.totalMinutes),
+                      textColor: style.textStrong),
                 ]),
           ),
           Text('💧 ${r.points}',

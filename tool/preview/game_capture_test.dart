@@ -127,7 +127,7 @@ void main() {
                 body: const Padding(
                     padding: EdgeInsets.all(MobileSize.gutter),
                     child: ProfileCard())),
-            const Size(402, 260),
+            const Size(402, 400),
             'profile_${label}_${scene.name}');
       }
       if (m == 3000) {

@@ -147,3 +147,97 @@ class _RingPainter extends CustomPainter {
   bool shouldRepaint(_RingPainter old) =>
       old.ring != ring || old.scale != scale;
 }
+
+/// 칭호 배지: 메달 아이콘 + 칭호 이름을 칭호 링 색 그라데이션 알약에 담는다.
+/// 숫자 레벨 대신 "이건 칭호다"가 한눈에 보이게. 행·프로필·승급·대결 공통.
+class TitleBadge extends StatelessWidget {
+  const TitleBadge(
+      {super.key,
+      required this.title,
+      required this.textColor,
+      this.height = MobileSize.badge});
+
+  final FocusTitle title;
+  final Color textColor;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final ring = TitleRings.all[title.index];
+    final colors = ring.colors.length == 1
+        ? [ring.colors.first, ring.colors.first]
+        : ring.colors;
+    final u = height / MobileSize.badge;
+    return Semantics(
+      label: '칭호 ${title.label}',
+      excludeSemantics: true,
+      child: Container(
+        height: height,
+        padding: EdgeInsets.symmetric(horizontal: 8 * u),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          gradient: LinearGradient(
+              colors: [for (final c in colors) c.withValues(alpha: 0.28)]),
+          border: Border.all(color: colors.first, width: 1.2 * u),
+          boxShadow: ring.glow > 0
+              ? [
+                  BoxShadow(
+                      color: colors.last.withValues(alpha: 0.45),
+                      blurRadius: ring.glow * u)
+                ]
+              : null,
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ring.stars ? Icons.auto_awesome_rounded : Icons.military_tech_rounded,
+              size: 15 * u, color: colors.first),
+          SizedBox(width: 3 * u),
+          Text(title.label,
+              style: TextStyle(
+                  fontSize: 12.5 * u,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  color: textColor)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// 칭호 사다리: 10단계 점. 지난 단계는 채움, 지금 단계는 크게 링 색, 남은 단계는 빈 점.
+class TitleLadder extends StatelessWidget {
+  const TitleLadder({super.key, required this.title, required this.track});
+  final FocusTitle title;
+  final Color track;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: '칭호 ${FocusTitle.values.length}단계 중 ${title.index + 1}단계',
+        excludeSemantics: true,
+        child: Row(children: [
+          for (final t in FocusTitle.values) ...[
+            if (t.index > 0)
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: t.index <= title.index
+                      ? TitleRings.all[t.index].colors.first
+                      : track,
+                ),
+              ),
+            Container(
+              width: t == title ? MobileSize.ladderDot * 1.75 : MobileSize.ladderDot,
+              height: t == title ? MobileSize.ladderDot * 1.75 : MobileSize.ladderDot,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: t.index <= title.index
+                    ? TitleRings.all[t.index].colors.first
+                    : track,
+                border: t == title
+                    ? Border.all(color: TitleRings.all[t.index].colors.last, width: 2)
+                    : null,
+              ),
+            ),
+          ],
+        ]),
+      );
+}

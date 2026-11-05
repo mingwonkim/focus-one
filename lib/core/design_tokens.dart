@@ -347,6 +347,9 @@ abstract class MobileSize {
   static const double avatar = 56; // 프로필 카드
   static const double avatarRow = 36; // 랭킹 행
   static const double avatarLarge = 96; // 승급·공유·1위
+  static const double badge = 24; // 칭호 배지 (행)
+  static const double badgeLarge = 34; // 칭호 배지 (프로필·승급)
+  static const double ladderDot = 8; // 칭호 사다리 점
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

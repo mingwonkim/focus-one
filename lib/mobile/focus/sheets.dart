@@ -481,6 +481,17 @@ class _Promotion extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: style.textStrong)),
+        const SizedBox(height: MobileSize.labelGap + 2),
+        TitleBadge(
+            title: title,
+            textColor: style.textStrong,
+            height: MobileSize.badgeLarge),
+        if (title.next case final next?) ...[
+          const SizedBox(height: MobileSize.labelGap + 2),
+          Text(
+              '다음 목표 \'${next.label}\'까지 ${hm(title.remaining(context.read<AppState>().focusMinutesTotal))}',
+              style: TextStyle(fontSize: 13, color: style.textMuted)),
+        ],
         TextButton.icon(
           onPressed: () => showShareSheet(context),
           icon: Icon(Icons.ios_share_rounded, color: style.accent),
