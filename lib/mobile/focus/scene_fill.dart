@@ -1,5 +1,5 @@
 // lib/mobile/focus/scene_fill.dart
-// 집중 중 화면 전체 변화: 바다 파도 · 숲이 물들며 자람 · 밤 우주처럼 어두워짐 · 일상 커피.
+// 집중 중 화면 전체 변화: 바다 파도 · 숲이 물들며 자람 · 밤 해질녘에서 우주로 · 일상 아이스 아메리카노.
 // 높이는 남은 시간(시계)에서만 나온다. 움직임은 약 24fps로 제한하고 앱이 안 보이면 멈춘다.
 import 'dart:async';
 import 'dart:math' as math;
@@ -226,15 +226,23 @@ class SceneFillPainter extends CustomPainter {
     c.restore();
   }
 
-  /// 경계선 없이 화면 전체가 남색에서 우주 검정으로. 어두워질수록 별이 늘어난다.
+  /// 경계선 없이 화면 전체가 보라빛 해질녘에서 우주 검정으로. 어두워질수록 별이 늘어난다.
   void _night(Canvas c, Size size, double t, SceneStyle s) {
     final fade = (progress / FillMotion.nightFadeIn).clamp(0.0, 1.0);
-    final sky = Color.lerp(
-        Color.lerp(s.cardBg, s.fill, fade),
-        s.fillDeep,
+    final dark =
         ((progress - FillMotion.nightFadeIn) / (1 - FillMotion.nightFadeIn))
-            .clamp(0.0, 1.0))!;
-    c.drawRect(Offset.zero & size, Paint()..color = sky);
+            .clamp(0.0, 1.0);
+    Color at(Color start) =>
+        Color.lerp(Color.lerp(s.cardBg, start, fade), s.fillDeep, dark)!;
+    final rect = Offset.zero & size;
+    c.drawRect(
+        rect,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [at(s.fill), at(s.fillGlow ?? s.fill)],
+          ).createShader(rect));
     final star = Paint();
     for (var i = 0; i < _stars.length; i++) {
       final show = ((progress - i / _stars.length * 0.9) / 0.1).clamp(0.0, 1.0);
@@ -249,22 +257,66 @@ class SceneFillPainter extends CustomPainter {
     }
   }
 
-  /// 크레마 띠 + 표면은 밝고 바닥으로 갈수록 진한 커피
+  // 얼음 (x 비율, 수면 아래 깊이, 크기, 기울기). 수면과 함께 올라온다.
+  static const _ice = [
+    (0.12, 14.0, 58.0, 0.22),
+    (0.36, 6.0, 46.0, -0.3),
+    (0.58, 16.0, 62.0, 0.12),
+    (0.86, 8.0, 50.0, -0.18),
+    (0.24, 92.0, 44.0, 0.42),
+    (0.74, 104.0, 52.0, -0.36),
+    (0.08, 190.0, 40.0, -0.1),
+    (0.92, 214.0, 42.0, 0.3),
+  ];
+
+  /// 잔 안을 들여다본 모습: 빨대 → 맑은 커피 → 떠 있는 얼음
   void _coffee(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.cremaAmp * 8;
+    const m = 72.0;
     final y = fillSurfaceY(size.height, progress, margin: m);
     final k = 2 * math.pi / size.width;
-    final phase = 2 * math.pi * t / FillMotion.cremaPeriod;
-    c.drawPath(_wave(size, y, FillMotion.cremaAmp, phase, k),
-        Paint()..color = s.fillCrest);
+    final phase = 2 * math.pi * t / FillMotion.coffeePeriod;
+    // 빨대: 커피 위로 나온 부분만 보인다
+    c.drawLine(
+        Offset(size.width * 0.70, -8),
+        Offset(size.width * 0.84, size.height + 8),
+        Paint()
+          ..color = s.mobileFace
+          ..strokeWidth = FillMotion.strawWidth);
+    final liquid = _wave(size, y, FillMotion.coffeeAmp, phase, k);
     c.drawPath(
-        _wave(size, y + 12, FillMotion.cremaAmp, phase, k),
+        liquid,
         Paint()
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [s.fill, s.fillDeep],
           ).createShader(Rect.fromLTRB(0, y, size.width, size.height + 1)));
+    final bob = 2 * math.pi * t / FillMotion.iceBobPeriod;
+    final fill = Paint()..color = s.fillCrest.withValues(alpha: 0.42);
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = s.fillCrest.withValues(alpha: 0.8);
+    final shine = Paint()..color = s.fillCrest.withValues(alpha: 0.75);
+    for (var i = 0; i < _ice.length; i++) {
+      final (fx, depth, side, tilt) = _ice[i];
+      final cy = y + depth + FillMotion.iceBob * math.sin(bob + i);
+      if (cy - side > size.height) continue;
+      c.save();
+      c.translate(fx * size.width, cy);
+      c.rotate(tilt + 0.03 * math.sin(bob + i * 2));
+      final r = RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset.zero, width: side, height: side),
+          Radius.circular(side * 0.2));
+      c.drawRRect(r, fill);
+      c.drawRRect(r, edge);
+      c.drawRRect(
+          RRect.fromRectAndRadius(
+              Rect.fromLTWH(-side * 0.32, -side * 0.34, side * 0.26, side * 0.1),
+              Radius.circular(side * 0.05)),
+          shine);
+      c.restore();
+    }
   }
 
   @override

@@ -77,6 +77,7 @@ class SceneStyle {
     required this.fill,
     required this.fillDeep,
     required this.fillCrest,
+    this.fillGlow,
   });
 
   final Brightness brightness;
@@ -117,7 +118,8 @@ class SceneStyle {
   // 폰 v3 집중 중 화면 전체 차오름
   final Color fill; // 뒤층·연한 나무·밤 시작색·커피 표면
   final Color fillDeep; // 앞층·진한 나무·우주 끝색·커피 바닥
-  final Color fillCrest; // 물마루·크레마·별 등 밝은 점
+  final Color fillCrest; // 물마루·얼음·별 등 밝은 점
+  final Color? fillGlow; // 밤: 시작 하늘의 아래쪽 노을빛
 
   static const forest = SceneStyle(
     brightness: Brightness.light,
@@ -188,9 +190,10 @@ class SceneStyle {
     mobileBottom: Color(0xFF9A7428),
     mobileFg: Color(0xFF14131A),
     secondaryLip: Color(0xFF3D3A49),
-    fill: Color(0xFF343558),
+    fill: Color(0xFF3F42A6),
     fillDeep: Color(0xFF04040A),
     fillCrest: Color(0xFFF4F1FF),
+    fillGlow: Color(0xFF9A6FD6),
   );
 
   static const ocean = SceneStyle(
@@ -263,9 +266,9 @@ class SceneStyle {
     mobileBottom: Color(0xFFAC5948),
     mobileFg: Color(0xFF49271F),
     secondaryLip: Color(0xFFF3CABD),
-    fill: Color(0xFF8A5433),
-    fillDeep: Color(0xFF4F2C1A),
-    fillCrest: Color(0xFFE9C9A6),
+    fill: Color(0xFF8F5220),
+    fillDeep: Color(0xFF2E170C),
+    fillCrest: Color(0xFFF4FBFF),
   );
 }
 
@@ -416,8 +419,11 @@ abstract class FillMotion {
   static const waveBackPeriod = 7.0; // 초
   static const waveFrontAmp = 6.0;
   static const waveFrontPeriod = 4.0;
-  static const cremaAmp = 3.0;
-  static const cremaPeriod = 6.0;
+  static const coffeeAmp = 3.0;
+  static const coffeePeriod = 6.0;
+  static const iceBob = 3.0; // 얼음이 위아래로 떠다니는 폭
+  static const iceBobPeriod = 5.0;
+  static const strawWidth = 16.0;
   static const treeSwayDeg = 2.0;
   static const treeSwayPeriod = 6.0;
   static const forestRows = 9; // 아래(가까움)부터 위(멀리)까지 줄

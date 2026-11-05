@@ -64,7 +64,10 @@ class _FocusHomeState extends State<FocusHome> {
     // 진행 중엔 세션에 고정된 친구
     final companion =
         Companion.byId(active?.companionId) ?? s.selectedCompanion;
-    final progress = idle ? MobileRing.fractionOf(_minutes) : s.progress;
+    // 집중 중 링은 배경과 같이 0에서 채워진다 (휴식은 남은 시간만큼 줄어듦)
+    final progress = idle
+        ? MobileRing.fractionOf(_minutes)
+        : (active != null ? 1 - s.progress : s.progress);
     // 대기: 데려올 친구를 또렷하게 보여 주고, 시작하면 흐려졌다가 집중할수록 선명해짐
     final reveal = idle ? 1.0 : 0.25 + 0.75 * (1 - s.progress);
 
