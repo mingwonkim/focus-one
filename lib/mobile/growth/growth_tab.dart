@@ -225,6 +225,7 @@ class _MapRow extends StatelessWidget {
         offset: Offset(dx, 0),
         child: Semantics(
           button: true,
+          onTap: onTap,
           label: done ? '$label, 지나옴' : (isCurrent ? '$label, 지금 여기' : label),
           excludeSemantics: true,
           child: PressScale(
@@ -508,6 +509,7 @@ class _QuestCard extends StatelessWidget {
         Semantics(
           container: true,
           button: unopened,
+          onTap: unopened ? () => s.openChests([chestKey]) : null,
           label: unopened ? '상자 열기' : (rewarded ? '열린 상자' : '잠긴 상자'),
           excludeSemantics: true,
           child: GestureDetector(

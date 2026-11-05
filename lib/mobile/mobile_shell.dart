@@ -150,6 +150,7 @@ class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
                             selected: t == current,
                             label: '${_labels[t]!.$1} 탭',
                             excludeSemantics: true,
+                            onTap: () => _tabs.value = t,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () => _tabs.value = t,

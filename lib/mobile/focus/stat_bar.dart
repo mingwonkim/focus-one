@@ -16,6 +16,10 @@ class StatBar extends StatelessWidget {
     Widget item(IconData icon, String value, String label, {Widget? page}) =>
         Semantics(
           button: page != null,
+          onTap: page == null
+              ? null
+              : () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => page)),
           label: '$label $value',
           excludeSemantics: true,
           child: GestureDetector(

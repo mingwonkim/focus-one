@@ -1,7 +1,10 @@
 // 5단계: 폰 새 화면 접근성 — 터치 크기, 눌리는 것의 라벨, 글자 대비
 import 'dart:io';
 
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -49,6 +52,23 @@ void main() {
         await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
         await expectLater(tester, meetsGuideline(textContrastGuideline));
+        // 버튼이라고 읽히면 화면 낭독기로 실제로 눌려야 한다
+        final broken = <String>[];
+        void visit(SemanticsNode n) {
+          final d = n.getSemanticsData();
+          if (d.flagsCollection.isButton &&
+              d.flagsCollection.isEnabled != Tristate.isFalse &&
+              !d.hasAction(SemanticsAction.tap)) {
+            broken.add(d.label);
+          }
+          n.visitChildren((c) {
+            visit(c);
+            return true;
+          });
+        }
+
+        visit(tester.getSemantics(find.byType(Scaffold).first));
+        expect(broken, isEmpty, reason: '누르기 동작 없는 버튼');
         st.dispose();
         handle.dispose();
       });

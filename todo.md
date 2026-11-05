@@ -134,7 +134,8 @@
 - [ ] 사용자: 실서버 반영 `supabase db push` (20261107000000_league.sql). 전엔 리그 탭이 "연결이 안 돼요" 표시, 다른 기능은 영향 없음
 - [ ] 사용자: 처리방침 사이트 배포 `cd ~/CodingProjects/looinlabs && WRANGLER_SEND_METRICS=false npx wrangler@4 deploy` (Claude 실행은 Production Deploy 규칙에 막힘. 빌드·커밋·푸시는 완료, 로컬이 원격보다 뒤처져 있어 rebase함)
 - [ ] 출시 때: ASC 앱 개인정보 항목 재점검(리그·친구 데이터)
-- [ ] 5단계: 실기기 전력·접근성·회귀
+- [x] 5단계 일부: 접근성 자동 검사, 낭독기 누르기 동작 수정, 그리기 비용(최대 1.7ms/프레임, 대리 지표), macOS·Android arm64·iOS 빌드, 시뮬레이터 흐름 확인
+- [ ] 남음: 버튼 이름 중복 읽힘(PillButton '시작 시작'), RoundIconButton이 버튼으로 안 읽힘, 실기기 배터리 측정, Android 실기기
 - [ ] 스토어 프리뷰 문구 점검 (tool/store/store_test.dart '선명해져요'는 유지됨, 링 차오름은 재촬영 필요)
 - 사용자 확정 전 main 머지 금지
 

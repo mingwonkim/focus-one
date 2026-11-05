@@ -168,6 +168,7 @@ class _GoalCard extends StatelessWidget {
           Expanded(
             child: Semantics(
               button: true,
+              onTap: () => _input(context, value),
               label: '$title $value분, 직접 입력',
               excludeSemantics: true,
               child: GestureDetector(
