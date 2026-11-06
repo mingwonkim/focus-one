@@ -406,7 +406,7 @@ Future<void> showRewardSheet(BuildContext context) {
             child: Image.asset(c.asset, width: 144, height: 144),
           ),
         if (c != null)
-          Text('${c.name}이(가) 왔어요',
+          Text(c.isStarter ? '${c.name}와(과) 함께 집중했어요' : '${c.name}이(가) 왔어요',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

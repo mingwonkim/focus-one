@@ -27,7 +27,7 @@ class Tag {
 }
 
 /// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분.
-/// 해금 0분 = 기본 친구: 처음부터 한 마리씩 있고, 꾸미기에서는 어느 장면에나 놓을 수 있다.
+/// 해금 0분 = 기본 친구: 캐릭터당 항상 1명이고, 꾸미기에서는 어느 장면에나 놓을 수 있다.
 class Companion {
   final String id; // 에셋 파일명과 같음
   final FocusScene scene;
@@ -147,6 +147,19 @@ class Progress {
     this.rankNickname,
     this.growth = const Growth(),
   });
+
+  /// 기본 친구가 여럿 놓인 예전 배치를 캐릭터당 1명만 남기고 정리한다
+  Progress withStarterLimit() {
+    final seen = <String>{};
+    bool keep(Placement p) =>
+        Companion.byId(p.itemId)?.isStarter != true || seen.add(p.itemId);
+    final next = {
+      for (final e in placements.entries) e.key: e.value.where(keep).toList()
+    };
+    final same =
+        placements.entries.every((e) => next[e.key]!.length == e.value.length);
+    return same ? this : copyWith(placements: next);
+  }
 
   Progress copyWith({
     List<Tag>? tags,

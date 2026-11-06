@@ -329,6 +329,43 @@ void main() {
       st.dispose();
     });
 
+    test('기본 친구는 세션을 끝내도 캐릭터당 1명', () async {
+      var st = await boot(monday);
+      st = await focus(st, day(0), 25); // 새싹사슴과 함께
+      st = await focus(st, day(1), 25);
+      expect(st.ownedCount('fawn'), 1);
+      st.dispose();
+    });
+
+    test('예전에 여럿 놓은 기본 친구는 1명만 남고, 수집 친구는 그대로', () async {
+      await LocalStore(file()).save(const StoreData(
+          tasks: [],
+          inbox: [],
+          sessions: [],
+          progress: Progress(owned: {
+            'fawn': 3,
+            'bear': 2
+          }, placements: {
+            'forest': [
+              Placement('fawn', 0, 0),
+              Placement('fawn', 1, 0),
+              Placement('bear', 2, 0),
+              Placement('bear', 3, 0),
+            ],
+            'night': [Placement('fawn', 0, 0), Placement('rabbit', 1, 0)],
+          })));
+      final st = await boot(monday);
+      expect(st.placementsOf(FocusScene.forest).map((p) => p.itemId),
+          ['fawn', 'bear', 'bear']);
+      expect(st.placementsOf(FocusScene.night).map((p) => p.itemId), ['rabbit']);
+      expect(
+          st.setPlacements(
+              FocusScene.forest, st.placementsOf(FocusScene.forest)),
+          isTrue,
+          reason: '정리 후 편집이 막히지 않는다');
+      st.dispose();
+    });
+
     test('도감 조건 상향: 300·1200·3000분, 이미 만난 친구는 유지', () async {
       final squirrel = Companion.byId('squirrel')!;
       var st = await boot(monday);

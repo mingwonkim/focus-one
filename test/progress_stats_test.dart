@@ -78,13 +78,13 @@ void main() {
     a.dispose();
 
     final b = await boot(t0.add(const Duration(hours: 1)));
-    expect(b.ownedCount('fawn'), 2); // 기본 1 + 획득 1
+    expect(b.ownedCount('fawn'), 1); // 기본 친구는 늘지 않는다
     expect(b.drops, 25 + 5 + Growth.dailyRewardDrops); // 25분 = 첫 집중 + 일일 목표
     expect(b.sessions.single.companionId, 'fawn');
     await b.flush();
     b.dispose();
     final c = await boot(t0.add(const Duration(hours: 2)));
-    expect(c.ownedCount('fawn'), 2);
+    expect(c.ownedCount('fawn'), 1);
     expect(c.drops, 25 + 5 + Growth.dailyRewardDrops);
     expect(c.buyDecor('grass'), isTrue);
     expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
@@ -122,7 +122,7 @@ void main() {
     final a = await boot(t0);
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     withClock(Clock.fixed(t0.add(const Duration(minutes: 20))), a.abandonSession);
-    expect(a.ownedCount('fawn'), 1); // 기본 1, 획득 없음
+    expect(a.ownedCount('fawn'), 1);
     expect(a.drops, 0);
     a.dispose();
   });
@@ -146,7 +146,7 @@ void main() {
     });
     expect(b.activeSession, isNull);
     expect(b.drops, 5 + 5 + Growth.dailyRewardDrops);
-    expect(b.ownedCount('fawn'), 2);
+    expect(b.ownedCount('fawn'), 1);
     expect(b.rankScore, 5); // 모은 25 − 탈출 20
     b.dispose();
   });
@@ -173,11 +173,11 @@ void main() {
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     await a.flush();
     a.dispose();
-    final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴 기본 1 + 획득 1
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0), Placement('fawn', 2, 0)]), isFalse);
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isTrue);
+    final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴은 기본 1명 고정
+    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
+    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0)]), isTrue);
     expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isFalse); // 숲에 이미 놓음
-    expect(b.placementsOf(FocusScene.forest).first.x, 0);
+    expect(b.placementsOf(FocusScene.forest).single.x, 0);
     expect(b.placementsOf(FocusScene.night), isEmpty);
     b.dispose();
   });

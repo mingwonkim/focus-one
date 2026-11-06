@@ -291,7 +291,7 @@ class AppState extends ChangeNotifier {
     _scene = data.scene;
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
-    _progress = data.progress;
+    _progress = data.progress.withStarterLimit();
     _progress = _progress.copyWith(growth: _growth.migrated(_today));
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
@@ -735,9 +735,9 @@ class AppState extends ChangeNotifier {
   }
   void setLockEnabled(bool v) =>
       _setProgress(_progress.copyWith(lockEnabled: v));
-  int ownedCount(String itemId) =>
-      (_progress.owned[itemId] ?? 0) +
-      (Companion.byId(itemId)?.isStarter == true ? 1 : 0);
+  int ownedCount(String itemId) => Companion.byId(itemId)?.isStarter == true
+      ? 1
+      : _progress.owned[itemId] ?? 0;
   FocusSession? get lastReward => _lastReward;
   FocusTitle? get lastPromotion => _lastPromotion;
   void clearLastReward() {
