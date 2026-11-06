@@ -425,6 +425,7 @@ abstract class MobileSize {
   static const double mapLink = 14; // 지나온 길
   static const double mapLinkFuture = 4; // 안 간 길(점선)
   static const double mapLinkOver = 7; // 지나온 길 위에 덧칠하는 줄
+  static const double mapLinkDeepen = 0.38; // 밝은 칭호의 지나온 길을 진하게
   static const double mapDash = 7;
   static const double questCard = 88;
   static const double chest = 72;

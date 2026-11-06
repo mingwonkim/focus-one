@@ -685,7 +685,7 @@ class _TitleChip extends StatelessWidget {
       );
 }
 
-/// 칸 사이 길: 지나온 길은 굵은 실선에 대비되는 줄을 덧칠, 안 간 길은 얇은 점선
+/// 칸 사이 길: 지나온 길은 굵은 실선에 흰 줄을 덧칠, 안 간 길은 얇은 점선
 class _LinkPainter extends CustomPainter {
   const _LinkPainter(
       {required this.from,
@@ -713,12 +713,19 @@ class _LinkPainter extends CustomPainter {
       ..strokeWidth = done ? MobileSize.mapLink : MobileSize.mapLinkFuture
       ..color = color;
     if (done) {
-      canvas.drawPath(path, paint);
+      // 밝은 칭호 색은 흰 줄이 묻히지 않게 길을 조금 진하게 깐다
+      final light = TitleRing.textOn(color) == TitleRings.ink;
+      canvas.drawPath(
+          path,
+          paint
+            ..color = light
+                ? Color.lerp(color, TitleRings.ink, MobileSize.mapLinkDeepen)!
+                : color);
       canvas.drawPath(
           path,
           paint
             ..strokeWidth = MobileSize.mapLinkOver
-            ..color = Color.lerp(color, TitleRing.textOn(color), 0.92)!);
+            ..color = TitleRings.star);
       return;
     }
     for (final m in path.computeMetrics()) {
