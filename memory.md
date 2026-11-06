@@ -7,7 +7,7 @@
 ## Android 출시 계정 (2026-10-13)
 - Play **조직 계정**(develop@looinlabs.com, Google Workspace 사용자)으로 새로 가입해 출시. 개인 계정(2001kmin, 개발자명 LooinLabs, 하루전 운영 중)은 2023-11 이후 규정상 새 앱마다 테스터 12명×14일 비공개 테스트 필요 → 사용자가 조직 계정 선택.
 - 주소: 조직 계정은 사업장 주소 공개. 사업장=자택이지만 하루전(인앱 구매)에 이미 공개돼 있어 비상주 사무실 안 함.
-- D-U-N-S: Apple duns-lookup(무료)으로 사용자 제출 완료 2026-10-13. 발급(1~2주) 후 Play 조직 가입($25·인증 사용자) → 서비스 계정 API 키 ~/.config/fokko/.
+- D-U-N-S: 2026-10-16 발급 거절됨(영문 사업자등록증 미제출). '해결(Resolved)'은 발급이 아니라 처리 종료라는 뜻, 본문 끝까지 읽을 것. 이전 기록: Apple duns-lookup(무료)으로 사용자 제출 완료 2026-10-13. 발급(1~2주) 후 Play 조직 가입($25·인증 사용자) → 서비스 계정 API 키 ~/.config/fokko/.
 - 출시 AAB 서명: android/key.properties(gitignore)가 ~/.config/focusone 키를 가리켜야 함. 없으면 debug 키로 조용히 서명됨.
 
 ## 디자인 v2 (2026-10-08 사용자 확정 → main 머지) — 현재 디자인 원본
