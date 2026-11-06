@@ -137,7 +137,8 @@ class _FocusHomeState extends State<FocusHome> {
           height: MobileSize.row,
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: MobileSize.gridGap, vertical: MobileSize.labelGap),
               decoration: BoxDecoration(
                 color: style.rowBg,
                 borderRadius: BorderRadius.circular(AppRadius.full),
@@ -304,13 +305,26 @@ class _ToolRow extends StatelessWidget {
         RoundIconButton(
           size: MobileSize.touchMin,
           style: style,
-          icon: s.lockEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
-          tooltip: s.lockEnabled ? '앱 잠금 켜짐' : '앱 잠금',
+          icon: !s.lockEnabled
+              ? Icons.lock_open_rounded
+              : (s.lockReady ? Icons.lock_rounded : Icons.no_encryption_rounded),
+          tooltip: !s.lockEnabled
+              ? '앱 잠금'
+              : (s.lockReady ? '앱 잠금 켜짐' : '앱 잠금 꺼짐, 권한을 확인해 주세요'),
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const LockPage())),
         ),
       ]),
     );
+  }
+}
+
+/// 시작. 잠금을 켜 뒀는데 걸 수 없으면 집중은 시작하되 바로 알려 준다.
+void _startFocus(BuildContext context, AppState s) {
+  s.startTimer(allowNoTask: true);
+  if (s.lockEnabled && !s.lockReady) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        content: Text('앱 잠금이 꺼져 있어요. 자물쇠에서 권한을 확인해 주세요')));
   }
 }
 
@@ -488,7 +502,7 @@ class _Controls extends StatelessWidget {
             height: MobileSize.cta,
             icon: Icons.play_arrow_rounded,
             label: '시작',
-            onTap: () => s.startTimer(allowNoTask: true),
+            onTap: () => _startFocus(context, s),
           ),
         ),
         const SizedBox(width: 12),
@@ -528,7 +542,7 @@ class _Controls extends StatelessWidget {
                 height: MobileSize.cta,
                 icon: Icons.play_arrow_rounded,
                 label: '계속',
-                onTap: () => s.startTimer(allowNoTask: true),
+                onTap: () => _startFocus(context, s),
               ),
       ),
       if (!s.isRunning) ...[const SizedBox(width: 12), memo],

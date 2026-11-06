@@ -223,6 +223,53 @@ begin
   perform pg_temp.check((select coalesce(sum(minutes), 0) from public.verified_daily where user_id = pg_temp.uid(62)) = 10, '구 점수는 리그에 안 섞임');
 end $$;
 
+-- 수정 검증 1: 끝났지만 못 보낸 세션은 다음 세션 시작이 취소하지 않고, 진행 중인 예약만 취소한다
+do $$
+declare
+  got int;
+begin
+  perform pg_temp.people(90, 90);
+  perform pg_temp.login(90);
+  perform public.begin_focus_v3('late-a', 1500);
+  update public.verified_sessions set ends_at = now() - interval '1 minute'
+    where user_id = pg_temp.uid(90) and session_id = 'late-a';
+  perform public.begin_focus_v3('late-b', 1500);
+  perform pg_temp.check(not (select canceled from public.verified_sessions
+    where user_id = pg_temp.uid(90) and session_id = 'late-a'), '끝난 미제출 세션은 취소 안 됨');
+  got := public.finish_focus_v3('late-a');
+  perform pg_temp.check(got = 25, '늦게 보낸 세션 인정');
+  perform public.begin_focus_v3('late-c', 1500);
+  perform pg_temp.check((select canceled from public.verified_sessions
+    where user_id = pg_temp.uid(90) and session_id = 'late-b'), '진행 중 예약은 새 시작이 취소');
+  perform pg_temp.check((select count(*) from public.verified_sessions
+    where user_id = pg_temp.uid(90) and finished_at is null and not canceled and ends_at > now()) = 1,
+    '진행 중 예약은 하나');
+end $$;
+
+-- 수정 검증 2: 유예 구간에 새 주 조에 먼저 들어가도 지난주 승급 조로 옮겨진다
+do $$
+declare
+  wk date := public.league_week() - 7;
+  gid bigint;
+  later_tier int;
+begin
+  perform pg_temp.people(91, 91);
+  perform pg_temp.login(91);
+  insert into public.league_groups (week, tier) values (wk, 0) returning id into gid;
+  insert into public.league_group_members (group_id, week, user_id) values (gid, wk, pg_temp.uid(91));
+  insert into public.verified_daily (user_id, day, minutes) values (pg_temp.uid(91), wk, 200);
+  perform public.league_assign(pg_temp.uid(91), wk + 7);
+  perform public.league_settle_group(gid);
+  select lg.tier into later_tier from public.league_group_members m
+    join public.league_groups lg on lg.id = m.group_id
+    where m.user_id = pg_temp.uid(91) and m.week = wk + 7;
+  perform pg_temp.check(later_tier = 1, '승급자는 새 주 탐험 조로 이동');
+  perform pg_temp.check((select tier from public.league_members where user_id = pg_temp.uid(91)) = 1,
+    '승급 유지');
+  perform pg_temp.check((select count(*) from public.league_group_members
+    where user_id = pg_temp.uid(91) and week = wk + 7) = 1, '새 주 조는 하나');
+end $$;
+
 -- 권한: 비로그인·직접 접근 차단
 do $$
 declare

@@ -34,6 +34,10 @@ class GoalPlan {
   int on(String day) =>
       nextFrom != null && day.compareTo(nextFrom!) >= 0 ? nextMinutes! : minutes;
 
+  /// [day] 기준으로 아직 적용 전인 예약이 있는지
+  bool pendingOn(String day) =>
+      nextFrom != null && day.compareTo(nextFrom!) < 0;
+
   /// 오늘 기준 다음 값. [from]은 낮출 때 적용될 다음 기간 첫날.
   GoalPlan changed(int value, {required String today, required String from}) {
     final now = on(today);
@@ -143,13 +147,26 @@ class Growth {
       );
 
   /// 이행: 지난 날에는 얼음을 소급해 쓰지 않는다. 여러 번 불러도 같다.
-  Growth migrated(String today) => migratedOn != null
-      ? this
-      : copyWith(
-          migratedOn: today,
-          evaluatedThrough: addDays(today, -1),
-          ice: iceMax - 1,
-        );
+  /// 이행 전에 이미 채운 이번 기간 퀘스트는 받은 것으로 둔다 (과거 분은 재지급하지 않는다).
+  Growth migrated(String today, {int dayMinutes = 0, int weekMinutes = 0}) {
+    if (migratedOn != null) return this;
+    final week = weekKey(today);
+    return copyWith(
+      migratedOn: today,
+      evaluatedThrough: addDays(today, -1),
+      ice: iceMax - 1,
+      rewarded: {
+        ...rewarded,
+        if (dayMinutes > 0) QuestKind.firstSession.keyFor(today),
+        if (dayMinutes >= daily.on(today)) QuestKind.dailyGoal.keyFor(today),
+        if (dayMinutes >= QuestKind.dailyLong.minutes!)
+          QuestKind.dailyLong.keyFor(today),
+        if (weekMinutes >= weekly.on(week)) QuestKind.weeklyGoal.keyFor(week),
+        for (final q in [QuestKind.weeklyHalf, QuestKind.weeklyFull])
+          if (weekMinutes >= q.minutes!) q.keyFor(week),
+      },
+    );
+  }
 
   /// 연속일로 인정되는 날. 이행 전 기록은 기존 규칙(중단도 인정)을 그대로 둔다.
   Set<String> activeDays(Iterable<FocusSession> sessions) => {
@@ -227,18 +244,26 @@ class Growth {
       onReward(QuestReward(kind, key, kind.drops, gainedIce));
     }
 
+    // 내 목표와 같은 분량의 고정 퀘스트는 겹치므로 목표 쪽만 주고, 받은 것으로 남긴다.
+    // 나중에 목표를 바꿔도 같은 분량을 또 받지 않는다.
+    void fixed(QuestKind q, String period, int goal, int done) {
+      if (done < q.minutes!) return;
+      if (q.minutes == goal) {
+        g = g.copyWith(rewarded: {...g.rewarded, q.keyFor(period)});
+      } else {
+        grant(q, period);
+      }
+    }
+
     grant(QuestKind.firstSession, day);
     final dayGoal = daily.on(day);
     if (dayMinutes >= dayGoal) grant(QuestKind.dailyGoal, day);
-    // 내 목표와 같은 분량의 고정 퀘스트는 겹치므로 목표 쪽만 준다
-    const long = QuestKind.dailyLong;
-    if (long.minutes != dayGoal && dayMinutes >= long.minutes!) grant(long, day);
+    fixed(QuestKind.dailyLong, day, dayGoal, dayMinutes);
     final week = weekKey(day);
     final weekGoal = weekly.on(week);
     if (weekMinutes >= weekGoal) grant(QuestKind.weeklyGoal, week);
-    for (final q in [QuestKind.weeklyHalf, QuestKind.weeklyFull]) {
-      if (q.minutes != weekGoal && weekMinutes >= q.minutes!) grant(q, week);
-    }
+    fixed(QuestKind.weeklyHalf, week, weekGoal, weekMinutes);
+    fixed(QuestKind.weeklyFull, week, weekGoal, weekMinutes);
     return g;
   }
 

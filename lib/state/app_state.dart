@@ -241,6 +241,10 @@ class AppState extends ChangeNotifier {
   String get todayKey => _today;
   String get thisWeekKey => weekKey(_today);
 
+  @visibleForTesting
+  void addLeagueOutboxForTest(String id) => _setProgress(_progress.copyWith(
+      growth: _growth.copyWith(leagueOutbox: {..._growth.leagueOutbox, id})));
+
   void openChests(Iterable<String> keys) => _setProgress(
       _progress.copyWith(growth: _growth.opened(keys)));
 
@@ -292,7 +296,9 @@ class AppState extends ChangeNotifier {
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
     _progress = data.progress.withSingleBoard();
-    _progress = _progress.copyWith(growth: _growth.migrated(_today));
+    _progress = _progress.copyWith(
+        growth: _growth.migrated(_today,
+            dayMinutes: minutesOn(_today), weekMinutes: weekMinutes(_today)));
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
@@ -723,6 +729,16 @@ class AppState extends ChangeNotifier {
   int get drops => _progress.drops;
   bool get lockEnabled => _progress.lockEnabled;
 
+  /// 잠금이 실제로 걸릴 수 있는지 (권한·고른 앱). OS 쪽 상태라 저장하지 않는다.
+  bool get lockReady => _lockReady;
+  bool _lockReady = true;
+  void setLockReady(bool v) {
+    if (v == _lockReady) return;
+    _lockReady = v;
+    notifyListeners();
+  }
+
+
   /// 폰 소리 선택. 'scene'이면 장면을 따라간다.
   String get soundId => _progress.soundId;
   void setSoundId(String id) => _setProgress(_progress.copyWith(soundId: id));
@@ -811,7 +827,8 @@ class AppState extends ChangeNotifier {
   bool isUnlocked(Companion c) =>
       sceneMinutes(c.scene) >= c.unlockMinutes ||
       xp >= Companion.unlockAllMinutes ||
-      ownedCount(c.id) > 0;
+      ownedCount(c.id) > 0 ||
+      c.id == _progress.selectedCompanionId; // 고를 때 해금돼 있던 친구는 조건이 올라도 유지
 
   /// 이번 세션에 데려올 친구 — 선택이 현재 장면과 다르거나 잠겨 있으면 장면 첫 친구
   Companion get selectedCompanion {

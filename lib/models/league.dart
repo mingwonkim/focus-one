@@ -1,6 +1,5 @@
 // lib/models/league.dart
 // 주간 리그 화면 값. 규칙의 원본은 supabase/migrations/20261107000000_league.sql.
-import 'dart:math' as math;
 
 enum LeagueTier {
   walk('산책'),
@@ -101,8 +100,20 @@ class LeagueStatus {
   static const smallGroupGoal = 150;
   bool get smallGroup => board.length <= 3;
 
-  int get promoteCount =>
-      tier == LeagueTier.voyage || smallGroup ? 0 : (board.length * 0.2).ceil();
-  int get demoteCount =>
-      tier == LeagueTier.walk || smallGroup ? 0 : math.max(0, (board.length * 0.2).floor());
+  /// 서버 정산과 같은 규칙: 상위 ceil(20%) 등수 안(동점 전원)이고 1분 이상이면 승급
+  int get promoteCount {
+    if (tier == LeagueTier.voyage || smallGroup) return 0;
+    final up = (board.length * 0.2).ceil();
+    return board.where((r) => r.minutes > 0 && r.rank <= up).length;
+  }
+
+  /// 아래에서 floor(20%)+1번째 점수보다 낮으면 강등 (선 동점은 빠진다)
+  int get demoteCount {
+    if (tier == LeagueTier.walk || smallGroup) return 0;
+    final down = (board.length * 0.2).floor();
+    if (down == 0) return 0;
+    final minutes = [for (final r in board) r.minutes]..sort();
+    final line = minutes[down];
+    return minutes.where((m) => m < line).length;
+  }
 }

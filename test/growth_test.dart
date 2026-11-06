@@ -291,6 +291,80 @@ void main() {
       ]);
     });
 
+    test('목표를 올려도 이미 목표로 받은 분량의 고정 퀘스트를 또 주지 않는다', () {
+      final day = dayKey(monday);
+      final rewards = <QuestReward>[];
+      var g = const Growth(daily: GoalPlan(75), weekly: GoalPlan(225)).rewardedFor(
+          day, dayMinutes: 75, weekMinutes: 225, onReward: rewards.add);
+      expect(rewards.map((r) => r.kind), [
+        QuestKind.firstSession,
+        QuestKind.dailyGoal,
+        QuestKind.weeklyGoal,
+      ]);
+      rewards.clear();
+      g = g.copyWith(daily: const GoalPlan(80), weekly: const GoalPlan(230));
+      g.rewardedFor(day, dayMinutes: 100, weekMinutes: 250, onReward: rewards.add);
+      expect(rewards, isEmpty, reason: '목표 보상은 기간당 한 번, 고정 75·225도 다시 없음');
+    });
+
+    test('이행 전에 쌓은 시간으로 퀘스트를 한꺼번에 주지 않는다', () async {
+      await LocalStore(file()).save(store([
+        session(monday.add(const Duration(hours: 1)), 80),
+        session(monday.add(const Duration(hours: 2)), 380),
+      ]));
+      var st = await boot(monday.add(const Duration(hours: 3)));
+      final drops = st.drops;
+      st = await focus(st, monday.add(const Duration(hours: 4)), 25);
+      expect(st.lastQuestRewards, isEmpty);
+      expect(st.drops, drops + 25);
+      expect(st.unopenedChests, isEmpty);
+      st.dispose();
+    });
+
+    test('이행 당일이라도 아직 안 채운 퀘스트는 받을 수 있다', () async {
+      await LocalStore(file()).save(store([session(day(-1), 25)]));
+      var st = await boot(monday.add(const Duration(hours: 3)));
+      st = await focus(st, monday.add(const Duration(hours: 4)), 25);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          [QuestKind.firstSession, QuestKind.dailyGoal]);
+      st.dispose();
+    });
+
+    test('낮춘 목표 안내는 적용일이 되면 사라진다', () {
+      const plan = GoalPlan(60, nextMinutes: 30, nextFrom: '2026-11-07');
+      expect(plan.pendingOn('2026-11-06'), isTrue);
+      expect(plan.pendingOn('2026-11-07'), isFalse);
+      expect(plan.pendingOn('2026-11-14'), isFalse);
+      expect(const GoalPlan(60).pendingOn('2026-11-06'), isFalse);
+    });
+
+    test('골라 둔 친구는 해금 조건이 올라도 잠기지 않는다', () async {
+      await LocalStore(file()).save(const StoreData(
+          tasks: [],
+          inbox: [],
+          sessions: [],
+          progress: Progress(selectedCompanionId: 'fox')));
+      final st = await boot(monday);
+      expect(st.isUnlocked(Companion.byId('fox')!), isTrue);
+      expect(st.selectedCompanion.id, 'fox');
+      expect(st.isUnlocked(Companion.byId('bear')!), isFalse);
+      st.dispose();
+    });
+
+    test('잠금을 걸 수 없으면 표시 상태가 바뀌고 저장값은 그대로다', () async {
+      final st = await boot(monday);
+      st.setLockEnabled(true);
+      expect(st.lockReady, isTrue);
+      var notified = 0;
+      st.addListener(() => notified++);
+      st.setLockReady(false);
+      st.setLockReady(false);
+      expect(st.lockReady, isFalse);
+      expect(st.lockEnabled, isTrue);
+      expect(notified, 1);
+      st.dispose();
+    });
+
     test('연속 업적 90·180·365일은 그 날수에서 열린다', () async {
       Future<AppState> run(int days) async {
         await LocalStore(file()).save(

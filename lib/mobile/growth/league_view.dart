@@ -301,7 +301,7 @@ class _ZoneLine extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: MobileSize.cardGap),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: 18, color: style.accent),
+          Icon(icon, size: MobileSize.zoneIcon, color: style.accent),
           const SizedBox(width: MobileSize.labelGap),
           Flexible(
             child: Text(text,
@@ -328,7 +328,7 @@ class _LeagueRowTile extends StatelessWidget {
           excludeSemantics: true,
           child: Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: MobileSize.cardPadding, vertical: 12),
+                horizontal: MobileSize.cardPadding, vertical: MobileSize.gridGap),
             decoration: _card(style).copyWith(
               border: row.isMe ? Border.all(color: style.accent, width: 2) : null,
             ),

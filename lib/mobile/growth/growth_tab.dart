@@ -792,9 +792,9 @@ class _QuestsView extends StatelessWidget {
       QuestKind.weeklyHalf.keyFor(week),
       QuestKind.weeklyFull.keyFor(week),
     });
-    // 고정 분량 퀘스트: 내 목표와 같으면 겹치므로 숨긴다 (이미 받았으면 상자를 보여 준다)
+    // 고정 분량 퀘스트: 내 목표와 같으면 겹치므로 숨긴다 (안 연 상자가 있으면 보여 준다)
     List<Widget> fixed(QuestKind q, String period, int done, int goal, String when) =>
-        q.minutes == goal && !s.isRewarded(q.keyFor(period))
+        q.minutes == goal && !s.unopenedChests.contains(q.keyFor(period))
             ? const []
             : [
                 const SizedBox(height: MobileSize.cardGap),

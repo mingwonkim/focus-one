@@ -434,6 +434,7 @@ abstract class MobileSize {
   static const double mapPulse = 18; // 지금 칸에서 링이 퍼지는 폭
   static const double mapTitleChip = 42; // 지도 칭호 글자 배지
   static const double mapSwing = 64; // 좌우로 흔들리는 폭
+  static const double zoneIcon = 18; // 리그 승급·강등 구분선
   static const double mapLink = 14; // 지나온 길
   static const double mapLinkFuture = 4; // 안 간 길(점선)
   static const double mapLinkOver = 7; // 지나온 길 위에 덧칠하는 줄

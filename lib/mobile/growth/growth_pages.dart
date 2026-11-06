@@ -55,6 +55,7 @@ class GoalPage extends StatelessWidget {
         done: s.todayMinutes,
         goal: s.dailyGoal,
         plan: s.dailyPlan,
+        period: s.todayKey,
         later: '내일부터',
         min: Growth.dailyMin,
         max: Growth.dailyMax,
@@ -67,6 +68,7 @@ class GoalPage extends StatelessWidget {
         done: s.thisWeekMinutes,
         goal: s.weeklyGoal,
         plan: s.weeklyPlan,
+        period: s.thisWeekKey,
         later: '다음 주부터',
         min: Growth.weeklyMin,
         max: Growth.weeklyMax,
@@ -87,6 +89,7 @@ class _GoalCard extends StatelessWidget {
     required this.done,
     required this.goal,
     required this.plan,
+    required this.period,
     required this.later,
     required this.min,
     required this.max,
@@ -98,6 +101,7 @@ class _GoalCard extends StatelessWidget {
   final int done;
   final int goal;
   final GoalPlan plan;
+  final String period; // 오늘 또는 이번 주 월요일
   final String later;
   final int min;
   final int max;
@@ -184,7 +188,7 @@ class _GoalCard extends StatelessWidget {
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
                           color: style.textStrong)),
-                  if (plan.nextMinutes != null)
+                  if (plan.pendingOn(period))
                     Text('$later 적용',
                         style: TextStyle(fontSize: 13, color: style.textMuted)),
                   ]),

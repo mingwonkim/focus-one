@@ -51,28 +51,42 @@ Future<void> runMobile() async {
   final lock = FocusLockService();
   // 이번 재생 구간에 이미 시도했는지(성공 여부 무관) — 매초 틱마다 재시도하지 않게
   String? triedFor;
-  var locked = false;
+  var wasReady = appState.lockReady;
   appState.addListener(() async {
     final a = appState.activeSession;
     final want = appState.lockEnabled && a != null && a.isRunning;
+    // 권한을 되찾으면 진행 중 세션에도 다시 건다
+    if (appState.lockReady && !wasReady) triedFor = null;
+    wasReady = appState.lockReady;
     try {
       if (want && triedFor != a.id) {
         triedFor = a.id;
         final ends =
             DateTime.now().add(Duration(seconds: appState.remainingSeconds));
-        locked = await lock.start(a.id, ends);
+        await lock.start(a.id, ends);
       } else if (!want && triedFor != null) {
         triedFor = null; // 재개하면 다시 시도
-        if (locked) await lock.stop();
-        locked = false;
+        // 재실행 뒤 start가 거절돼도 이전 실행의 잠금이 남아 있을 수 있어 항상 푼다
+        await lock.stop();
       }
     } catch (_) {
       // 채널 오류여도 집중은 계속
     }
   });
 
+  // 권한은 설정·강제 종료로 앱 밖에서 꺼질 수 있어 돌아올 때마다 본다
+  Future<void> refreshLock() async {
+    try {
+      final st = await lock.status();
+      appState.setLockReady(st.authorized && st.selectedCount > 0);
+    } catch (_) {}
+  }
+
+  await refreshLock();
+
   // 랭킹: 참여(닉네임 있음)했으면 점수·아바타가 바뀔 때마다 제출. 오프라인이면 다음 변경 때 다시.
   final ranking = RankingService();
+  LeagueSync? leagueSync;
   try {
     await RankingService.init();
     String? sent; // 마지막으로 보낸 '닉네임:아바타:점수'
@@ -95,7 +109,7 @@ Future<void> runMobile() async {
 
     appState.addListener(sync);
     sync();
-    LeagueSync(appState, ranking).start();
+    leagueSync = LeagueSync(appState, ranking)..start();
   } catch (_) {}
 
   try {
@@ -103,6 +117,12 @@ Future<void> runMobile() async {
   } catch (e) {
     debugPrint('kakao init: $e');
   }
+
+  // 앱으로 돌아오면 잠금 권한과 못 보낸 리그 세션을 다시 본다
+  AppLifecycleListener(onResume: () {
+    refreshLock();
+    leagueSync?.sync();
+  });
 
   runApp(
       MultiProvider(providers: [

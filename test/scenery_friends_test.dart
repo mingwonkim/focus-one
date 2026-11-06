@@ -59,6 +59,10 @@ void main() {
     expect(find.textContaining('옮기기'), findsNothing);
     expect(find.text('???'), findsNWidgets(32), reason: '못 만난 친구는 그림자로');
 
+    expect(tester.getTopLeft(find.text('완료')).dy,
+        lessThan(tester.getTopLeft(find.text('라떼멍')).dy),
+        reason: '친구 목록이 길어도 완료를 스크롤 없이 누른다');
+
     await tester.tap(find.text('라떼멍'));
     await tester.pump();
     expect(find.text('빈 칸을 눌러 놓기'), findsOneWidget);

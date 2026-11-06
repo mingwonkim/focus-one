@@ -167,6 +167,38 @@ class _SceneryTabState extends State<SceneryTab> {
             }),
           ),
         ] else ...[
+          // 친구가 많아 목록이 길다 → 완료는 풍경 바로 아래
+          Row(children: [
+            Expanded(
+              child: _Pill(
+                style: style,
+                height: MobileSize.cta,
+                onTap: () => setState(() => _draft = null),
+                child: Center(
+                  child: Text('취소',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: style.textStrong)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: PillButton(
+                style: style,
+                width: double.infinity,
+                height: MobileSize.cta,
+                icon: Icons.check_rounded,
+                label: '완료',
+                onTap: () {
+                  s.setPlacements(_draft!);
+                  setState(() => _draft = null);
+                },
+              ),
+            ),
+          ]),
+          const SizedBox(height: MobileSize.gridGap),
           Row(children: [
             Expanded(
               child: SegmentedButton<bool>(
@@ -223,37 +255,6 @@ class _SceneryTabState extends State<SceneryTab> {
                     _friendCard(s, style, c),
               ],
             ),
-          const SizedBox(height: 16),
-          Row(children: [
-            Expanded(
-              child: _Pill(
-                style: style,
-                height: MobileSize.cta,
-                onTap: () => setState(() => _draft = null),
-                child: Center(
-                  child: Text('취소',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: style.textStrong)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: PillButton(
-                style: style,
-                width: double.infinity,
-                height: MobileSize.cta,
-                icon: Icons.check_rounded,
-                label: '완료',
-                onTap: () {
-                  s.setPlacements(_draft!);
-                  setState(() => _draft = null);
-                },
-              ),
-            ),
-          ]),
         ],
     ];
     // 보관함·도감·상점: 탭바 바로 위 고정 (편집 중엔 숨김)

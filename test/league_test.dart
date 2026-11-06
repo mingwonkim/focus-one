@@ -25,6 +25,8 @@ class FakeRanking extends RankingService {
   LeagueStatus status = const LeagueStatus(joined: false);
   final begun = <String>[];
   final finished = <String>[];
+  final calls = <String>[];
+  Set<String> failIds = {};
   Object? finishError;
   bool joined = false;
   bool left = false;
@@ -44,11 +46,15 @@ class FakeRanking extends RankingService {
   }
 
   @override
-  Future<void> beginFocus(String sessionId, int plannedSec) async =>
-      begun.add(sessionId);
+  Future<void> beginFocus(String sessionId, int plannedSec) async {
+    begun.add(sessionId);
+    calls.add('begin:$sessionId');
+  }
   @override
   Future<int> finishFocus(String sessionId) async {
+    calls.add('finish:$sessionId');
     if (finishError != null) throw finishError!;
+    if (failIds.contains(sessionId)) throw Exception('too early');
     finished.add(sessionId);
     return 25;
   }
@@ -75,9 +81,26 @@ void main() {
       expect(LeagueStatus.fromJson({'joined': false}).joined, isFalse);
     });
 
+    test('동점이면 구분선도 서버 정산과 같다', () {
+      LeagueStatus of(List<(int, int)> rows) => LeagueStatus(
+          joined: true,
+          tier: LeagueTier.explore,
+          board: [for (final (rank, minutes) in rows) row(rank, minutes: minutes)]);
+      final allTied = of([(1, 100), (1, 100), (1, 100), (1, 100), (1, 100)]);
+      expect(allTied.promoteCount, 5, reason: '전원 1위 승급');
+      expect(allTied.demoteCount, 0, reason: '선 동점은 강등 없음');
+      final zero = of([(1, 0), (1, 0), (1, 0), (1, 0), (1, 0)]);
+      expect(zero.promoteCount, 0, reason: '0분은 승급 안 함');
+      final bottomTied = of([(1, 90), (2, 50), (3, 50), (4, 10), (4, 10)]);
+      expect(bottomTied.promoteCount, 1);
+      expect(bottomTied.demoteCount, 0, reason: '하위 동점은 강등 제외');
+      final clear = of([(1, 90), (2, 50), (3, 40), (4, 30), (5, 10)]);
+      expect(clear.demoteCount, 1);
+    });
+
     test('승강 구역은 서버 규칙과 같다', () {
       LeagueStatus of(int n, LeagueTier t) => LeagueStatus(
-          joined: true, tier: t, board: [for (var i = 1; i <= n; i++) row(i)]);
+          joined: true, tier: t, board: [for (var i = 1; i <= n; i++) row(i, minutes: 200 - i * 10)]);
       expect(of(10, LeagueTier.explore).promoteCount, 2);
       expect(of(10, LeagueTier.explore).demoteCount, 2);
       expect(of(4, LeagueTier.explore).promoteCount, 1);
@@ -97,6 +120,53 @@ void main() {
       } on FileSystemException {
         // 임시 폴더
       }
+    });
+
+    test('못 보낸 세션을 먼저 보내고 새 세션을 예약한다', () async {
+      final st = AppState(LocalStore(File('${dir.path}/o.json')));
+      await st.init();
+      st.setRankNickname('나');
+      st.setLeagueJoined(true);
+      st.addLeagueOutboxForTest('old');
+      final fake = FakeRanking();
+      final sync = LeagueSync(st, fake);
+      st.startTimer(allowNoTask: true);
+      await sync.sync();
+      expect(fake.calls, ['finish:old', 'begin:${st.activeSession!.id}']);
+      st.stopTimer();
+      st.dispose();
+    });
+
+    test('한 세션 전송 실패가 다른 세션을 막지 않는다', () async {
+      final st = AppState(LocalStore(File('${dir.path}/p.json')));
+      await st.init();
+      st.setRankNickname('나');
+      st.setLeagueJoined(true);
+      st.addLeagueOutboxForTest('bad');
+      st.addLeagueOutboxForTest('good');
+      final fake = FakeRanking()..failIds = {'bad'};
+      await LeagueSync(st, fake).sync();
+      expect(st.leagueOutbox, {'bad'});
+      expect(fake.finished, ['good']);
+      st.dispose();
+    });
+
+    test('시작 뒤 오래 지난 세션은 재실행해도 새로 예약하지 않는다', () async {
+      final st = AppState(LocalStore(File('${dir.path}/q.json')));
+      await st.init();
+      st.setRankNickname('나');
+      st.setLeagueJoined(true);
+      st.startTimer(allowNoTask: true);
+      final started = st.activeSession!.startedAt;
+      final fake = FakeRanking();
+      await LeagueSync(st, fake, now: () => started.add(const Duration(minutes: 2)))
+          .sync();
+      expect(fake.begun, isEmpty, reason: '재실행 복구');
+      await LeagueSync(st, fake, now: () => started.add(const Duration(seconds: 5)))
+          .sync();
+      expect(fake.begun, hasLength(1), reason: '방금 시작');
+      st.stopTimer();
+      st.dispose();
     });
 
     test('참여 안 했으면 아무것도 안 보낸다', () async {
@@ -119,7 +189,7 @@ void main() {
       st.setRankNickname('나');
       st.setLeagueJoined(true);
       st.setDurationMinutes(10);
-      var now = DateTime(2026, 11, 9, 9);
+      var now = DateTime.now();
       final fake = FakeRanking()..finishError = Exception('too early');
       final sync = LeagueSync(st, fake,
           now: () => now, retry: const Duration(seconds: 30));
