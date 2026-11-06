@@ -132,7 +132,7 @@
 - 사용자 11/06 취침 전 지시: 4단계·5단계·개인정보 처리방침 갱신. 실서버 db push·스토어 제출은 하지 않고 준비만
 - [x] 4단계 코드: 리그 SQL(로컬 pg 50개 검증, tool/test_league_sql.sh), 세션 예약·제출 재시도(league_sync), 리그 화면 — 테스트 102개
 - [x] 실서버 반영 `supabase db push` (20261107000000_league.sql) — 11/06 사용자 지시로 Claude 실행. worktree는 연결 정보(supabase/.temp, git 제외)를 main에서 복사해야 함. 비로그인 호출로 함수 5개 존재·차단(401) 확인. 로그인 상태 동작은 실기기에서 확인 필요
-- [ ] 사용자: 처리방침 사이트 배포 `cd ~/CodingProjects/looinlabs && WRANGLER_SEND_METRICS=false npx wrangler@4 deploy` (Claude 실행은 Production Deploy 규칙에 막힘. 빌드·커밋·푸시는 완료, 로컬이 원격보다 뒤처져 있어 rebase함)
+- [x] 처리방침 사이트 배포 — 11/06 사용자 지시로 Claude 실행 (버전 2b7d770e)
 - [ ] 출시 때: ASC 앱 개인정보 항목 재점검(리그·친구 데이터)
 - [x] 5단계 일부: 접근성 자동 검사, 낭독기 누르기 동작 수정, 그리기 비용(최대 1.7ms/프레임, 대리 지표), macOS·Android arm64·iOS 빌드, 시뮬레이터 흐름 확인
 - [x] 접근성: 버튼 이름 중복·원형 버튼 역할·목표 입력 터치 크기 수정 — 테스트 121개
