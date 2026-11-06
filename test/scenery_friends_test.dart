@@ -11,6 +11,22 @@ import 'package:focus_one/mobile/scenery/scenery_tab.dart';
 import 'package:focus_one/state/app_state.dart';
 
 void main() {
+  test('꾸미기 안내 글자는 장면마다 그라데이션 위에서 읽힌다', () {
+    double contrast(Color a, Color b) {
+      final x = a.computeLuminance(), y = b.computeLuminance();
+      return ((x > y ? x : y) + 0.05) / ((x > y ? y : x) + 0.05);
+    }
+
+    for (final scene in FocusScene.values) {
+      final s = scene.style;
+      expect(s.boardTop, isNot(s.boardBottom), reason: scene.name);
+      for (final c in [s.boardTop, s.boardBottom]) {
+        expect(contrast(s.textStrong, c), greaterThanOrEqualTo(4.5),
+            reason: '${scene.name} $c');
+      }
+    }
+  });
+
   testWidgets('장면 선택 없이 친구 36종, 라떼멍을 놓을 수 있다', (tester) async {
     final dir = Directory.systemTemp.createTempSync('fo');
     final file = File('${dir.path}/d.json');

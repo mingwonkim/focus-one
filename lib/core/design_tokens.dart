@@ -68,6 +68,8 @@ class SceneStyle {
     required this.divider,
     required this.fieldFill,
     required this.sceneLabel,
+    required this.boardTop,
+    required this.boardBottom,
     required this.footerLabel,
     required this.footerUnit,
     required this.fillShade,
@@ -103,6 +105,8 @@ class SceneStyle {
   final Color fieldFill;
 
   final String sceneLabel; // 헤더 장면 칩 ("숲")
+  final Color boardTop; // 꾸미기 풍경 그라데이션 위
+  final Color boardBottom; // 아래
   final String footerLabel; // "오늘 심은 나무"
   final String footerUnit; // "그루"
 
@@ -139,6 +143,8 @@ class SceneStyle {
     divider: Color(0xFFDCEEE3),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '숲',
+    boardTop: Color(0xFFFFF3CC), // 크림
+    boardBottom: Color(0xFFBDEBD3), // 민트
     footerLabel: '오늘 심은 나무',
     footerUnit: '그루',
     fillShade: Color(0xFF14715D),
@@ -173,6 +179,8 @@ class SceneStyle {
     divider: Color(0xFF2A2833),
     fieldFill: Color(0xFF24222D),
     sceneLabel: '밤',
+    boardTop: Color(0xFF2E2F6B), // 남색
+    boardBottom: Color(0xFF7652A8), // 보라
     footerLabel: '오늘 모은 별',
     footerUnit: '개',
     fillShade: Color(0xFF9A7428),
@@ -208,6 +216,8 @@ class SceneStyle {
     divider: Color(0xFFDDEDF7),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '바다',
+    boardTop: Color(0xFFC8EEFF), // 하늘
+    boardBottom: Color(0xFFDCD3F9), // 라벤더
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
     fillShade: Color(0xFF227A9D),
@@ -243,6 +253,8 @@ class SceneStyle {
     divider: Color(0xFFFBE0D8),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '일상',
+    boardTop: Color(0xFFFFEBC8), // 살구
+    boardBottom: Color(0xFFFFC6C2), // 코랄 핑크
     footerLabel: '오늘 마신 커피',
     footerUnit: '잔',
     fillShade: Color(0xFFAC5948),

@@ -118,7 +118,7 @@ class _SceneryTabState extends State<SceneryTab> {
                         '배치 바꾸기를 눌러\n친구와 장식을 놓아 보세요.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 14, height: 1.5, color: style.textMuted),
+                            fontSize: 14, height: 1.5, color: style.textStrong),
                       ),
                     ),
                   ),
@@ -414,7 +414,7 @@ class _StockCard extends StatelessWidget {
   }
 }
 
-/// 풍경 바닥: 지금 장면 색의 그라데이션. 편집 중엔 격자.
+/// 풍경 바닥: 지금 장면의 두 색 그라데이션. 편집 중엔 격자.
 class _BoardPainter extends CustomPainter {
   const _BoardPainter({required this.style, required this.grid});
   final SceneStyle style;
@@ -429,10 +429,7 @@ class _BoardPainter extends CustomPainter {
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color.lerp(style.cardBg, style.accent, 0.1)!,
-              Color.lerp(style.cardBg, style.accent, 0.38)!,
-            ],
+            colors: [style.boardTop, style.boardBottom],
           ).createShader(r));
     if (!grid) return;
     final line = Paint()

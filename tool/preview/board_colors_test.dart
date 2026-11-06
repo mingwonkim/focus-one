@@ -1,4 +1,4 @@
-// 꾸미기 그라데이션 색 후보 6가지를 한 장으로 (macOS 전용). CI 대상 아님.
+// 꾸미기 장면별 그라데이션을 한 장으로 (macOS 전용). CI 대상 아님.
 // 실행: flutter test tool/preview/board_colors_test.dart --dart-define=OUT=<dir>
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -7,20 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/models/collection.dart';
 
 import 'capture_test.dart' show loadFont;
 
 const out = String.fromEnvironment('OUT', defaultValue: '/tmp');
-
-const _options = [
-  ('1 하늘 → 민트', Color(0xFFD8F0FF), Color(0xFFBFEBDD)),
-  ('2 복숭아 → 라벤더', Color(0xFFFFE3D3), Color(0xFFDCD3F7)),
-  ('3 크림 → 연두', Color(0xFFFFF6DC), Color(0xFFCFEBB5)),
-  ('4 라벤더 → 하늘', Color(0xFFE6DDFB), Color(0xFFC9E6FB)),
-  ('5 크림 → 코랄', Color(0xFFFFF4E4), Color(0xFFFFCDBF)),
-  ('6 남색 → 보라', Color(0xFF2B2F63), Color(0xFF6A4C9C)),
-];
 
 const _sample = [
   Placement('fawn', 1, 1),
@@ -36,7 +28,7 @@ const _sample = [
 void main() {
   testWidgets('colors', (tester) async {
     await tester.runAsync(loadFont);
-    const size = Size(1140, 800);
+    const size = Size(760, 800);
     await tester.binding.setSurfaceSize(size);
     final key = GlobalKey();
     Widget board(String label, Color top, Color bottom) => Column(children: [
@@ -86,8 +78,9 @@ void main() {
                 runSpacing: 16,
                 alignment: WrapAlignment.center,
                 children: [
-                  for (final (label, top, bottom) in _options)
-                    board(label, top, bottom),
+                  for (final scene in FocusScene.values)
+                    board(scene.style.sceneLabel, scene.style.boardTop,
+                        scene.style.boardBottom),
                 ],
               ),
             ),
