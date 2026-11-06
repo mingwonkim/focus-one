@@ -809,7 +809,9 @@ class AppState extends ChangeNotifier {
 
   /// 이미 만난 친구는 조건이 바뀌어도 잠기지 않는다
   bool isUnlocked(Companion c) =>
-      sceneMinutes(c.scene) >= c.unlockMinutes || ownedCount(c.id) > 0;
+      sceneMinutes(c.scene) >= c.unlockMinutes ||
+      xp >= Companion.unlockAllMinutes ||
+      ownedCount(c.id) > 0;
 
   /// 이번 세션에 데려올 친구 — 선택이 현재 장면과 다르거나 잠겨 있으면 장면 첫 친구
   Companion get selectedCompanion {

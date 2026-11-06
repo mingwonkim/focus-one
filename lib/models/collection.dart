@@ -26,7 +26,7 @@ class Tag {
       );
 }
 
-/// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분.
+/// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분, 또는 전체 100시간.
 /// 해금 0분 = 기본 친구: 캐릭터당 항상 1명이고, 꾸미기에서는 어느 장면에나 놓을 수 있다.
 class Companion {
   final String id; // 에셋 파일명과 같음
@@ -39,23 +39,46 @@ class Companion {
   String get asset => 'assets/mobile/companions/$id.webp';
   bool get isStarter => unlockMinutes == 0;
 
+  /// 이만큼 집중하면 장면과 상관없이 모두 해금 (장면별 끝 조건 1500분 × 4)
+  static const unlockAllMinutes = 6000;
+
   static const all = [
     Companion('fawn', FocusScene.forest, '새싹사슴', 0),
+    Companion('butterfly', FocusScene.forest, '꽃잎나비', 150),
     Companion('squirrel', FocusScene.forest, '이끼다람', 300),
-    Companion('fox', FocusScene.forest, '잎새여우', 1200),
-    Companion('bear', FocusScene.forest, '숲곰', 3000),
+    Companion('frog', FocusScene.forest, '버섯개구리', 450),
+    Companion('fox', FocusScene.forest, '잎새여우', 600),
+    Companion('snail', FocusScene.forest, '덩굴달팽이', 800),
+    Companion('bear', FocusScene.forest, '숲곰', 1000),
+    Companion('boar', FocusScene.forest, '솔방울멧돼지', 1250),
+    Companion('badger', FocusScene.forest, '단풍오소리', 1500),
     Companion('rabbit', FocusScene.night, '달토끼', 0),
+    Companion('bat', FocusScene.night, '별박쥐', 150),
     Companion('owl', FocusScene.night, '별부엉', 300),
-    Companion('firefly', FocusScene.night, '반딧불', 1200),
-    Companion('cat', FocusScene.night, '꿈고양', 3000),
+    Companion('moth', FocusScene.night, '달빛나방', 450),
+    Companion('firefly', FocusScene.night, '반딧불', 600),
+    Companion('sheep', FocusScene.night, '구름양', 800),
+    Companion('cat', FocusScene.night, '꿈고양', 1000),
+    Companion('fennec', FocusScene.night, '별빛사막여우', 1250),
+    Companion('wolf', FocusScene.night, '은하늑대', 1500),
     Companion('whale', FocusScene.ocean, '물결고래', 0),
+    Companion('crab', FocusScene.ocean, '모래게', 150),
     Companion('turtle', FocusScene.ocean, '파도거북', 300),
-    Companion('octopus', FocusScene.ocean, '방울문어', 1200),
-    Companion('ray', FocusScene.ocean, '구름가오리', 3000),
+    Companion('seahorse', FocusScene.ocean, '산호해마', 450),
+    Companion('octopus', FocusScene.ocean, '방울문어', 600),
+    Companion('puffer', FocusScene.ocean, '풍선복어', 800),
+    Companion('ray', FocusScene.ocean, '구름가오리', 1000),
+    Companion('otter', FocusScene.ocean, '조개수달', 1250),
+    Companion('penguin', FocusScene.ocean, '얼음펭귄', 1500),
     Companion('puppy', FocusScene.daily, '라떼멍', 0),
+    Companion('duck', FocusScene.daily, '우산오리', 150),
     Companion('hamster', FocusScene.daily, '책햄찌', 300),
-    Companion('raccoon', FocusScene.daily, '기차너구리', 1200),
-    Companion('hedgehog', FocusScene.daily, '캠프도치', 3000),
+    Companion('loafcat', FocusScene.daily, '식빵냥', 450),
+    Companion('raccoon', FocusScene.daily, '기차너구리', 600),
+    Companion('alpaca', FocusScene.daily, '뜨개알파카', 800),
+    Companion('hedgehog', FocusScene.daily, '캠프도치', 1000),
+    Companion('panda', FocusScene.daily, '도시락판다', 1250),
+    Companion('koala', FocusScene.daily, '자전거코알라', 1500),
   ];
 
   static Companion? byId(String? id) =>

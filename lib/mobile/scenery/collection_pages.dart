@@ -161,7 +161,7 @@ class DexPage extends StatelessWidget {
                     color: style.textStrong)),
             const SizedBox(width: 6),
             Text(
-                '${Companion.of(scene).where((c) => s.ownedCount(c.id) > 0).length}/4',
+                '${Companion.of(scene).where((c) => s.ownedCount(c.id) > 0).length}/${Companion.of(scene).length}',
                 style: TextStyle(fontSize: 13, color: style.textMuted)),
           ]),
           const SizedBox(height: 10),

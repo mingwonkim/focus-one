@@ -339,7 +339,7 @@ enum Achievement {
   quarter('90일 연속', '90일 연속 집중했어요'),
   halfYear('180일 연속', '180일 연속 집중했어요'),
   year('365일 연속', '365일 연속 집중했어요'),
-  allFriends('모든 친구', '친구 16종을 모두 만날 수 있어요');
+  allFriends('모든 친구', '친구 36종을 모두 만날 수 있어요');
 
   const Achievement(this.label, this.detail);
   final String label;

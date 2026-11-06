@@ -337,6 +337,24 @@ void main() {
       st.dispose();
     });
 
+    test('총 100시간이면 다른 장면 친구까지 전부 해금', () async {
+      var st = await boot(monday);
+      st = await focus(st, day(0), 5999);
+      expect(st.isUnlocked(Companion.byId('koala')!), isFalse);
+      st = await focus(st, day(1), 1);
+      expect(Companion.all.every(st.isUnlocked), isTrue);
+      expect(st.hasAchievement(Achievement.allFriends), isTrue);
+      st.dispose();
+    });
+
+    test('친구 그림 파일이 모두 있고 id는 서버 제한 16자 이내', () {
+      for (final c in Companion.all) {
+        expect(File(c.asset).existsSync(), isTrue, reason: c.asset);
+        expect(c.id.length, lessThanOrEqualTo(16), reason: c.id);
+      }
+      expect(Companion.all.map((c) => c.id).toSet(), hasLength(36));
+    });
+
     test('예전에 여럿 놓은 기본 친구는 1명만 남고, 수집 친구는 그대로', () async {
       await LocalStore(file()).save(const StoreData(
           tasks: [],
@@ -374,8 +392,11 @@ void main() {
       st = await focus(st, day(1), 1);
       expect(st.isUnlocked(squirrel), isTrue);
       st.dispose();
-      expect(Companion.of(FocusScene.ocean).map((c) => c.unlockMinutes),
-          [0, 300, 1200, 3000]);
+      for (final scene in FocusScene.values) {
+        expect(Companion.of(scene).map((c) => c.unlockMinutes),
+            [0, 150, 300, 450, 600, 800, 1000, 1250, 1500]);
+      }
+      expect(Companion.all, hasLength(36));
 
       await LocalStore(file()).save(const StoreData(
           tasks: [],
@@ -385,6 +406,7 @@ void main() {
       final old = await boot(day(2));
       expect(old.isUnlocked(Companion.byId('bear')!), isTrue);
       expect(old.isUnlocked(Companion.byId('fox')!), isFalse);
+      expect(old.hasAchievement(Achievement.allFriends), isFalse);
       old.dispose();
     });
 

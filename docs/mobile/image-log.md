@@ -32,3 +32,10 @@ Higgsfield 새 계정 크레딧 부족(0.03) → 사용자 요청으로 무료 �
 
 ## 앱 아이콘 (2026-10-11, codex) — 최종 F3-b
 라운드: 고래 A/B → 사슴·달토끼·라떼멍·네 친구(C~F) → 달토끼 D2~D4 → 네 친구 F2~F4 → F3 얼굴 1.5배(b)·1.8배(c). 최종 F3-b → assets/icon/source.png. 버린 시안은 스크래치에만.
+
+## 친구 20종 추가 (2026-11-06, codex image_generation, 장면별 1회 일괄)
+공통 프롬프트 위와 같음 + 기존 친구를 참고 이미지로 넣어 톤 통일. 1024 투명 PNG → 512 webp.
+숲: butterfly(꽃잎나비)·frog(버섯개구리)·snail(덩굴달팽이)·boar(솔방울멧돼지)·badger(단풍오소리)
+밤: bat(별박쥐)·moth(달빛나방)·wolf(은하늑대)·sheep(구름양)·fennec(별빛사막여우)
+바다: seahorse(산호해마)·otter(조개수달)·penguin(얼음펭귄)·puffer(풍선복어)·crab(모래게)
+일상: duck(우산오리)·loafcat(식빵냥)·alpaca(뜨개알파카)·koala(자전거코알라)·panda(도시락판다)
