@@ -48,7 +48,7 @@ jobs:
           retention-days: 14
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # latest(26.04)는 clang이 플러그인 경고를 오류로 막는다
     steps:
       - uses: actions/checkout@v5
 
