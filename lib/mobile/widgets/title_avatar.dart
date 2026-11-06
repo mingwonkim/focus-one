@@ -185,7 +185,7 @@ class TitleFramePainter extends CustomPainter {
     final c = size.center(Offset.zero);
     final radius = size.shortestSide / 2;
     final u = size.shortestSide / MobileSize.mapNodeBig;
-    final alpha = reached ? 1.0 : 0.5;
+    final alpha = reached ? 1.0 : 0.7;
     Color tone(int i) => ring.colors[i % ring.colors.length].withValues(alpha: alpha);
 
     for (final o in ring.ornaments) {

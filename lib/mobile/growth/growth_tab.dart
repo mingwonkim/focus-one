@@ -274,16 +274,19 @@ class _MapRow extends StatelessWidget {
         : 'Lv.${node.level}';
     // 칸은 자기가 속한 칭호 구간의 색을 입는다
     final zone = TitleRings.all[FocusTitle.of(node.xp).index];
-    final numberColor = done
-        ? zone.onFill
-        : (isCurrent ? style.accent : style.textFaint);
+    final zoneColor = done
+        ? zone.colors.first
+        : Color.lerp(
+            zone.colors.first, style.cardBg, MobileSize.mapFutureFade)!;
+    final numberColor =
+        isCurrent ? style.accent : TitleRing.textOn(zoneColor);
     return Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
       Positioned.fill(
         child: CustomPaint(
           painter: _LinkPainter(
             from: dx,
             to: _mapOffset(index + 1),
-            color: done ? zone.colors.first : style.ringTrack,
+            color: zoneColor,
             last: index == MapNode.all.length - 1,
           ),
         ),
@@ -319,7 +322,7 @@ class _MapRow extends StatelessWidget {
                     child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: done ? zone.colors.first : style.rowBg,
+                      color: isCurrent ? style.rowBg : zoneColor,
                       boxShadow: AppShadow.card(style.rowShadow),
                     ),
                     child: Padding(
@@ -333,7 +336,7 @@ class _MapRow extends StatelessWidget {
                                     ? Icons.auto_awesome_rounded
                                     : Icons.military_tech_rounded,
                                 size: size * 0.3,
-                                color: done ? numberColor : zone.colors.first),
+                                color: numberColor),
                           Text('${node.level}',
                               style: TextStyle(
                                   fontSize: big ? 34 : 24,
@@ -357,8 +360,7 @@ class _MapRow extends StatelessWidget {
           child: FractionalTranslation(
             translation: Offset(chipSide * 0.5, 0),
             child: ExcludeSemantics(
-              child: _TitleChip(
-                  style: style, title: node.title!, reached: done),
+              child: _TitleChip(style: style, title: node.title!),
             ),
           ),
         ),
@@ -377,11 +379,9 @@ class _MapRow extends StatelessWidget {
 
 /// 칭호 이름: 지도에서 가장 눈에 띄는 글자. 칭호 배지를 크게, 뒤 길이 비치지 않게 깔고 쓴다.
 class _TitleChip extends StatelessWidget {
-  const _TitleChip(
-      {required this.style, required this.title, required this.reached});
+  const _TitleChip({required this.style, required this.title});
   final SceneStyle style;
   final FocusTitle title;
-  final bool reached;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -390,14 +390,11 @@ class _TitleChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.card(style.rowShadow),
         ),
-        child: Opacity(
-          opacity: reached ? 1 : 0.72,
-          child: TitleBadge(
-              title: title,
-              textColor: style.textStrong,
-              height: MobileSize.mapTitleChip,
-              weight: FontWeight.w900),
-        ),
+        child: TitleBadge(
+            title: title,
+            textColor: style.textStrong,
+            height: MobileSize.mapTitleChip,
+            weight: FontWeight.w900),
       );
 }
 

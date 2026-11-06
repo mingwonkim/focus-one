@@ -99,9 +99,18 @@ void main() {
       return ((x > y ? x : y) + 0.05) / ((x > y ? y : x) + 0.05);
     }
 
-    for (final r in TitleRings.all) {
-      expect(contrast(r.colors.first, r.onFill), greaterThanOrEqualTo(4.5),
-          reason: '${r.colors.first}');
+    for (final scene in FocusScene.values) {
+      for (final r in TitleRings.all) {
+        final base = r.colors.first;
+        final future = Color.lerp(
+            base, scene.style.cardBg, MobileSize.mapFutureFade)!;
+        expect(contrast(base, TitleRing.textOn(base)), greaterThanOrEqualTo(4.5),
+            reason: '지나온 칸 $base');
+        // 안 간 칸 숫자는 24pt 이상 굵은 글자라 큰 글자 기준 3:1
+        expect(contrast(future, TitleRing.textOn(future)),
+            greaterThanOrEqualTo(3),
+            reason: '${scene.name} 안 간 칸 $future');
+      }
     }
     final looks = {
       for (final r in TitleRings.all)

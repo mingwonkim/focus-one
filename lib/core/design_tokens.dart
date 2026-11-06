@@ -333,9 +333,8 @@ class TitleRing {
   final bool stars; // 링 위 작은 별 3개 (마스터)
   final List<TitleOrnament> ornaments; // 지도 칭호 칸 장식
 
-  /// 칭호 칸을 채우는 색 위에 올릴 글자색: 대비가 큰 쪽
-  Color get onFill {
-    final base = colors.first;
+  /// [base] 색 위에 올릴 글자색: 대비가 큰 쪽
+  static Color textOn(Color base) {
     return _contrast(base, TitleRings.ink) >= _contrast(base, TitleRings.star)
         ? TitleRings.ink
         : TitleRings.star;
@@ -415,6 +414,7 @@ abstract class MobileSize {
   static const double mapRowHeight = 104;
   static const double mapNode = 64;
   static const double mapNodeBig = 108;
+  static const double mapFutureFade = 0.32; // 아직 안 간 칸·길이 바탕색 쪽으로 옅어지는 비율
   static const double mapTitleChip = 42; // 지도 칭호 글자 배지
   static const double mapSwing = 64; // 좌우로 흔들리는 폭
   static const double mapLink = 6;
