@@ -36,6 +36,10 @@ void main() {
     await tester.tap(find.text('시작'));
     await tester.pump();
     expect(find.textContaining('앱 잠금이 꺼져 있어요'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 400));
+    final snack = tester.getRect(find.byType(SnackBar));
+    final memo = tester.getRect(find.text('딴생각 메모'));
+    expect(snack.bottom, lessThan(memo.top), reason: '취소·메모 버튼을 가리지 않는다');
     st.stopTimer();
     st.dispose();
     await tester.pumpWidget(const SizedBox());

@@ -323,7 +323,13 @@ class _ToolRow extends StatelessWidget {
 void _startFocus(BuildContext context, AppState s) {
   s.startTimer(allowNoTask: true);
   if (s.lockEnabled && !s.lockReady) {
+    // 시작 10초 동안만 있는 취소 버튼을 가리지 않게 위로 띄운다
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+            left: MobileSize.gutter,
+            right: MobileSize.gutter,
+            bottom: MobileSize.cta * 2),
         content: Text('앱 잠금이 꺼져 있어요. 자물쇠에서 권한을 확인해 주세요')));
   }
 }
