@@ -718,7 +718,7 @@ class _LinkPainter extends CustomPainter {
           path,
           paint
             ..strokeWidth = MobileSize.mapLinkOver
-            ..color = Color.lerp(color, TitleRing.textOn(color), 0.6)!);
+            ..color = Color.lerp(color, TitleRing.textOn(color), 0.92)!);
       return;
     }
     for (final m in path.computeMetrics()) {
