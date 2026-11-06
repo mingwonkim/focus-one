@@ -20,11 +20,11 @@ const out = String.fromEnvironment('OUT', defaultValue: '/tmp');
 
 void main() {
   for (final (name, minutes, scene) in [
-    ('reached', 40000, FocusScene.forest),
-    ('locked', 40, FocusScene.forest),
-    ('night', 40000, FocusScene.night),
+    ('forest', 3300, FocusScene.forest),
+    ('night', 3300, FocusScene.night),
   ]) {
     testWidgets(name, (tester) async {
+      await tester.binding.setSurfaceSize(const Size(402, 874));
       await tester.runAsync(loadFont);
       final dir = Directory.systemTemp.createTempSync('fo');
       final file = File('${dir.path}/d.json');
@@ -47,7 +47,7 @@ void main() {
       final st = AppState(LocalStore(file));
       await tester.runAsync(st.init);
       st.setScene(scene);
-      const size = Size(375, 6900);
+      const size = Size(402, 874);
       await tester.binding.setSurfaceSize(size);
       final key = GlobalKey();
       await tester.pumpWidget(ChangeNotifierProvider.value(
@@ -69,17 +69,22 @@ void main() {
         ),
       ));
       await tester.pump();
-      tester.state<ScrollableState>(find.byType(Scrollable).last).position.jumpTo(0);
-      await tester.pump();
-      await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 300)));
-      await tester.pump();
-      await tester.runAsync(() async {
-        final b = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-        final img = await b.toImage(pixelRatio: 1);
-        final d = await img.toByteData(format: ui.ImageByteFormat.png);
-        File('$out/map-$name.png').writeAsBytesSync(d!.buffer.asUint8List());
-      });
+      final list = tester.state<ScrollableState>(find.byType(Scrollable).last);
+      for (final y in [-1.0, 0.0, 1200.0, 2400.0, 3400.0, 4400.0]) {
+        if (y >= 0) list.position.jumpTo(y);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 200)));
+        await tester.pump();
+        await tester.runAsync(() async {
+          final b = key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+          final img = await b.toImage(pixelRatio: 1);
+          final d = await img.toByteData(format: ui.ImageByteFormat.png);
+          File('$out/map-$name-${y.toInt()}.png')
+              .writeAsBytesSync(d!.buffer.asUint8List());
+        });
+      }
       await tester.binding.setSurfaceSize(null);
       st.dispose();
     });

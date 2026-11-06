@@ -13,6 +13,7 @@ import 'package:focus_one/mobile/growth/growth_tab.dart';
 import 'package:focus_one/models/collection.dart';
 import 'package:focus_one/mobile/widgets/title_avatar.dart';
 import 'package:focus_one/models/focus_title.dart';
+import 'package:focus_one/models/growth.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
 
@@ -139,6 +140,63 @@ void main() {
       expect(left, greaterThanOrEqualTo(0));
       expect(left + box.size.width, lessThanOrEqualTo(size.width));
     }
+    st.dispose();
+  });
+
+  test('지도 배경은 칭호 구간마다 색이 다르고 갑자기 바뀌지 않는다', () {
+    final style = FocusScene.forest.style;
+    final titled = [
+      for (var i = 0; i < MapNode.all.length; i++)
+        if (MapNode.all[i].title != null) i
+    ];
+    final colors = {for (final r in titled) mapBackgroundAt(style, r + 0.0)};
+    expect(colors.length, greaterThanOrEqualTo(FocusTitle.values.length - 1),
+        reason: '칭호마다 다른 배경');
+    for (var r = 0.0; r < MapNode.all.length; r += 0.25) {
+      final a = mapBackgroundAt(style, r), b = mapBackgroundAt(style, r + 0.25);
+      expect((a.r - b.r).abs(), lessThan(0.06), reason: '줄 $r');
+      expect((a.g - b.g).abs(), lessThan(0.06), reason: '줄 $r');
+      expect((a.b - b.b).abs(), lessThan(0.06), reason: '줄 $r');
+    }
+  });
+
+  for (final minutes in [0, 40, 200, 1000, 3000, 8000, 20000]) {
+    testWidgets('$minutes분: 지금 여기 표시가 하나, 작은 폰 화면 안', (tester) async {
+      final st = await seeded(tester, minutes);
+      const size = Size(375, 667);
+      await tester.binding.setSurfaceSize(size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(app(st, size, 1, const GrowthTab()));
+      await tester.pump();
+      final here = find.text('지금 여기');
+      expect(here, findsOneWidget);
+      final box = tester.renderObject<RenderBox>(here);
+      final left = box.localToGlobal(Offset.zero).dx;
+      expect(left, greaterThanOrEqualTo(0));
+      expect(left + box.size.width, lessThanOrEqualTo(size.width));
+      st.dispose();
+    });
+  }
+
+  testWidgets('멀리 스크롤하면 지금 위치로 버튼이 나오고 누르면 돌아온다', (tester) async {
+    final st = await seeded(tester, 40);
+    const size = Size(402, 874);
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(app(st, size, 1, const GrowthTab()));
+    await tester.pump();
+    expect(find.text('지금 위치로'), findsNothing);
+    final list = tester.state<ScrollableState>(find.byType(Scrollable).last);
+    list.position.jumpTo(3000);
+    await tester.pump();
+    expect(find.text('지금 위치로'), findsOneWidget);
+    expect(find.text('지금 여기'), findsNothing);
+    await tester.tap(find.text('지금 위치로'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(find.text('지금 여기'), findsOneWidget);
+    expect(find.text('지금 위치로'), findsNothing);
     st.dispose();
   });
 
