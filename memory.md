@@ -89,3 +89,8 @@
 - 기본 친구(해금 0분)는 캐릭터당 1명 고정. ownedCount가 항상 1을 돌려주고 저장값은 안 바꾼다. 처음엔 +1로 만들었으나 사용자가 2개로 보이는 걸 지적함. 수집 재미는 나중에 친구를 36종으로 늘려 채운다. 해금 조건을 올려도 이미 보유한 친구는 isUnlocked 유지.
 - 차오름 overshoot는 물결 폭만큼만. 크게 잡으면 시작이 늦고 끝나기 전에 가득 찬다(사용자가 10분 타이머에서 약 1분 지연으로 발견).
 - 친구 36종, 해금은 장면 누적 0~1500분(9단계) 또는 전체 6000분. 사용자가 '100시간이면 전부'로 정함. codex exec는 stdin을 닫아야 함(</dev/null), 안 그러면 입력을 기다리다 멈춘다.
+
+## iOS 제출 절차 (2026-11-06, Xcode 계정 없이)
+- Xcode가 로그아웃이면 cloud signing이 'No Accounts'로 실패. API 키는 앱 관리 권한이라 cloud signing도 불가. 대신 API로 맥의 iPhone Distribution 인증서(CFCB75UTZP)를 쓰는 App Store 프로파일을 만들어 수동 서명 내보내기: Fokko AppStore / Fokko FocusMonitor AppStore / Fokko BreakActivity AppStore.
+- 순서: xcodebuild archive → exportArchive(signingStyle manual) → IPA 권한 확인(family-controls) → altool 업로드(API_PRIVATE_KEYS_DIR=~/.config/fokko) → tool/asc_release.py → asc_screenshots.py·asc_preview.py → 처리 완료 대기 → 빌드 연결 → asc_submit.py.
+
