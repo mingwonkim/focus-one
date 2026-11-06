@@ -321,12 +321,11 @@ void main() {
       for (final c in Companion.all) {
         expect(st.ownedCount(c.id), c.isStarter ? 1 : 0, reason: c.id);
       }
-      expect(st.place(FocusScene.daily, 'whale', 0, 0), isTrue,
-          reason: '기본 친구는 다른 장면에도 놓는다');
-      final ocean = Companion.forScenery(FocusScene.ocean).map((c) => c.id);
-      expect(ocean.take(4).toList(), ['whale', 'fawn', 'rabbit', 'puppy'],
-          reason: '이 장면 기본 친구가 맨 앞');
-      expect(ocean.toSet(), hasLength(36), reason: '모든 친구가 나온다');
+      expect(st.place('whale', 0, 0), isTrue);
+      expect(st.place('whale', 1, 0), isFalse, reason: '기본 친구는 1명');
+      final list = Companion.forScenery.map((c) => c.id).toList();
+      expect(list.take(4), ['fawn', 'rabbit', 'whale', 'puppy']);
+      expect(list.toSet(), hasLength(36), reason: '모든 친구가 나온다');
       st.dispose();
     });
 
@@ -338,35 +337,23 @@ void main() {
       st.dispose();
     });
 
-    test('기본 친구는 다른 장면으로 옮기면 그 장면에서 빠지고, 수집 친구는 보유 수까지만', () async {
+    test('꾸미기는 풍경 하나: 보유 수까지 놓고 장면과 상관없다', () async {
       await LocalStore(file()).save(const StoreData(
           tasks: [],
           inbox: [],
           sessions: [],
-          progress: Progress(owned: {
-            'bear': 1
-          }, placements: {
-            'daily': [Placement('puppy', 0, 0)],
-            'forest': [Placement('bear', 0, 0)],
-          })));
+          progress: Progress(owned: {'bear': 1})));
       final st = await boot(monday);
+      expect(st.setPlacements(const [Placement('puppy', 1, 1)]), isTrue);
+      st.setScene(FocusScene.ocean);
+      expect(st.placements.single.itemId, 'puppy', reason: '장면을 바꿔도 그대로');
       expect(
-          st.setPlacements(FocusScene.ocean, const [Placement('puppy', 1, 1)]),
-          isTrue);
-      expect(st.placementsOf(FocusScene.daily), isEmpty);
-      expect(st.placementsOf(FocusScene.ocean).single.itemId, 'puppy');
-      expect(
-          st.setPlacements(FocusScene.ocean, const [
+          st.setPlacements(const [
             Placement('puppy', 1, 1),
             Placement('puppy', 2, 1),
           ]),
-          isFalse,
-          reason: '한 장면에 2명 불가');
-      expect(
-          st.setPlacements(FocusScene.night, const [Placement('bear', 1, 1)]),
-          isFalse,
-          reason: '수집 친구는 옮겨지지 않는다');
-      expect(st.placementsOf(FocusScene.forest).single.itemId, 'bear');
+          isFalse);
+      expect(st.setPlacements(const [Placement('bear', 1, 1)]), isTrue);
       st.dispose();
     });
 
@@ -388,33 +375,48 @@ void main() {
       expect(Companion.all.map((c) => c.id).toSet(), hasLength(36));
     });
 
-    test('예전에 여럿 놓은 기본 친구는 1명만 남고, 수집 친구는 그대로', () async {
+    test('장면별로 놓았던 예전 배치는 모두 한 풍경으로 모인다', () async {
       await LocalStore(file()).save(const StoreData(
           tasks: [],
           inbox: [],
           sessions: [],
           progress: Progress(owned: {
-            'fawn': 3,
-            'bear': 2
+            'bear': 2,
+            'grass': 1
           }, placements: {
             'forest': [
               Placement('fawn', 0, 0),
-              Placement('fawn', 1, 0),
               Placement('bear', 2, 0),
               Placement('bear', 3, 0),
             ],
-            'night': [Placement('fawn', 0, 0), Placement('rabbit', 1, 0)],
+            'night': [Placement('fawn', 0, 0), Placement('rabbit', 2, 0)],
+            'daily': [Placement('puppy', 0, 0), Placement('grass', 5, 5)],
           })));
-      final st = await boot(monday);
-      expect(st.placementsOf(FocusScene.forest).map((p) => p.itemId),
-          ['fawn', 'bear', 'bear']);
-      expect(st.placementsOf(FocusScene.night).map((p) => p.itemId), ['rabbit']);
-      expect(
-          st.setPlacements(
-              FocusScene.forest, st.placementsOf(FocusScene.forest)),
-          isTrue,
-          reason: '정리 후 편집이 막히지 않는다');
+      var st = await boot(monday);
+      List<String> ids() => st.placements.map((p) => p.itemId).toList()..sort();
+      expect(ids(), ['bear', 'bear', 'fawn', 'grass', 'puppy', 'rabbit'],
+          reason: '겹쳐도 사라지지 않고, 기본 친구 중복만 하나로');
+      final cells = st.placements.map((p) => (p.x, p.y)).toSet();
+      expect(cells, hasLength(6), reason: '칸이 겹치지 않는다');
+      expect(st.setPlacements(st.placements), isTrue, reason: '편집이 막히지 않는다');
+      await st.flush();
       st.dispose();
+      st = await boot(monday.add(const Duration(hours: 1)));
+      expect(ids(), hasLength(6), reason: '다시 켜도 그대로');
+      st.dispose();
+    });
+
+    test('옛 배치가 칸보다 많으면 남는 것은 보관함에 있고 데이터는 안 줄어든다', () {
+      final many = Progress(owned: const {'grass': 40}, placements: {
+        for (final name in ['forest', 'night'])
+          name: [
+            for (var i = 0; i < 20; i++)
+              Placement('grass', i % Placement.grid, i ~/ Placement.grid)
+          ],
+      }).withSingleBoard();
+      expect(many.placements[Progress.boardKey], hasLength(36));
+      expect(many.owned['grass'], 40);
+      expect(identical(many.withSingleBoard(), many), isTrue, reason: '여러 번 불러도 같다');
     });
 
     test('도감 조건 상향: 300·1200·3000분, 이미 만난 친구는 유지', () async {

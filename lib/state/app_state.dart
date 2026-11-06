@@ -291,7 +291,7 @@ class AppState extends ChangeNotifier {
     _scene = data.scene;
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
-    _progress = data.progress.withStarterLimit();
+    _progress = data.progress.withSingleBoard();
     _progress = _progress.copyWith(growth: _growth.migrated(_today));
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
@@ -836,30 +836,22 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  List<Placement> placementsOf(FocusScene s) =>
-      _progress.placements[s.name] ?? const [];
+  List<Placement> get placements =>
+      _progress.placements[Progress.boardKey] ?? const [];
 
-  int placedCount(String itemId) => _progress.placements.values
-      .expand((l) => l)
-      .where((p) => p.itemId == itemId)
-      .length;
+  int placedCount(String itemId) =>
+      placements.where((p) => p.itemId == itemId).length;
 
   /// 빈 칸에만, 보유 수를 넘지 않게 배치
-  bool place(FocusScene s, String itemId, int x, int y) {
-    final list = placementsOf(s);
+  bool place(String itemId, int x, int y) {
     final inGrid = x >= 0 && y >= 0 && x < Placement.grid && y < Placement.grid;
-    if (!inGrid || list.any((p) => p.x == x && p.y == y)) return false;
+    if (!inGrid || placements.any((p) => p.x == x && p.y == y)) return false;
     if (placedCount(itemId) >= ownedCount(itemId)) return false;
-    _setProgress(_progress.copyWith(placements: {
-      ..._progress.placements,
-      s.name: [...list, Placement(itemId, x, y)],
-    }));
-    return true;
+    return setPlacements([...placements, Placement(itemId, x, y)]);
   }
 
-  /// 편집 완료: 장면 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
-  /// 기본 친구를 다른 장면에서 데려오면 그 장면에서는 빠진다.
-  bool setPlacements(FocusScene s, List<Placement> list) {
+  /// 편집 완료: 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
+  bool setPlacements(List<Placement> list) {
     final cells = <(int, int)>{};
     final used = <String, int>{};
     for (final p in list) {
@@ -869,34 +861,19 @@ class AppState extends ChangeNotifier {
       if (!cells.add((p.x, p.y))) return false;
       used[p.itemId] = (used[p.itemId] ?? 0) + 1;
     }
-    // 다른 장면에 놓인 것까지 합쳐 보유 수 이하
     for (final e in used.entries) {
-      if (Companion.byId(e.key)?.isStarter == true) {
-        if (e.value > 1) return false;
-        continue;
-      }
-      final elsewhere = _progress.placements.entries
-          .where((x) => x.key != s.name)
-          .expand((x) => x.value)
-          .where((p) => p.itemId == e.key)
-          .length;
-      if (e.value + elsewhere > ownedCount(e.key)) return false;
+      if (e.value > ownedCount(e.key)) return false;
     }
-    bool moved(Placement p) =>
-        used.containsKey(p.itemId) && Companion.byId(p.itemId)?.isStarter == true;
-    _setProgress(_progress.copyWith(placements: {
-      for (final e in _progress.placements.entries)
-        e.key: e.value.where((p) => !moved(p)).toList(),
-      s.name: List.of(list),
-    }));
+    _setProgress(_progress
+        .copyWith(placements: {Progress.boardKey: List.of(list)}));
     return true;
   }
 
   /// 회수: 보관함으로 돌아갈 뿐 재지급·삭제 없음
-  void unplace(FocusScene s, int x, int y) {
+  void unplace(int x, int y) {
     _setProgress(_progress.copyWith(placements: {
-      ..._progress.placements,
-      s.name: placementsOf(s).where((p) => p.x != x || p.y != y).toList(),
+      Progress.boardKey:
+          placements.where((p) => p.x != x || p.y != y).toList(),
     }));
   }
 

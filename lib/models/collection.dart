@@ -27,7 +27,7 @@ class Tag {
 }
 
 /// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분, 또는 전체 100시간.
-/// 해금 0분 = 기본 친구: 캐릭터당 항상 1명이고, 꾸미기에서는 어느 장면에나 놓을 수 있다.
+/// 해금 0분 = 기본 친구: 처음부터 캐릭터당 1명 있다.
 class Companion {
   final String id; // 에셋 파일명과 같음
   final FocusScene scene;
@@ -87,14 +87,11 @@ class Companion {
   static List<Companion> of(FocusScene s) =>
       all.where((c) => c.scene == s).toList();
 
-  /// 꾸미기 친구칸 순서: 이 장면 기본 친구 → 다른 기본 친구 → 이 장면 친구 → 나머지
-  static List<Companion> forScenery(FocusScene s) {
-    int rank(Companion c) =>
-        c.isStarter ? (c.scene == s ? 0 : 1) : (c.scene == s ? 2 : 3);
-    return [
-      for (final r in [0, 1, 2, 3]) ...all.where((c) => rank(c) == r)
-    ];
-  }
+  /// 꾸미기 친구칸 순서: 기본 친구 → 나머지는 해금이 빠른 순
+  static List<Companion> get forScenery => [
+        for (final minutes in {for (final c in all) c.unlockMinutes}.toList()..sort())
+          ...all.where((c) => c.unlockMinutes == minutes)
+      ];
 }
 
 /// 상점 장식 (그림은 코드로). 가격 = 물방울.
@@ -152,7 +149,8 @@ class Progress {
   final String? currentTagId;
   final String? selectedCompanionId; // 다음 세션에 데려올 친구
   final Map<String, int> owned; // 친구·장식 id → 보유 수
-  final Map<String, List<Placement>> placements; // 장면 이름 → 배치
+  final Map<String, List<Placement>> placements; // 꾸미기 배치 ([boardKey] 하나, 예전 파일은 장면별)
+  static const boardKey = 'board';
   final int drops;
   final bool lockEnabled; // 집중 중 앱 잠금 (권한·선택은 OS 쪽)
   final String soundId; // 'scene'(장면 기본) | 장면별 상황 소리 id | 'white' | 'brown'
@@ -174,17 +172,34 @@ class Progress {
     this.growth = const Growth(),
   });
 
-  /// 기본 친구가 여럿 놓인 예전 배치를 캐릭터당 1명만 남기고 정리한다
-  Progress withStarterLimit() {
-    final seen = <String>{};
-    bool keep(Placement p) =>
-        Companion.byId(p.itemId)?.isStarter != true || seen.add(p.itemId);
-    final next = {
-      for (final e in placements.entries) e.key: e.value.where(keep).toList()
-    };
-    final same =
-        placements.entries.every((e) => next[e.key]!.length == e.value.length);
-    return same ? this : copyWith(placements: next);
+  /// 꾸미기는 풍경 하나: 장면별로 저장된 예전 배치를 모두 모은다. 칸이 겹치면 빈 칸으로 옮기고,
+  /// 기본 친구는 1명만 남긴다. 칸이 모자라면 남는 것은 보관함에 그대로 있다.
+  Progress withSingleBoard() {
+    if (placements.keys.every((k) => k == boardKey)) return this;
+    final merged = <Placement>[];
+    final waiting = <Placement>[];
+    final taken = <(int, int)>{};
+    final starters = <String>{};
+    for (final key in [
+      if (placements.containsKey(boardKey)) boardKey,
+      ...placements.keys.where((k) => k != boardKey),
+    ]) {
+      for (final p in placements[key]!) {
+        if (Companion.byId(p.itemId)?.isStarter == true &&
+            !starters.add(p.itemId)) {
+          continue;
+        }
+        (taken.add((p.x, p.y)) ? merged : waiting).add(p);
+      }
+    }
+    for (var y = 0; y < Placement.grid && waiting.isNotEmpty; y++) {
+      for (var x = 0; x < Placement.grid && waiting.isNotEmpty; x++) {
+        if (taken.add((x, y))) {
+          merged.add(Placement(waiting.removeAt(0).itemId, x, y));
+        }
+      }
+    }
+    return copyWith(placements: {boardKey: merged});
   }
 
   Progress copyWith({

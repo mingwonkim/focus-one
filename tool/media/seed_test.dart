@@ -81,7 +81,7 @@ void main() {
     for (final d in ['grass', 'tree', 'bench', 'mug', 'books']) {
       s.buyDecor(d);
     }
-    s.setPlacements(FocusScene.forest, const [
+    s.setPlacements(const [
       Placement('tree', 0, 0),
       Placement('fawn', 2, 2),
       Placement('squirrel', 4, 1),

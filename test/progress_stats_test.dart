@@ -162,7 +162,7 @@ void main() {
 
   test('배치: 빈 칸·보유 수 안에서만, 회수 가능', () async {
     final a = await boot(DateTime(2026, 10, 11));
-    expect(a.place(FocusScene.forest, 'squirrel', 0, 0), isFalse); // 보유 0
+    expect(a.place('squirrel', 0, 0), isFalse); // 보유 0
     expect(a.buyDecor('tree'), isFalse); // 물방울 부족
     a.dispose();
   });
@@ -174,11 +174,11 @@ void main() {
     await a.flush();
     a.dispose();
     final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴은 기본 1명 고정
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0)]), isTrue);
-    expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isTrue); // 기본 친구는 옮겨 온다
-    expect(b.placementsOf(FocusScene.forest), isEmpty);
-    expect(b.placementsOf(FocusScene.night).single.itemId, 'fawn');
+    expect(b.setPlacements(const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
+    expect(b.setPlacements(const [Placement('fawn', 0, 0), Placement('rabbit', 0, 0)]), isFalse); // 겹침
+    expect(b.setPlacements(const [Placement('fawn', 0, 0)]), isTrue);
+    expect(b.setPlacements(const [Placement('squirrel', 1, 1)]), isFalse); // 보유 초과면 안 바뀜
+    expect(b.placements.single.itemId, 'fawn');
     b.dispose();
   });
 

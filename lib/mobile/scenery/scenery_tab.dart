@@ -22,54 +22,32 @@ class SceneryTab extends StatefulWidget {
 }
 
 class _SceneryTabState extends State<SceneryTab> {
-  FocusScene? _viewing; // 보고 있는 풍경 (기본: 지금 장면)
   List<Placement>? _draft; // 편집 중 사본 (null = 보기)
   String? _picked; // 놓을 아이템
   bool _decorTab = false;
 
-  void _tapCell(AppState s, FocusScene scene, int x, int y) {
+  void _tapCell(AppState s, int x, int y) {
     final draft = _draft!;
     final i = draft.indexWhere((p) => p.x == x && p.y == y);
     setState(() {
       if (i >= 0) {
         draft.removeAt(i); // 회수
         HapticFeedback.selectionClick();
-      } else if (_picked != null && _left(s, scene, _picked!) > 0) {
+      } else if (_picked != null && _left(s, _picked!) > 0) {
         draft.add(Placement(_picked!, x, y));
         HapticFeedback.lightImpact();
-        if (_left(s, scene, _picked!) == 0) _picked = null;
+        if (_left(s, _picked!) == 0) _picked = null;
       }
     });
   }
 
-  /// 이 친구가 놓인 다른 장면 수
-  int _elsewhere(AppState s, FocusScene scene, String id) => FocusScene.values
-      .where((x) => x != scene)
-      .expand(s.placementsOf)
-      .where((p) => p.itemId == id)
-      .length;
+  /// 편집 사본 기준 남은 수 = 보유 − 사본 배치
+  int _left(AppState s, String id) =>
+      s.ownedCount(id) -
+      (_draft ?? s.placements).where((p) => p.itemId == id).length;
 
-  /// 편집 사본 기준 남은 수 = 보유 − (다른 장면 배치 + 사본 배치).
-  /// 기본 친구는 다른 장면에 있어도 이쪽으로 옮겨 올 수 있다.
-  int _left(AppState s, FocusScene scene, String id) {
-    final starter = Companion.byId(id)?.isStarter == true;
-    final here =
-        (_draft ?? s.placementsOf(scene)).where((p) => p.itemId == id).length;
-    return s.ownedCount(id) - (starter ? 0 : _elsewhere(s, scene, id)) - here;
-  }
-
-  /// 기본 친구가 지금 놓인 다른 장면 이름
-  String? _placedScene(AppState s, FocusScene scene, String id) {
-    for (final x in FocusScene.values) {
-      if (x != scene && s.placementsOf(x).any((p) => p.itemId == id)) {
-        return x.style.sceneLabel;
-      }
-    }
-    return null;
-  }
-
-  Widget _friendCard(AppState s, FocusScene scene, SceneStyle style, Companion c) {
-    final left = _left(s, scene, c.id);
+  Widget _friendCard(AppState s, SceneStyle style, Companion c) {
+    final left = _left(s, c.id);
     if (s.ownedCount(c.id) == 0) {
       final open = s.isUnlocked(c);
       return _StockCard(
@@ -83,14 +61,11 @@ class _SceneryTabState extends State<SceneryTab> {
         picked: false,
       );
     }
-    final away = c.isStarter ? _placedScene(s, scene, c.id) : null;
     return _StockCard(
       style: style,
       id: c.id,
       name: c.name,
-      note: left <= 0
-          ? '모두 놓음'
-          : (away != null ? '$away에서 옮기기' : (c.isStarter ? null : '×$left')),
+      note: left <= 0 ? '놓음' : (c.isStarter ? null : '×$left'),
       picked: _picked == c.id,
       onTap: left > 0
           ? () => setState(() => _picked = _picked == c.id ? null : c.id)
@@ -101,13 +76,12 @@ class _SceneryTabState extends State<SceneryTab> {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
-    final scene = _viewing ?? s.scene;
-    final style = scene.style;
+    final style = s.scene.style;
     final editing = _draft != null;
-    final placed = _draft ?? s.placementsOf(scene);
+    final placed = _draft ?? s.placements;
     final decor = [
       for (final d in Decor.all)
-        if (d.scene == scene && s.ownedCount(d.id) > 0) d
+        if (s.ownedCount(d.id) > 0) d
     ];
 
     final kids = <Widget>[
@@ -118,19 +92,6 @@ class _SceneryTabState extends State<SceneryTab> {
                   fontWeight: FontWeight.w700,
                   color: style.textStrong)),
           const Spacer(),
-          if (!editing)
-            _Pill(
-              style: style,
-              onTap: () => setState(() => _viewing = scene.next),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                SceneBullet(scene: scene, selected: true, moon: true),
-                const SizedBox(width: 6),
-                Text(scene.style.sceneLabel,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, color: style.textStrong)),
-              ]),
-            ),
-          const SizedBox(width: 8),
           _Pill(
             style: style,
             child: Text('💧 ${s.drops}',
@@ -148,13 +109,13 @@ class _SceneryTabState extends State<SceneryTab> {
               child: Stack(children: [
                 Positioned.fill(
                     child: CustomPaint(
-                        painter: _GroundPainter(scene, grid: editing))),
+                        painter: _BoardPainter(style: style, grid: editing))),
                 if (placed.isEmpty && !editing)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(
-                        '집중을 끝내면 친구가 와요.\n배치 바꾸기를 눌러 이곳에 데려다 두세요.',
+                        '배치 바꾸기를 눌러\n친구와 장식을 놓아 보세요.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 14, height: 1.5, color: style.textMuted),
@@ -182,7 +143,7 @@ class _SceneryTabState extends State<SceneryTab> {
                         height: cell,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
-                          onTap: () => _tapCell(s, scene, x, y),
+                          onTap: () => _tapCell(s, x, y),
                         ),
                       ),
               ]),
@@ -198,7 +159,7 @@ class _SceneryTabState extends State<SceneryTab> {
             icon: Icons.edit_rounded,
             label: '배치 바꾸기',
             onTap: () => setState(() {
-              _draft = List.of(s.placementsOf(scene));
+              _draft = List.of(s.placements);
               _picked = null;
             }),
           ),
@@ -247,16 +208,16 @@ class _SceneryTabState extends State<SceneryTab> {
                       style: style,
                       id: d.id,
                       name: d.name,
-                      note: '×${_left(s, scene, d.id)}',
+                      note: '×${_left(s, d.id)}',
                       picked: _picked == d.id,
-                      onTap: _left(s, scene, d.id) > 0
+                      onTap: _left(s, d.id) > 0
                           ? () => setState(
                               () => _picked = _picked == d.id ? null : d.id)
                           : null,
                     )
                 else
-                  for (final c in Companion.forScenery(scene))
-                    _friendCard(s, scene, style, c),
+                  for (final c in Companion.forScenery)
+                    _friendCard(s, style, c),
               ],
             ),
           const SizedBox(height: 16),
@@ -284,7 +245,7 @@ class _SceneryTabState extends State<SceneryTab> {
                 icon: Icons.check_rounded,
                 label: '완료',
                 onTap: () {
-                  s.setPlacements(scene, _draft!);
+                  s.setPlacements(_draft!);
                   setState(() => _draft = null);
                 },
               ),
@@ -450,67 +411,37 @@ class _StockCard extends StatelessWidget {
   }
 }
 
-/// 장면별 바닥 (코드로 그림): 숲=풀밭, 밤=별 내린 들판, 바다=물속 모래밭. 편집 중엔 격자.
-class _GroundPainter extends CustomPainter {
-  _GroundPainter(this.scene, {required this.grid});
-  final FocusScene scene;
+/// 풍경 바닥: 지금 장면 색의 그라데이션. 편집 중엔 격자.
+class _BoardPainter extends CustomPainter {
+  const _BoardPainter({required this.style, required this.grid});
+  final SceneStyle style;
   final bool grid;
 
   @override
   void paint(Canvas canvas, Size size) {
     final r = Offset.zero & size;
-    final (top, bottom, speck) = switch (scene) {
-      FocusScene.forest => (
-          const Color(0xFFDDF2E5),
-          const Color(0xFFA9DBB8),
-          const Color(0xFF8CCB9E)
-        ),
-      FocusScene.night => (
-          const Color(0xFF232C4A),
-          const Color(0xFF151B30),
-          const Color(0xFFE3C77F)
-        ),
-      FocusScene.ocean => (
-          const Color(0xFFC9E9F8),
-          const Color(0xFF8CC8E6),
-          const Color(0xFFFFFFFF)
-        ),
-      FocusScene.daily => (
-          const Color(0xFFFFEDE6),
-          const Color(0xFFF7C7B5),
-          const Color(0xFFE59478)
-        ),
-    };
     canvas.drawRect(
         r,
         Paint()
           ..shader = LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [top, bottom],
+            colors: [
+              Color.lerp(style.cardBg, style.accent, 0.1)!,
+              Color.lerp(style.cardBg, style.accent, 0.38)!,
+            ],
           ).createShader(r));
-    // 고정 시드 점 무늬 (풀잎·별·물방울 느낌)
-    final rnd = math.Random(scene.index + 7);
-    final p = Paint()
-      ..color = speck.withValues(alpha: scene == FocusScene.night ? 0.8 : 0.5);
-    for (var i = 0; i < 40; i++) {
-      canvas.drawCircle(
-          Offset(rnd.nextDouble() * size.width, rnd.nextDouble() * size.height),
-          1 + rnd.nextDouble() * 2,
-          p);
-    }
-    if (grid) {
-      final g = Paint()
-        ..color = scene.style.textMuted.withValues(alpha: 0.35)
-        ..strokeWidth = 1;
-      final c = size.width / Placement.grid;
-      for (var i = 1; i < Placement.grid; i++) {
-        canvas.drawLine(Offset(i * c, 0), Offset(i * c, size.height), g);
-        canvas.drawLine(Offset(0, i * c), Offset(size.width, i * c), g);
-      }
+    if (!grid) return;
+    final line = Paint()
+      ..color = style.textStrong.withValues(alpha: 0.14)
+      ..strokeWidth = 1;
+    final cell = size.width / Placement.grid;
+    for (var i = 1; i < Placement.grid; i++) {
+      canvas.drawLine(Offset(i * cell, 0), Offset(i * cell, size.height), line);
+      canvas.drawLine(Offset(0, i * cell), Offset(size.width, i * cell), line);
     }
   }
 
   @override
-  bool shouldRepaint(_GroundPainter o) => o.scene != scene || o.grid != grid;
+  bool shouldRepaint(_BoardPainter o) => o.style != style || o.grid != grid;
 }

@@ -59,7 +59,7 @@ class _StoragePageState extends State<StoragePage> {
       ...Companion.all.map((c) => c.id),
       ...Decor.all.map((d) => d.id)
     ].fold(0, (a, id) => a + s.ownedCount(id));
-    final placed = FocusScene.values.expand(s.placementsOf).length;
+    final placed = s.placements.length;
 
     Widget stat(String label, int n) => Expanded(
           child: Container(
