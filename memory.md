@@ -83,3 +83,8 @@
 - Semantics 라벨이 옆 글자와 합쳐지면 낭독기·bySemanticsLabel에서 안 보임 → 눌리는 항목엔 container: true.
 - 4단계: 리그 점수는 verified_daily만(서버 시계). 구 daily_points·submit_score와 섞지 않음. 서버는 실제 집중을 증명 못 함: 시작~예정 종료가 지났다는 것만 안다. 크론 없이 조회·제출 때 지연 정산.
 - 접근성 함정: Semantics(excludeSemantics: true)는 자식 GestureDetector의 누르기 동작까지 가린다 → 같은 Semantics에 onTap을 직접 넘긴다. test/accessibility_test.dart가 '버튼인데 누르기 없음'을 잡는다.
+
+## v3 레벨·친구 결정 (2026-11-06)
+- 레벨 = 지도 칸 번호. 간격 25분에서 칸마다 15분씩 증가, 칭호 문턱은 가장 가까운 칸을 대체(63칸). 기록에서 계산해 이행 불필요. 사용자: "단계가 너무 많고 물방울만 있어 동기가 안 생김".
+- 기본 친구(해금 0분)는 ownedCount에 +1로 계산해 저장값을 안 바꾼다. 해금 조건을 올려도 이미 보유한 친구는 isUnlocked 유지.
+- 차오름 overshoot는 물결 폭만큼만. 크게 잡으면 시작이 늦고 끝나기 전에 가득 찬다(사용자가 10분 타이머에서 약 1분 지연으로 발견).

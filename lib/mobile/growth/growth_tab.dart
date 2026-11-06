@@ -102,7 +102,7 @@ class _MapViewState extends State<_MapView> {
   void _describe(BuildContext context, AppState s, MapNode n) {
     final style = s.scene.style;
     final left = n.xp - s.xp;
-    showFocusSheet(context, n.title?.label ?? '${n.xp} XP', (ctx) {
+    showFocusSheet(context, 'Lv.${n.level}', (ctx) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(
             MobileSize.gutter, 4, MobileSize.gutter, MobileSize.sectionGap),
@@ -131,6 +131,9 @@ class _MapViewState extends State<_MapView> {
     final xp = s.xp;
     final current = MapNode.currentIndex(xp);
     final title = s.title;
+    final level = s.level;
+    final reached = MapNode.all[level - 1];
+    final next = level < MapNode.all.length ? MapNode.all[level] : null;
     return Column(children: [
       Container(
         margin: const EdgeInsets.symmetric(horizontal: MobileSize.gutter),
@@ -143,14 +146,29 @@ class _MapViewState extends State<_MapView> {
               height: MobileSize.badgeLarge),
           const SizedBox(width: MobileSize.gridGap),
           Expanded(
-            child: Text(
-              xp == 0
-                  ? '첫 집중이 여기에 남아요'
-                  : title.next == null
-                      ? '$xp XP'
-                      : '$xp XP · ${title.next!.label}까지 ${title.remaining(xp)}분',
-              style: TextStyle(fontSize: 13, color: style.textMuted),
-            ),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Lv.$level',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: style.textStrong)),
+                  const SizedBox(height: MobileSize.labelGap),
+                  _LevelBar(
+                      style: style,
+                      progress: next == null
+                          ? 1
+                          : (xp - reached.xp) / (next.xp - reached.xp)),
+                  const SizedBox(height: MobileSize.labelGap),
+                  Text(
+                    next == null
+                        ? '최고 레벨이에요'
+                        : '다음 레벨까지 ${next.xp - xp}분'
+                            '${title.next == null ? '' : ' · ${title.next!.label}까지 ${title.remaining(xp)}분'}',
+                    style: TextStyle(fontSize: 13, color: style.textMuted),
+                  ),
+                ]),
           ),
         ]),
       ),
@@ -177,6 +195,27 @@ class _MapViewState extends State<_MapView> {
       ),
     ]);
   }
+}
+
+class _LevelBar extends StatelessWidget {
+  const _LevelBar({required this.style, required this.progress});
+  final SceneStyle style;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: Container(
+          height: MobileSize.goalBar,
+          color: style.ringTrack,
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: progress.clamp(0.0, 1.0),
+            heightFactor: 1,
+            child: ColoredBox(color: style.ringProgress),
+          ),
+        ),
+      );
 }
 
 double _mapOffset(int i) => math.sin(i * math.pi / 3) * MobileSize.mapSwing;
@@ -207,9 +246,13 @@ class _MapRow extends StatelessWidget {
     final big = node.title != null;
     final size = big ? MobileSize.mapNodeBig : MobileSize.mapNode;
     final dx = _mapOffset(index);
+    final chipSide = dx > 0 ? -1.0 : 1.0; // 화면에서 넓은 쪽
     final label = big
-        ? '칭호 ${node.title!.label}, ${node.xp} XP'
-        : '${node.xp} XP';
+        ? 'Lv.${node.level}, 칭호 ${node.title!.label}'
+        : 'Lv.${node.level}';
+    final numberColor = done
+        ? AppColors.onPrimary
+        : (isCurrent ? style.accent : style.textFaint);
     return Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
       Positioned.fill(
         child: CustomPaint(
@@ -248,16 +291,21 @@ class _MapRow extends StatelessWidget {
                       color: done ? style.ringProgress : style.rowBg,
                       boxShadow: AppShadow.card(style.rowShadow),
                     ),
-                    child: Icon(
-                      big
-                          ? Icons.military_tech_rounded
-                          : (done
-                              ? Icons.check_rounded
-                              : Icons.water_drop_rounded),
-                      size: size * 0.46,
-                      color: done
-                          ? AppColors.onPrimary
-                          : (isCurrent ? style.accent : style.textFaint),
+                    child: Padding(
+                      padding: const EdgeInsets.all(MobileSize.cardGap),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          if (big)
+                            Icon(Icons.military_tech_rounded,
+                                size: size * 0.34, color: numberColor),
+                          Text('${node.level}',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: numberColor)),
+                        ]),
+                      ),
                     ),
                   ),
                 ),
@@ -268,16 +316,19 @@ class _MapRow extends StatelessWidget {
       ),
       if (big)
         Transform.translate(
-          offset: Offset(dx + size / 2 + MobileSize.iconGap * 5, 0),
-          child: Text(node.title!.label,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: style.textStrong)),
+          offset: Offset(dx + chipSide * (size / 2 + MobileSize.cardGap), 0),
+          child: FractionalTranslation(
+            translation: Offset(chipSide * 0.5, 0),
+            child: ExcludeSemantics(
+              child: _TitleChip(
+                  style: style, label: node.title!.label, reached: done),
+            ),
+          ),
         ),
       if (isCurrent)
         Transform.translate(
-          offset: Offset(dx > 0 ? dx - size - 8 : dx + size + 8, 0),
+          // 칭호 칸이면 칭호 글자 반대쪽으로 비킨다
+          offset: Offset(dx + (big ? -chipSide : chipSide) * (size + 8), 0),
           child: ExcludeSemantics(
             child: Image.asset(companionAsset,
                 width: MobileSize.mapNode, height: MobileSize.mapNode),
@@ -285,6 +336,31 @@ class _MapRow extends StatelessWidget {
         ),
     ]);
   }
+}
+
+/// 칭호 이름: 지도에서 가장 눈에 띄는 글자. 닿았으면 장면색을 채운다.
+class _TitleChip extends StatelessWidget {
+  const _TitleChip(
+      {required this.style, required this.label, required this.reached});
+  final SceneStyle style;
+  final String label;
+  final bool reached;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: MobileSize.gridGap, vertical: MobileSize.labelGap),
+        decoration: BoxDecoration(
+          color: reached ? style.ringProgress : style.rowBg,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          boxShadow: AppShadow.card(style.rowShadow),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: reached ? AppColors.onPrimary : style.textStrong)),
+      );
 }
 
 class _LinkPainter extends CustomPainter {
@@ -356,11 +432,34 @@ class _QuestsView extends StatelessWidget {
     final s = context.watch<AppState>();
     final style = s.scene.style;
     final today = s.todayKey;
-    final firstKey = 'first:$today';
-    final dailyKey = 'daily:$today';
-    final weeklyKey = 'weekly:${s.thisWeekKey}';
-    final older = s.unopenedChests
-        .difference({firstKey, dailyKey, weeklyKey});
+    final week = s.thisWeekKey;
+    final firstKey = QuestKind.firstSession.keyFor(today);
+    final dailyKey = QuestKind.dailyGoal.keyFor(today);
+    final weeklyKey = QuestKind.weeklyGoal.keyFor(week);
+    final older = s.unopenedChests.difference({
+      firstKey,
+      dailyKey,
+      weeklyKey,
+      QuestKind.dailyLong.keyFor(today),
+      QuestKind.weeklyHalf.keyFor(week),
+      QuestKind.weeklyFull.keyFor(week),
+    });
+    // 고정 분량 퀘스트: 내 목표와 같으면 겹치므로 숨긴다 (이미 받았으면 상자를 보여 준다)
+    List<Widget> fixed(QuestKind q, String period, int done, int goal, String when) =>
+        q.minutes == goal && !s.isRewarded(q.keyFor(period))
+            ? const []
+            : [
+                const SizedBox(height: MobileSize.cardGap),
+                _QuestCard(
+                  style: style,
+                  title: '$when ${q.minutes}분 집중하기',
+                  reward: '물방울 ${q.drops}개',
+                  done: done,
+                  goal: q.minutes!,
+                  unit: '분',
+                  chestKey: q.keyFor(period),
+                ),
+              ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(MobileSize.gutter, 0, MobileSize.gutter,
           MobileSize.sectionGap),
@@ -399,6 +498,7 @@ class _QuestsView extends StatelessWidget {
           unit: '분',
           chestKey: dailyKey,
         ),
+        ...fixed(QuestKind.dailyLong, today, s.todayMinutes, s.dailyGoal, '오늘'),
         const SizedBox(height: MobileSize.sectionGap),
         _SectionLabel(style: style, text: '이번 주'),
         _QuestCard(
@@ -410,6 +510,8 @@ class _QuestsView extends StatelessWidget {
           unit: '분',
           chestKey: weeklyKey,
         ),
+        for (final q in [QuestKind.weeklyHalf, QuestKind.weeklyFull])
+          ...fixed(q, week, s.thisWeekMinutes, s.weeklyGoal, '이번 주'),
         const SizedBox(height: MobileSize.cardGap),
         Center(
           child: TextButton(

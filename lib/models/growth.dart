@@ -63,6 +63,7 @@ class Growth {
   static const icePrice = 30;
   static const dailyRewardDrops = 10;
   static const weeklyRewardDrops = 30;
+  static const longDayMinutes = 75; // 고정 퀘스트 기준: 하루 75분
 
   final String? migratedOn; // null = 아직 이행 전
   final String? evaluatedThrough; // 이 날까지 얼음 사용을 판단했다
@@ -70,7 +71,7 @@ class Growth {
   final Set<String> iceDays;
   final GoalPlan daily;
   final GoalPlan weekly;
-  final Set<String> rewarded; // 'first:<날짜>' · 'daily:<날짜>' · 'weekly:<월요일>'
+  final Set<String> rewarded; // QuestKind.keyFor: 'first:<날짜>' · 'weekly:<월요일>' 등
   final Set<String> unopened; // 아직 안 연 상자
   final bool leagueJoined; // 서버 리그 참여 (서버가 원본, 화면 열 때 맞춘다)
   final Set<String> leagueOutbox; // 끝났지만 서버에 아직 못 보낸 세션 id
@@ -213,7 +214,8 @@ class Growth {
     required void Function(QuestReward) onReward,
   }) {
     var g = this;
-    void grant(QuestKind kind, String key) {
+    void grant(QuestKind kind, String period) {
+      final key = kind.keyFor(period);
       if (g.rewarded.contains(key)) return;
       final gainedIce =
           kind == QuestKind.weeklyGoal && g.ice < iceMax ? 1 : 0;
@@ -225,11 +227,17 @@ class Growth {
       onReward(QuestReward(kind, key, kind.drops, gainedIce));
     }
 
-    grant(QuestKind.firstSession, 'first:$day');
-    if (dayMinutes >= daily.on(day)) grant(QuestKind.dailyGoal, 'daily:$day');
+    grant(QuestKind.firstSession, day);
+    final dayGoal = daily.on(day);
+    if (dayMinutes >= dayGoal) grant(QuestKind.dailyGoal, day);
+    // 내 목표와 같은 분량의 고정 퀘스트는 겹치므로 목표 쪽만 준다
+    const long = QuestKind.dailyLong;
+    if (long.minutes != dayGoal && dayMinutes >= long.minutes!) grant(long, day);
     final week = weekKey(day);
-    if (weekMinutes >= weekly.on(week)) {
-      grant(QuestKind.weeklyGoal, 'weekly:$week');
+    final weekGoal = weekly.on(week);
+    if (weekMinutes >= weekGoal) grant(QuestKind.weeklyGoal, week);
+    for (final q in [QuestKind.weeklyHalf, QuestKind.weeklyFull]) {
+      if (q.minutes != weekGoal && weekMinutes >= q.minutes!) grant(q, week);
     }
     return g;
   }
@@ -239,12 +247,20 @@ class Growth {
 }
 
 enum QuestKind {
-  firstSession(5),
-  dailyGoal(Growth.dailyRewardDrops),
-  weeklyGoal(Growth.weeklyRewardDrops);
+  firstSession(5, 'first'),
+  dailyGoal(Growth.dailyRewardDrops, 'daily'),
+  dailyLong(20, 'daily75', minutes: Growth.longDayMinutes),
+  weeklyGoal(Growth.weeklyRewardDrops, 'weekly'),
+  weeklyHalf(40, 'weekly225', minutes: Growth.longDayMinutes * 3),
+  weeklyFull(80, 'weekly450', minutes: Growth.longDayMinutes * 6);
 
-  const QuestKind(this.drops);
+  const QuestKind(this.drops, this.prefix, {this.minutes});
   final int drops;
+  final String prefix;
+  final int? minutes; // 고정 분량 퀘스트만
+
+  /// [period]: 날짜 또는 그 주 월요일
+  String keyFor(String period) => '$prefix:$period';
 }
 
 class QuestReward {
@@ -255,23 +271,41 @@ class QuestReward {
   const QuestReward(this.kind, this.key, this.drops, this.ice);
 }
 
-/// 성장 지도의 칸. 25XP마다 하나, 칭호 문턱은 큰 칸. XP에서 계산하므로 저장하지 않는다.
+/// 성장 지도의 칸 = 레벨. 위로 갈수록 필요한 분이 늘고, 칭호 문턱은 가장 가까운 칸을 대신하는
+/// 큰 칸이다. XP에서 계산하므로 저장하지 않는다.
 class MapNode {
   final int xp;
+  final int level;
   final FocusTitle? title;
-  const MapNode(this.xp, this.title);
+  const MapNode(this.xp, this.level, this.title);
 
-  static const step = 25;
+  static const firstGap = 25;
+  static const gapGrowth = 15;
 
   static final List<MapNode> all = () {
-    final titles = {for (final t in FocusTitle.values) t.minMinutes: t};
-    final xps = <int>{
-      ...titles.keys,
-      for (var x = 0; x <= FocusTitle.master.minMinutes; x += step) x,
-    }.toList()
-      ..sort();
-    return [for (final x in xps) MapNode(x, titles[x])];
+    final top = FocusTitle.master.minMinutes;
+    final xps = <int>[0];
+    for (var gap = firstGap; xps.last + gap < top; gap += gapGrowth) {
+      xps.add(xps.last + gap);
+    }
+    final titles = <int, FocusTitle>{};
+    for (final t in FocusTitle.values) {
+      var near = 0;
+      for (var i = 1; i < xps.length; i++) {
+        if ((xps[i] - t.minMinutes).abs() < (xps[near] - t.minMinutes).abs()) {
+          near = i;
+        }
+      }
+      xps[near] = t.minMinutes;
+      titles[t.minMinutes] = t;
+    }
+    return [
+      for (var i = 0; i < xps.length; i++) MapNode(xps[i], i + 1, titles[xps[i]])
+    ];
   }();
+
+  /// 지금 레벨: 이미 닿은 칸 수
+  static int levelOf(int xp) => all.where((n) => n.xp <= xp).length;
 
   /// 아직 닿지 않은 첫 칸. 끝까지 갔으면 마지막 칸.
   static int currentIndex(int xp) {
@@ -302,6 +336,9 @@ enum Achievement {
   firstFocus('첫 집중', '집중을 처음 끝까지 해냈어요'),
   week('7일 연속', '7일 연속 집중했어요'),
   month('30일 연속', '30일 연속 집중했어요'),
+  quarter('90일 연속', '90일 연속 집중했어요'),
+  halfYear('180일 연속', '180일 연속 집중했어요'),
+  year('365일 연속', '365일 연속 집중했어요'),
   allFriends('모든 친구', '친구 16종을 모두 만날 수 있어요');
 
   const Achievement(this.label, this.detail);

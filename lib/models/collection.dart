@@ -27,6 +27,7 @@ class Tag {
 }
 
 /// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분.
+/// 해금 0분 = 기본 친구: 처음부터 한 마리씩 있고, 꾸미기에서는 어느 장면에나 놓을 수 있다.
 class Companion {
   final String id; // 에셋 파일명과 같음
   final FocusScene scene;
@@ -36,24 +37,25 @@ class Companion {
   const Companion(this.id, this.scene, this.name, this.unlockMinutes);
 
   String get asset => 'assets/mobile/companions/$id.webp';
+  bool get isStarter => unlockMinutes == 0;
 
   static const all = [
     Companion('fawn', FocusScene.forest, '새싹사슴', 0),
-    Companion('squirrel', FocusScene.forest, '이끼다람', 60),
-    Companion('fox', FocusScene.forest, '잎새여우', 180),
-    Companion('bear', FocusScene.forest, '숲곰', 360),
+    Companion('squirrel', FocusScene.forest, '이끼다람', 300),
+    Companion('fox', FocusScene.forest, '잎새여우', 1200),
+    Companion('bear', FocusScene.forest, '숲곰', 3000),
     Companion('rabbit', FocusScene.night, '달토끼', 0),
-    Companion('owl', FocusScene.night, '별부엉', 60),
-    Companion('firefly', FocusScene.night, '반딧불', 180),
-    Companion('cat', FocusScene.night, '꿈고양', 360),
+    Companion('owl', FocusScene.night, '별부엉', 300),
+    Companion('firefly', FocusScene.night, '반딧불', 1200),
+    Companion('cat', FocusScene.night, '꿈고양', 3000),
     Companion('whale', FocusScene.ocean, '물결고래', 0),
-    Companion('turtle', FocusScene.ocean, '파도거북', 60),
-    Companion('octopus', FocusScene.ocean, '방울문어', 180),
-    Companion('ray', FocusScene.ocean, '구름가오리', 360),
+    Companion('turtle', FocusScene.ocean, '파도거북', 300),
+    Companion('octopus', FocusScene.ocean, '방울문어', 1200),
+    Companion('ray', FocusScene.ocean, '구름가오리', 3000),
     Companion('puppy', FocusScene.daily, '라떼멍', 0),
-    Companion('hamster', FocusScene.daily, '책햄찌', 60),
-    Companion('raccoon', FocusScene.daily, '기차너구리', 180),
-    Companion('hedgehog', FocusScene.daily, '캠프도치', 360),
+    Companion('hamster', FocusScene.daily, '책햄찌', 300),
+    Companion('raccoon', FocusScene.daily, '기차너구리', 1200),
+    Companion('hedgehog', FocusScene.daily, '캠프도치', 3000),
   ];
 
   static Companion? byId(String? id) =>
@@ -61,6 +63,12 @@ class Companion {
 
   static List<Companion> of(FocusScene s) =>
       all.where((c) => c.scene == s).toList();
+
+  /// 꾸미기 친구칸: 기본 친구 전부 + 이 장면에서 집중으로 만나는 친구
+  static List<Companion> forScenery(FocusScene s) => [
+        ...all.where((c) => c.isStarter),
+        ...all.where((c) => c.scene == s && !c.isStarter),
+      ];
 }
 
 /// 상점 장식 (그림은 코드로). 가격 = 물방울.

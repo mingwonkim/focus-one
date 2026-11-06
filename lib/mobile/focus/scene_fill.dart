@@ -5,15 +5,15 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/design_tokens.dart';
 
-/// 수면 y. p=0이면 화면 아래로, p=1이면 화면 위로 [margin]만큼 넘겨 물결이 비지 않게 한다.
-double fillSurfaceY(double height, double p, {double margin = 0}) {
-  final t = p.clamp(0.0, 1.0);
-  return (height + margin) - t * (height + margin * 2);
-}
+/// 수면 y. p=0이면 화면 바닥이라 시작하자마자 보이고, p=1이면 화면 위로 [overshoot]만큼
+/// 넘겨 물결 골이 비지 않는다. [overshoot]는 물결 폭만큼만 — 크면 끝나기 전에 가득 찬다.
+double fillSurfaceY(double height, double p, {double overshoot = 0}) =>
+    height - p.clamp(0.0, 1.0) * (height + overshoot);
 
 class SceneFill extends StatefulWidget {
   const SceneFill({
@@ -33,7 +33,7 @@ class SceneFill extends StatefulWidget {
 
 class _SceneFillState extends State<SceneFill> with WidgetsBindingObserver {
   final _time = ValueNotifier<double>(0);
-  final _watch = Stopwatch();
+  final _watch = clock.stopwatch();
   Timer? _timer;
   bool _visible = true;
   bool _reduce = false;
@@ -170,8 +170,8 @@ class SceneFillPainter extends CustomPainter {
   }
 
   void _ocean(Canvas c, Size size, double t, SceneStyle s) {
-    const m = FillMotion.waveBackAmp * 2;
-    final y = fillSurfaceY(size.height, progress, margin: m);
+    final y = fillSurfaceY(size.height, progress,
+        overshoot: FillMotion.waveOvershoot);
     _swell(c, size, t, y, Paint()..color = s.fill, Paint()..color = s.fillDeep,
         s.fillCrest);
   }
@@ -184,7 +184,7 @@ class SceneFillPainter extends CustomPainter {
         180 *
         math.sin(2 * math.pi * t / FillMotion.treeSwayPeriod);
     // 땅도 함께 차오르고 짙어진다
-    final ground = fillSurfaceY(size.height, progress, margin: 40);
+    final ground = fillSurfaceY(size.height, progress, overshoot: 8);
     c.drawPath(_wave(size, ground, 8, 0.6, 2 * math.pi / size.width),
         Paint()..color = Color.lerp(s.fill, s.fillShade, progress)!);
     const rows = FillMotion.forestRows;
@@ -196,7 +196,8 @@ class SceneFillPainter extends CustomPainter {
       final cols = 4 + (fy * 2).round();
       for (var i = 0; i <= cols; i++) {
         final jitter = _hash(r, i);
-        final start = fy * 0.8 + jitter * 0.04;
+        // 마지막 줄도 진행 1에서 다 자란다
+        final start = fy * (0.96 - FillMotion.treeGrow) + jitter * 0.04;
         final grow = ((progress - start) / FillMotion.treeGrow).clamp(0.0, 1.0);
         if (grow <= 0) continue;
         final x = (i + (r.isOdd ? 0.5 : 0.0) + (jitter - 0.5) * 0.4) /
@@ -261,6 +262,48 @@ class SceneFillPainter extends CustomPainter {
     }
   }
 
+  // 얼음 큐브 면 (꼭짓점 거리 1 기준). 빛은 왼쪽 위에서 온다.
+  static Path _face(List<Offset> p) => Path()..addPolygon(p, true);
+  static const _cubeW = 0.87;
+  static final _iceTop = _face(const [
+    Offset(0, -1),
+    Offset(_cubeW, -0.5),
+    Offset(0, 0),
+    Offset(-_cubeW, -0.5),
+  ]);
+  static final _iceLeft = _face(const [
+    Offset(-_cubeW, -0.5),
+    Offset(0, 0),
+    Offset(0, 1),
+    Offset(-_cubeW, 0.5),
+  ]);
+  static final _iceRight = _face(const [
+    Offset(_cubeW, -0.5),
+    Offset(0, 0),
+    Offset(0, 1),
+    Offset(_cubeW, 0.5),
+  ]);
+  static final _iceOutline = _face(const [
+    Offset(0, -1),
+    Offset(_cubeW, -0.5),
+    Offset(_cubeW, 0.5),
+    Offset(0, 1),
+    Offset(-_cubeW, 0.5),
+    Offset(-_cubeW, -0.5),
+  ]);
+  static final _iceInner = Path()
+    ..moveTo(-_cubeW, -0.5)
+    ..lineTo(0, 0)
+    ..lineTo(_cubeW, -0.5)
+    ..moveTo(0, 0)
+    ..lineTo(0, 1);
+  static final _iceGlint = _face(const [
+    Offset(-0.1, -0.72),
+    Offset(0.28, -0.53),
+    Offset(0.1, -0.43),
+    Offset(-0.28, -0.62),
+  ]);
+
   // 얼음 (x 비율, 수면 아래 깊이, 크기, 기울기). 수면과 함께 올라온다.
   static const _ice = [
     (0.12, 14.0, 58.0, 0.22),
@@ -275,8 +318,8 @@ class SceneFillPainter extends CustomPainter {
 
   /// 잔 안을 들여다본 모습: 바다처럼 출렁이는 커피 + 떠 있는 얼음
   void _coffee(Canvas c, Size size, double t, SceneStyle s) {
-    const m = 72.0;
-    final y = fillSurfaceY(size.height, progress, margin: m);
+    final y = fillSurfaceY(size.height, progress,
+        overshoot: FillMotion.waveOvershoot);
     _swell(
         c,
         size,
@@ -291,12 +334,16 @@ class SceneFillPainter extends CustomPainter {
           ).createShader(Rect.fromLTRB(0, y, size.width, size.height + 1)),
         Color.lerp(s.fill, s.fillCrest, 0.6)!);
     final bob = 2 * math.pi * t / FillMotion.iceBobPeriod;
-    final fill = Paint()..color = s.fillCrest.withValues(alpha: 0.42);
+    final shadow = Paint()..color = s.fillDeep.withValues(alpha: 0.45);
+    final top = Paint()..color = s.fillCrest.withValues(alpha: 0.88);
+    final left = Paint()..color = s.fillCrest.withValues(alpha: 0.5);
+    final right = Paint()..color = s.fillCrest.withValues(alpha: 0.26);
+    final glint = Paint()..color = s.fillCrest;
     final edge = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = s.fillCrest.withValues(alpha: 0.8);
-    final shine = Paint()..color = s.fillCrest.withValues(alpha: 0.75);
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round
+      ..color = s.fillCrest.withValues(alpha: 0.9);
     for (var i = 0; i < _ice.length; i++) {
       final (fx, depth, side, tilt) = _ice[i];
       final cy = y + depth + FillMotion.iceBob * math.sin(bob + i);
@@ -304,16 +351,18 @@ class SceneFillPainter extends CustomPainter {
       c.save();
       c.translate(fx * size.width, cy);
       c.rotate(tilt + 0.03 * math.sin(bob + i * 2));
-      final r = RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset.zero, width: side, height: side),
-          Radius.circular(side * 0.2));
-      c.drawRRect(r, fill);
-      c.drawRRect(r, edge);
-      c.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(-side * 0.32, -side * 0.34, side * 0.26, side * 0.1),
-              Radius.circular(side * 0.05)),
-          shine);
+      final a = side * 0.58;
+      c.scale(a);
+      c.save();
+      c.translate(0.14, 0.2);
+      c.drawPath(_iceOutline, shadow);
+      c.restore();
+      c.drawPath(_iceTop, top);
+      c.drawPath(_iceLeft, left);
+      c.drawPath(_iceRight, right);
+      c.drawPath(_iceOutline, edge..strokeWidth = 2 / a);
+      c.drawPath(_iceInner, edge..strokeWidth = 1.5 / a);
+      c.drawPath(_iceGlint, glint);
       c.restore();
     }
   }

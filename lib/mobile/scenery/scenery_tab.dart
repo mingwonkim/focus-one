@@ -63,7 +63,7 @@ class _SceneryTabState extends State<SceneryTab> {
     final placed = _draft ?? s.placementsOf(scene);
     final items = _decorTab
         ? Decor.all.where((d) => d.scene == scene).map((d) => (d.id, d.name))
-        : Companion.of(scene).map((c) => (c.id, c.name));
+        : Companion.forScenery(scene).map((c) => (c.id, c.name));
     final stock = [
       for (final (id, name) in items)
         if (s.ownedCount(id) > 0) (id, name)

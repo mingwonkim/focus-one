@@ -253,11 +253,16 @@ class AppState extends ChangeNotifier {
   CompanionStage companionStage(String id) =>
       CompanionStage.of(companionMinutes(id));
 
+  int get level => MapNode.levelOf(xp);
+
   bool hasAchievement(Achievement a) => switch (a) {
         Achievement.firstFocus =>
           _sessions.any((x) => x.outcome == SessionOutcome.completed),
         Achievement.week => bestStreak >= 7,
         Achievement.month => bestStreak >= 30,
+        Achievement.quarter => bestStreak >= 90,
+        Achievement.halfYear => bestStreak >= 180,
+        Achievement.year => bestStreak >= 365,
         Achievement.allFriends => Companion.all.every(isUnlocked),
       };
 
@@ -730,7 +735,9 @@ class AppState extends ChangeNotifier {
   }
   void setLockEnabled(bool v) =>
       _setProgress(_progress.copyWith(lockEnabled: v));
-  int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
+  int ownedCount(String itemId) =>
+      (_progress.owned[itemId] ?? 0) +
+      (Companion.byId(itemId)?.isStarter == true ? 1 : 0);
   FocusSession? get lastReward => _lastReward;
   FocusTitle? get lastPromotion => _lastPromotion;
   void clearLastReward() {
@@ -800,7 +807,9 @@ class AppState extends ChangeNotifier {
       .where((x) => x.outcome == SessionOutcome.completed && x.scene == s.name)
       .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
 
-  bool isUnlocked(Companion c) => sceneMinutes(c.scene) >= c.unlockMinutes;
+  /// 이미 만난 친구는 조건이 바뀌어도 잠기지 않는다
+  bool isUnlocked(Companion c) =>
+      sceneMinutes(c.scene) >= c.unlockMinutes || ownedCount(c.id) > 0;
 
   /// 이번 세션에 데려올 친구 — 선택이 현재 장면과 다르거나 잠겨 있으면 장면 첫 친구
   Companion get selectedCompanion {

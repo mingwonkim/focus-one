@@ -403,6 +403,7 @@ abstract class FillMotion {
   static const frame = Duration(milliseconds: 42); // 약 24fps
   static const waveBackAmp = 10.0;
   static const waveBackPeriod = 7.0; // 초
+  static const waveOvershoot = 20.0; // 가득 찰 때 물결 골까지 덮는 여유
   static const waveFrontAmp = 6.0;
   static const waveFrontPeriod = 4.0;
   static const iceBob = 3.0; // 얼음이 위아래로 떠다니는 폭

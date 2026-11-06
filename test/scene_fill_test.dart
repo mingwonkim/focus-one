@@ -2,6 +2,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:focus_one/core/design_tokens.dart';
@@ -10,8 +11,8 @@ import 'package:focus_one/mobile/focus/scene_fill.dart';
 void main() {
   test('수면 위치', () {
     const h = 800.0;
-    expect(fillSurfaceY(h, 0, margin: 20), 820);
-    expect(fillSurfaceY(h, 1, margin: 20), -20);
+    expect(fillSurfaceY(h, 0, overshoot: 20), h, reason: '시작은 바닥에서');
+    expect(fillSurfaceY(h, 1, overshoot: 20), -20);
     expect(fillSurfaceY(h, 0.5), 400);
     expect(fillSurfaceY(h, 2), 0); // 범위 밖은 자른다
   });
@@ -48,6 +49,34 @@ void main() {
     await tester.binding.delayed(const Duration(milliseconds: 100));
     expect(tester.binding.hasScheduledFrame, isTrue, reason: '돌아오면 다시');
     await tester.pumpWidget(const SizedBox());
+  });
+
+  group('10분 타이머 기준', () {
+    const size = Size(100, 874);
+    Future<ByteData> render(FocusScene scene, double p) async {
+      final recorder = ui.PictureRecorder();
+      SceneFillPainter(
+              scene: scene, progress: p, time: ValueNotifier<double>(1.5))
+          .paint(Canvas(recorder), size);
+      final image = await recorder.endRecording().toImage(100, 874);
+      return (await image.toByteData())!;
+    }
+
+    int alpha(ByteData d, int x, int y) => d.getUint8((y * 100 + x) * 4 + 3);
+    bool anyPainted(ByteData d, int y) =>
+        [for (var x = 0; x < 100; x += 5) alpha(d, x, y)].any((a) => a > 0);
+    bool allPainted(ByteData d, int y) =>
+        [for (var x = 0; x < 100; x += 5) alpha(d, x, y)].every((a) => a > 0);
+
+    for (final scene in [FocusScene.ocean, FocusScene.daily, FocusScene.forest]) {
+      test('\${scene.name}: 10초 만에 바닥에 보인다', () async {
+        expect(anyPainted(await render(scene, 10 / 600), 873), isTrue);
+      });
+      test('\${scene.name}: 끝나야 맨 위까지 차고, 1분 전엔 아직 아니다', () async {
+        expect(allPainted(await render(scene, 1), 0), isTrue);
+        expect(anyPainted(await render(scene, 0.9), 40), isFalse);
+      });
+    }
   });
 
   test('한 프레임 그리기 비용 (전력 대리 지표)', () {

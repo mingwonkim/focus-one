@@ -91,6 +91,52 @@ void main() {
     st.dispose();
   });
 
+  testWidgets('지도 머리에 레벨과 다음 레벨까지 남은 분', (tester) async {
+    final st = await seeded(tester, 40); // 30(Lv.2) 지나 65(Lv.3)까지
+    await tester.binding.setSurfaceSize(const Size(402, 874));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+        app(st, const Size(402, 874), 1, const GrowthTab()));
+    await tester.pump();
+    expect(find.text('Lv.2'), findsOneWidget);
+    expect(find.textContaining('다음 레벨까지 25분'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'^Lv\.3, 지금 여기')), findsOneWidget);
+    st.dispose();
+  });
+
+  testWidgets('퀘스트에 75·225·450분, 내 목표와 같으면 하나만', (tester) async {
+    final st = await seeded(tester, 40);
+    const size = Size(402, 1400);
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(app(st, size, 1, const GrowthTab()));
+    await tester.tap(find.textContaining('퀘스트'));
+    await tester.pump();
+    for (final t in ['오늘 75분 집중하기', '이번 주 225분 집중하기', '이번 주 450분 집중하기']) {
+      expect(find.text(t), findsOneWidget, reason: t);
+    }
+    st.setDailyGoal(75);
+    st.setWeeklyGoal(225);
+    await tester.pump();
+    expect(find.text('오늘 75분 집중하기'), findsOneWidget);
+    expect(find.text('이번 주 225분 집중하기'), findsOneWidget);
+    st.dispose();
+  });
+
+  testWidgets('업적에 90·180·365일', (tester) async {
+    final st = await seeded(tester, 40);
+    const size = Size(402, 1200);
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(app(st, size, 1, const GrowthTab()));
+    await tester.tap(find.text('업적'));
+    await tester.pump();
+    for (final t in ['90일 연속', '180일 연속', '365일 연속']) {
+      expect(find.text(t), findsOneWidget, reason: t);
+    }
+    st.dispose();
+  });
+
   testWidgets('상자를 열면 안 연 상자가 줄고 물방울은 그대로', (tester) async {
     // 끝날 시각이 지난 진행 세션을 켜면 실제 완료 경로로 보상이 나온다
     final started = DateTime.now().subtract(const Duration(minutes: 30));

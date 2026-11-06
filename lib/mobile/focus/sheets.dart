@@ -421,6 +421,10 @@ Future<void> showRewardSheet(BuildContext context) {
           child: Text('💧 물방울 +$drops',
               style: TextStyle(fontSize: 16, color: style.textStrong)),
         ),
+        if (MapNode.levelOf(s.xp - r.minutes) != s.level) ...[
+          const SizedBox(height: 8),
+          _RewardRow(style: style, text: '레벨 업! 이제 Lv.${s.level}'),
+        ],
         for (final g in s.lastQuestRewards) ...[
           const SizedBox(height: 8),
           _RewardRow(
@@ -428,8 +432,12 @@ Future<void> showRewardSheet(BuildContext context) {
             text: switch (g.kind) {
               QuestKind.firstSession => '오늘 첫 집중 · 물방울 +${g.drops}',
               QuestKind.dailyGoal => '오늘 목표 달성 · 물방울 +${g.drops}',
+              QuestKind.dailyLong =>
+                '오늘 ${g.kind.minutes}분 달성 · 물방울 +${g.drops}',
               QuestKind.weeklyGoal =>
                 '이번 주 목표 달성 · 물방울 +${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
+              QuestKind.weeklyHalf || QuestKind.weeklyFull =>
+                '이번 주 ${g.kind.minutes}분 달성 · 물방울 +${g.drops}',
             },
           ),
         ],

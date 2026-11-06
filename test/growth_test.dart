@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
 import 'package:focus_one/models/focus_title.dart';
@@ -244,6 +245,130 @@ void main() {
       again.dispose();
     });
 
+    test('고정 퀘스트: 하루 75분, 주 225·450분은 한 번씩만', () async {
+      var st = await boot(monday);
+      st = await focus(st, day(0), 75);
+      expect(st.lastQuestRewards.map((r) => r.kind), [
+        QuestKind.firstSession,
+        QuestKind.dailyGoal,
+        QuestKind.dailyLong,
+      ]);
+      expect(st.drops, 75 + 5 + Growth.dailyRewardDrops + 20);
+
+      st = await focus(st, day(1), 75);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          contains(QuestKind.weeklyGoal));
+      st = await focus(st, day(2), 75);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          contains(QuestKind.weeklyHalf));
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          isNot(contains(QuestKind.weeklyFull)));
+
+      st = await focus(st, day(3), 75);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          isNot(contains(QuestKind.weeklyHalf)));
+      st = await focus(st, day(4), 75);
+      st = await focus(st, day(5), 75);
+      expect(st.lastQuestRewards.map((r) => r.kind),
+          contains(QuestKind.weeklyFull));
+      expect(st.weekMinutes(dayKey(monday)), 450);
+      st.dispose();
+    });
+
+    test('목표가 고정 퀘스트와 같으면 목표 보상만 나간다', () {
+      final rewards = <QuestReward>[];
+      const Growth(daily: GoalPlan(75), weekly: GoalPlan(450)).rewardedFor(
+        dayKey(monday),
+        dayMinutes: 75,
+        weekMinutes: 450,
+        onReward: rewards.add,
+      );
+      expect(rewards.map((r) => r.kind), [
+        QuestKind.firstSession,
+        QuestKind.dailyGoal,
+        QuestKind.weeklyGoal,
+        QuestKind.weeklyHalf,
+      ]);
+    });
+
+    test('연속 업적 90·180·365일은 그 날수에서 열린다', () async {
+      Future<AppState> run(int days) async {
+        await LocalStore(file()).save(
+            store([for (var i = 1; i <= days; i++) session(day(-i), 25)]));
+        return boot(day(0));
+      }
+
+      for (final (days, open, closed) in [
+        (89, Achievement.month, Achievement.quarter),
+        (90, Achievement.quarter, Achievement.halfYear),
+        (180, Achievement.halfYear, Achievement.year),
+        (365, Achievement.year, null),
+      ]) {
+        final st = await run(days);
+        expect(st.hasAchievement(open), isTrue, reason: '$days일 $open');
+        if (closed != null) {
+          expect(st.hasAchievement(closed), isFalse, reason: '$days일 $closed');
+        }
+        await st.flush();
+        st.dispose();
+      }
+    });
+
+    test('기본 친구 4종은 처음부터 있고, 나머지는 집중으로 추가된다', () async {
+      final st = await boot(monday);
+      final starters = Companion.all.where((c) => c.isStarter);
+      expect(starters.map((c) => c.id), ['fawn', 'rabbit', 'whale', 'puppy']);
+      for (final c in Companion.all) {
+        expect(st.ownedCount(c.id), c.isStarter ? 1 : 0, reason: c.id);
+      }
+      expect(st.place(FocusScene.daily, 'whale', 0, 0), isTrue,
+          reason: '기본 친구는 다른 장면에도 놓는다');
+      final ocean = Companion.forScenery(FocusScene.ocean).map((c) => c.id);
+      expect(ocean, containsAll(['fawn', 'rabbit', 'whale', 'puppy', 'ray']));
+      expect(ocean, isNot(contains('bear')), reason: '다른 장면 친구는 안 나온다');
+      st.dispose();
+    });
+
+    test('도감 조건 상향: 300·1200·3000분, 이미 만난 친구는 유지', () async {
+      final squirrel = Companion.byId('squirrel')!;
+      var st = await boot(monday);
+      st = await focus(st, day(0), 299);
+      expect(st.isUnlocked(squirrel), isFalse);
+      st = await focus(st, day(1), 1);
+      expect(st.isUnlocked(squirrel), isTrue);
+      st.dispose();
+      expect(Companion.of(FocusScene.ocean).map((c) => c.unlockMinutes),
+          [0, 300, 1200, 3000]);
+
+      await LocalStore(file()).save(const StoreData(
+          tasks: [],
+          inbox: [],
+          sessions: [],
+          progress: Progress(owned: {'bear': 2})));
+      final old = await boot(day(2));
+      expect(old.isUnlocked(Companion.byId('bear')!), isTrue);
+      expect(old.isUnlocked(Companion.byId('fox')!), isFalse);
+      old.dispose();
+    });
+
+    test('구버전 파일을 읽고 저장해도 앱 잠금 설정이 유지된다', () async {
+      await file().writeAsString(jsonEncode({
+        'tasks': [],
+        'inbox': [],
+        'sessions': [],
+        'progress': {'lockEnabled': true, 'drops': 7}, // growth 없는 1.0.x 파일
+      }));
+      final a = await boot(monday);
+      expect(a.lockEnabled, isTrue);
+      a.setLockEnabled(true);
+      await a.flush();
+      a.dispose();
+      final b = await boot(monday.add(const Duration(hours: 1)));
+      expect(b.lockEnabled, isTrue);
+      expect(b.drops, 7);
+      b.dispose();
+    });
+
     test('친구 성장은 그 친구와 끝까지 한 분만, 중단은 빼고', () async {
       final st = await boot(monday);
       expect(st.companionStage('fawn'), CompanionStage.basic);
@@ -275,10 +400,26 @@ void main() {
       }
     });
     test('현재 칸은 아직 닿지 않은 첫 칸, 끝나면 마지막', () {
-      expect(MapNode.all[MapNode.currentIndex(0)].xp, 25);
-      expect(MapNode.all[MapNode.currentIndex(25)].xp, 30);
-      expect(MapNode.all[MapNode.currentIndex(30)].xp, 50);
+      expect(MapNode.all[MapNode.currentIndex(0)].xp, 30);
+      expect(MapNode.all[MapNode.currentIndex(29)].xp, 30);
+      expect(MapNode.all[MapNode.currentIndex(30)].xp, 65);
       expect(MapNode.currentIndex(999999), MapNode.all.length - 1);
+    });
+    test('레벨: 칸 수가 적고 칸 번호와 같으며 위로 갈수록 간격이 넓다', () {
+      expect(MapNode.all.length, lessThanOrEqualTo(70));
+      expect(MapNode.levelOf(0), 1);
+      expect(MapNode.levelOf(29), 1);
+      expect(MapNode.levelOf(30), 2);
+      for (final n in MapNode.all) {
+        expect(MapNode.levelOf(n.xp), n.level);
+        expect(n.xp % 5, 0, reason: '시간 링이 5분 단위');
+      }
+      expect(MapNode.levelOf(999999), MapNode.all.length);
+      final gap = [
+        for (var i = 1; i < MapNode.all.length; i++)
+          MapNode.all[i].xp - MapNode.all[i - 1].xp
+      ];
+      expect(gap.last, greaterThan(gap.first * 10));
     });
   });
 }
