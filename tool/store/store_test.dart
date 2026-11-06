@@ -33,6 +33,13 @@ const iphone = (
   screen: Size(440, 956),
   safe: EdgeInsets.only(top: 62, bottom: 34),
 );
+const android = (
+  name: 'android',
+  canvas: Size(360, 640), // ×3 = 1080×1920 (Google Play 9:16)
+  ratio: 3.0,
+  screen: Size(402, 874),
+  safe: EdgeInsets.only(top: 40, bottom: 24),
+);
 const ipad = (
   name: 'ipad',
   canvas: Size(1032, 1376), // ×2 = 2064×2752 (13")
@@ -231,7 +238,7 @@ Future<void> _tapTab(WidgetTester tester, String label) async {
 }
 
 void main() {
-  for (final d in [iphone, ipad]) {
+  for (final d in [iphone, android, ipad]) {
     testWidgets('shots ${d.name}', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await tester.runAsync(_loadFonts);
@@ -263,7 +270,7 @@ void main() {
       await _settle(tester);
       s.startTimer();
       await tester.pump(const Duration(minutes: 18, seconds: 24));
-      await shot('01_focus', '할 일 딱 하나,\n지금 이것만', 'ADHD를 위한 싱글 태스크 집중 타이머');
+      await shot('01_focus', '할 일 딱 하나,\n집중한 만큼 차올라요', 'ADHD를 위한 싱글 태스크 집중 타이머');
 
       // 2) 집중 완료 → 친구 보상
       await tester.pump(const Duration(minutes: 32));
@@ -271,22 +278,29 @@ void main() {
       await tester.tap(find.byTooltip('닫기').last);
       await _settle(tester);
 
-      // 3) 꾸미기
+      // 3) 성장 지도 · 퀘스트
+      await _tapTab(tester, '성장');
+      await shot('03_growth', '집중할수록\n레벨이 올라요', '칭호마다 색이 바뀌는 성장 지도');
+      await tester.tap(find.textContaining('퀘스트').first);
+      await _settle(tester);
+      await shot('04_quests', '오늘의 퀘스트로\n매일 조금씩', '달성하면 상자 속 물방울과 얼음');
+
+      // 5) 꾸미기
       await _tapTab(tester, '꾸미기');
-      await shot('03_scenery', '모은 친구로\n나만의 숲 꾸미기', '숲 · 밤 · 바다 · 일상, 네 가지 풍경');
+      await shot('05_scenery', '모은 친구로\n나만의 풍경 꾸미기', '친구 36종, 집중할수록 하나씩 만나요');
 
-      // 4) 기록
+      // 6) 기록
       await _tapTab(tester, '기록');
-      await shot('04_records', '집중한 시간이\n한눈에 쌓여요', '연속 기록 · 태그별 시간 · 골든타임');
+      await shot('06_records', '집중한 시간이\n한눈에 쌓여요', '연속 기록 · 태그별 시간 · 골든타임');
 
-      // 5) 밤 장면 · 앱 잠금 안내
+      // 7) 밤 장면 · 앱 잠금 안내
       await _tapTab(tester, '집중');
       s.setScene(FocusScene.night);
       s.setDurationMinutes(30);
       await _settle(tester);
       s.startTimer();
       await tester.pump(const Duration(minutes: 7, seconds: 41));
-      await shot('05_night', '집중하는 동안\n딴 앱은 잠가요', '밤바람 · 귀뚜라미 소리와 함께 몰입');
+      await shot('07_night', '집중하는 동안\n딴 앱은 잠가요', '밤바람 · 귀뚜라미 소리와 함께 몰입');
       await tester.pump(const Duration(minutes: 60));
       await _settle(tester);
       if (find.byTooltip('닫기').evaluate().isNotEmpty) {
@@ -294,10 +308,10 @@ void main() {
         await _settle(tester);
       }
 
-      // 6) 할 일
+      // 8) 할 일
       s.setScene(FocusScene.ocean);
       await _tapTab(tester, '할 일');
-      await shot('06_tasks', '떠오른 생각은\n적어 두고 다시 집중', '할 일 · 생각 메모 · 태그');
+      await shot('08_tasks', '떠오른 생각은\n적어 두고 다시 집중', '할 일 · 생각 메모 · 태그');
 
       s.dispose();
       debugDisableShadows = true;
@@ -305,6 +319,72 @@ void main() {
       tester.view.reset();
     });
   }
+
+  // Google Play 그래픽 이미지 1024×500
+  testWidgets('feature graphic', (tester) async {
+    await tester.runAsync(_loadFonts);
+    debugDisableShadows = false;
+    tester.view.physicalSize = const Size(1024, 500);
+    tester.view.devicePixelRatio = 1;
+    Directory('$out/android').createSync(recursive: true);
+    final key = GlobalKey();
+    const friends = ['fawn', 'rabbit', 'whale', 'puppy'];
+    final style = FocusScene.forest.style;
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: RepaintBoundary(
+        key: key,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [style.boardTop, style.boardBottom],
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 64),
+          child: Row(children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Fokko',
+                      style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 76,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1.5,
+                          color: style.textStrong)),
+                  const SizedBox(height: 8),
+                  Text('할 일 딱 하나,\n집중한 만큼 자라요',
+                      style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          fontSize: 36,
+                          height: 1.3,
+                          fontWeight: FontWeight.w700,
+                          color: style.textStrong)),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 440,
+              child: Wrap(alignment: WrapAlignment.center, children: [
+                for (final f in friends)
+                  Image.asset('assets/mobile/companions/$f.webp',
+                      width: 200, height: 200),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    ));
+    await _images(tester);
+    await tester.pump();
+    await _png(tester, key, '$out/android/feature_graphic.png', 1);
+    debugDisableShadows = true;
+    tester.view.reset();
+  });
 
   // 앱 프리뷰: 886×1920 · 30fps. 장면 전환 시각은 timeline.json (소리 입히기용)
   // 기기 테두리·배경 없이 앱 화면만 꽉 채운다 (1.0.1 거절 2.3.4: 프리뷰에 테두리 금지). 문구는 상태바 자리에 덧씌움.
@@ -404,10 +484,13 @@ void main() {
     s.setScene(FocusScene.forest);
     mark('forest2');
 
-    // 5) 꾸미기
-    say('모은 친구로\n나만의 숲 꾸미기', '숲 · 밤 · 바다 · 일상, 네 가지 풍경');
-    await tap(find.text('꾸미기').last);
+    // 5) 성장 지도 · 꾸미기
+    say('집중할수록\n레벨이 올라요', '칭호마다 색이 바뀌는 성장 지도');
+    await tap(find.text('성장').last);
     await hold(2.4);
+    say('모은 친구로\n나만의 풍경 꾸미기', '친구 36종, 집중할수록 하나씩 만나요');
+    await tap(find.text('꾸미기').last);
+    await hold(2.2);
 
     // 6) 기록 (천천히 스크롤)
     say('집중한 시간이\n한눈에 쌓여요', '연속 기록 · 태그별 시간 · 골든타임');

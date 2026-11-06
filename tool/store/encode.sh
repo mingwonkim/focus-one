@@ -7,9 +7,9 @@ set -euo pipefail
 dir=$1
 snd=assets/sounds
 up="$dir/upload"
-mkdir -p "$up/iphone" "$up/ipad"
+mkdir -p "$up/iphone" "$up/ipad" "$up/android"
 
-for d in iphone ipad; do
+for d in iphone ipad android; do
   for f in "$dir/$d"/*.png; do
     ffmpeg -loglevel error -y -i "$f" -vf format=rgb24 "$up/$d/$(basename "$f")"
   done

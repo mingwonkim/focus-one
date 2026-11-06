@@ -9,6 +9,7 @@ import '../data/local_store.dart';
 import '../models/blocker_settings.dart';
 import '../models/collection.dart';
 import '../models/focus_title.dart';
+import '../models/growth.dart';
 import '../models/task.dart';
 
 /// 타이머 사이클: 대기 → 집중 → 휴식 → 대기
@@ -154,24 +155,131 @@ class AppState extends ChangeNotifier {
         .fold(0, (sum, s) => sum + s.minutes);
   }
 
-  /// 연속 집중일 스트릭
-  int get streakDays {
-    if (_sessions.isEmpty) return 0;
-    final days = _sessions
-        .map((s) => DateTime(s.endedAt.year, s.endedAt.month, s.endedAt.day))
-        .toSet();
-    var streak = 0;
-    var cursor = DateTime.now();
-    cursor = DateTime(cursor.year, cursor.month, cursor.day);
-    // 오늘 기록이 없으면 어제부터 카운트
-    if (!days.contains(cursor)) {
-      cursor = cursor.subtract(const Duration(days: 1));
+  // ---- 성장: 목표·연속일·얼음 (v3) ----
+  Growth get _growth => _progress.growth;
+  Set<String> get _activeDays => _growth.activeDays(_sessions);
+  String get _today => dayKey(clock.now());
+
+  int get streakDays => _growth.streak(_today, _activeDays);
+  int get bestStreak => _growth.bestStreak(_activeDays);
+  int get iceCount => _growth.ice;
+  Set<String> get iceDays => _growth.iceDays;
+  Set<String> get activeDays => _activeDays;
+  bool get focusedToday => _activeDays.contains(_today);
+
+  int get dailyGoal => _growth.daily.on(_today);
+  int get weeklyGoal => _growth.weekly.on(weekKey(_today));
+  GoalPlan get dailyPlan => _growth.daily;
+  GoalPlan get weeklyPlan => _growth.weekly;
+  int get todayMinutes => minutesOn(_today);
+  int get thisWeekMinutes => weekMinutes(_today);
+
+  /// XP = 끝까지 완료한 집중 분. 칭호와 같은 값이라 따로 저장하지 않는다.
+  int get xp => focusMinutesTotal;
+
+  int _completedMinutes(bool Function(String day) inRange) => _sessions
+      .where((x) =>
+          x.outcome == SessionOutcome.completed && inRange(dayKey(x.endedAt)))
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  int minutesOn(String day) => _completedMinutes((d) => d == day);
+
+  int weekMinutes(String day) {
+    final from = weekKey(day);
+    final to = addDays(from, 6);
+    return _completedMinutes(
+        (d) => d.compareTo(from) >= 0 && d.compareTo(to) <= 0);
+  }
+
+  static int _fitGoal(int v, int min, int max) =>
+      ((v / Growth.goalStep).round() * Growth.goalStep).clamp(min, max);
+
+  void setDailyGoal(int minutes) {
+    final today = _today;
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            daily: _growth.daily.changed(
+                _fitGoal(minutes, Growth.dailyMin, Growth.dailyMax),
+                today: today,
+                from: addDays(today, 1)))));
+  }
+
+  void setWeeklyGoal(int minutes) {
+    final week = weekKey(_today);
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            weekly: _growth.weekly.changed(
+                _fitGoal(minutes, Growth.weeklyMin, Growth.weeklyMax),
+                today: week,
+                from: addDays(week, 7)))));
+  }
+
+  bool buyIce() {
+    if (_growth.ice >= Growth.iceMax || _progress.drops < Growth.icePrice) {
+      return false;
     }
-    while (days.contains(cursor)) {
-      streak++;
-      cursor = cursor.subtract(const Duration(days: 1));
-    }
-    return streak;
+    _setProgress(_progress.copyWith(
+        drops: _progress.drops - Growth.icePrice,
+        growth: _growth.copyWith(ice: _growth.ice + 1)));
+    return true;
+  }
+
+  /// 어제까지 빠진 날을 얼음으로 메운다. 진행 중 세션이 남았으면 그 기록이 먼저라 미룬다.
+  void settleGrowth() {
+    if (_active != null) return;
+    final next = _growth.settled(_today, _activeDays);
+    if (identical(next, _growth)) return;
+    _setProgress(_progress.copyWith(growth: next));
+  }
+
+  /// 방금 세션으로 달성한 퀘스트 (보상 시트와 같은 수명)
+  List<QuestReward> get lastQuestRewards => _lastQuestRewards;
+  List<QuestReward> _lastQuestRewards = const [];
+
+  Set<String> get unopenedChests => _growth.unopened;
+  bool isRewarded(String key) => _growth.rewarded.contains(key);
+  String get todayKey => _today;
+  String get thisWeekKey => weekKey(_today);
+
+  @visibleForTesting
+  void addLeagueOutboxForTest(String id) => _setProgress(_progress.copyWith(
+      growth: _growth.copyWith(leagueOutbox: {..._growth.leagueOutbox, id})));
+
+  void openChests(Iterable<String> keys) => _setProgress(
+      _progress.copyWith(growth: _growth.opened(keys)));
+
+  /// 그 친구와 끝까지 완료한 누적 분
+  int companionMinutes(String id) => _sessions
+      .where((x) =>
+          x.outcome == SessionOutcome.completed && x.companionId == id)
+      .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
+
+  CompanionStage companionStage(String id) =>
+      CompanionStage.of(companionMinutes(id));
+
+  int get level => MapNode.levelOf(xp);
+
+  bool hasAchievement(Achievement a) => switch (a) {
+        Achievement.firstFocus =>
+          _sessions.any((x) => x.outcome == SessionOutcome.completed),
+        Achievement.week => bestStreak >= 7,
+        Achievement.month => bestStreak >= 30,
+        Achievement.quarter => bestStreak >= 90,
+        Achievement.halfYear => bestStreak >= 180,
+        Achievement.year => bestStreak >= 365,
+        Achievement.allFriends => Companion.all.every(isUnlocked),
+      };
+
+  void _grantGoalRewards(String day) {
+    final gained = <QuestReward>[];
+    final next = _growth.rewardedFor(day,
+        dayMinutes: minutesOn(day),
+        weekMinutes: weekMinutes(day),
+        onReward: gained.add);
+    _progress = _progress.copyWith(
+        growth: next,
+        drops: _progress.drops + gained.fold(0, (sum, r) => sum + r.drops));
+    _lastQuestRewards = gained;
   }
 
   /// 세션 완료 콜백 (알림/사운드 트리거용, main에서 주입)
@@ -187,7 +295,10 @@ class AppState extends ChangeNotifier {
     _scene = data.scene;
     _soundEnabled = data.soundEnabled;
     _soundVolume = data.soundVolume;
-    _progress = data.progress;
+    _progress = data.progress.withSingleBoard();
+    _progress = _progress.copyWith(
+        growth: _growth.migrated(_today,
+            dayMinutes: minutesOn(_today), weekMinutes: weekMinutes(_today)));
     // 마지막에 하던 미완료 작업이 있으면 이어서 표시
     final pending = pendingTasks;
     if (pending.isNotEmpty) _currentTaskId = pending.first.id;
@@ -203,6 +314,8 @@ class AppState extends ChangeNotifier {
         _startTicker();
       }
     }
+    settleGrowth();
+    _persist();
     notifyListeners();
   }
 
@@ -411,8 +524,26 @@ class AppState extends ChangeNotifier {
   }
 
   String? get rankNickname => _progress.rankNickname;
-  void setRankNickname(String? v) =>
-      _setProgress(_progress.copyWith(rankNickname: () => v));
+  void setRankNickname(String? v) => _setProgress(_progress.copyWith(
+      rankNickname: () => v,
+      // 랭킹에서 나가면 서버 계정이 지워져 리그도 함께 끝난다
+      growth: v == null
+          ? _growth.copyWith(leagueJoined: false, leagueOutbox: const {})
+          : null));
+
+  bool get leagueJoined => _growth.leagueJoined;
+  Set<String> get leagueOutbox => _growth.leagueOutbox;
+
+  void setLeagueJoined(bool v) {
+    if (v == _growth.leagueJoined) return;
+    _setProgress(_progress.copyWith(
+        growth: _growth.copyWith(
+            leagueJoined: v, leagueOutbox: v ? null : const {})));
+  }
+
+  void leagueSent(String sessionId) => _setProgress(_progress.copyWith(
+      growth: _growth.copyWith(
+          leagueOutbox: _growth.leagueOutbox.difference({sessionId}))));
 
   /// 끝까지 완료한 집중의 누적 분 (= 모은 물방울 총량, 칭호 기준)
   int get focusMinutesTotal => _sessions
@@ -452,6 +583,7 @@ class AppState extends ChangeNotifier {
     _cancelSession();
     final task = _tasks.where((t) => t.id == active.taskId).firstOrNull;
     if (task != null) onSessionComplete?.call(task, active.plannedSec ~/ 60);
+    settleGrowth();
     if (startBreak && autoBreak) {
       _startBreak(); // 집중이 끝나면 자동으로 휴식 — 차단도 이때 풀린다
     } else {
@@ -578,6 +710,15 @@ class AppState extends ChangeNotifier {
           owned: owned, drops: _progress.drops + focused ~/ 60);
       _lastReward = _sessions.last;
       _lastPromotion = title != titleBefore ? title : null;
+      // 빠진 날을 먼저 판단한다 — 이번 보상으로 받은 얼음이 지난 공백에 쓰이지 않게
+      _progress = _progress.copyWith(
+          growth: _growth.settled(dayKey(now), _activeDays));
+      _grantGoalRewards(dayKey(now));
+      if (_growth.leagueJoined) {
+        _progress = _progress.copyWith(
+            growth: _growth
+                .copyWith(leagueOutbox: {..._growth.leagueOutbox, a.id}));
+      }
     }
   }
 
@@ -587,6 +728,16 @@ class AppState extends ChangeNotifier {
       _progress.tags.where((t) => t.id == _progress.currentTagId).firstOrNull;
   int get drops => _progress.drops;
   bool get lockEnabled => _progress.lockEnabled;
+
+  /// 잠금이 실제로 걸릴 수 있는지 (권한·고른 앱). OS 쪽 상태라 저장하지 않는다.
+  bool get lockReady => _lockReady;
+  bool _lockReady = true;
+  void setLockReady(bool v) {
+    if (v == _lockReady) return;
+    _lockReady = v;
+    notifyListeners();
+  }
+
 
   /// 폰 소리 선택. 'scene'이면 장면을 따라간다.
   String get soundId => _progress.soundId;
@@ -600,12 +751,15 @@ class AppState extends ChangeNotifier {
   }
   void setLockEnabled(bool v) =>
       _setProgress(_progress.copyWith(lockEnabled: v));
-  int ownedCount(String itemId) => _progress.owned[itemId] ?? 0;
+  int ownedCount(String itemId) => Companion.byId(itemId)?.isStarter == true
+      ? 1
+      : _progress.owned[itemId] ?? 0;
   FocusSession? get lastReward => _lastReward;
   FocusTitle? get lastPromotion => _lastPromotion;
   void clearLastReward() {
     _lastReward = null;
     _lastPromotion = null;
+    _lastQuestRewards = const [];
     notifyListeners();
   }
 
@@ -669,7 +823,12 @@ class AppState extends ChangeNotifier {
       .where((x) => x.outcome == SessionOutcome.completed && x.scene == s.name)
       .fold(0, (sum, x) => sum + (x.focusedSec ?? x.minutes * 60) ~/ 60);
 
-  bool isUnlocked(Companion c) => sceneMinutes(c.scene) >= c.unlockMinutes;
+  /// 이미 만난 친구는 조건이 바뀌어도 잠기지 않는다
+  bool isUnlocked(Companion c) =>
+      sceneMinutes(c.scene) >= c.unlockMinutes ||
+      xp >= Companion.unlockAllMinutes ||
+      ownedCount(c.id) > 0 ||
+      c.id == _progress.selectedCompanionId; // 고를 때 해금돼 있던 친구는 조건이 올라도 유지
 
   /// 이번 세션에 데려올 친구 — 선택이 현재 장면과 다르거나 잠겨 있으면 장면 첫 친구
   Companion get selectedCompanion {
@@ -694,29 +853,22 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  List<Placement> placementsOf(FocusScene s) =>
-      _progress.placements[s.name] ?? const [];
+  List<Placement> get placements =>
+      _progress.placements[Progress.boardKey] ?? const [];
 
-  int placedCount(String itemId) => _progress.placements.values
-      .expand((l) => l)
-      .where((p) => p.itemId == itemId)
-      .length;
+  int placedCount(String itemId) =>
+      placements.where((p) => p.itemId == itemId).length;
 
   /// 빈 칸에만, 보유 수를 넘지 않게 배치
-  bool place(FocusScene s, String itemId, int x, int y) {
-    final list = placementsOf(s);
+  bool place(String itemId, int x, int y) {
     final inGrid = x >= 0 && y >= 0 && x < Placement.grid && y < Placement.grid;
-    if (!inGrid || list.any((p) => p.x == x && p.y == y)) return false;
+    if (!inGrid || placements.any((p) => p.x == x && p.y == y)) return false;
     if (placedCount(itemId) >= ownedCount(itemId)) return false;
-    _setProgress(_progress.copyWith(placements: {
-      ..._progress.placements,
-      s.name: [...list, Placement(itemId, x, y)],
-    }));
-    return true;
+    return setPlacements([...placements, Placement(itemId, x, y)]);
   }
 
-  /// 편집 완료: 장면 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
-  bool setPlacements(FocusScene s, List<Placement> list) {
+  /// 편집 완료: 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
+  bool setPlacements(List<Placement> list) {
     final cells = <(int, int)>{};
     final used = <String, int>{};
     for (final p in list) {
@@ -726,25 +878,19 @@ class AppState extends ChangeNotifier {
       if (!cells.add((p.x, p.y))) return false;
       used[p.itemId] = (used[p.itemId] ?? 0) + 1;
     }
-    // 다른 장면에 놓인 것까지 합쳐 보유 수 이하
     for (final e in used.entries) {
-      final elsewhere = _progress.placements.entries
-          .where((x) => x.key != s.name)
-          .expand((x) => x.value)
-          .where((p) => p.itemId == e.key)
-          .length;
-      if (e.value + elsewhere > ownedCount(e.key)) return false;
+      if (e.value > ownedCount(e.key)) return false;
     }
-    _setProgress(_progress.copyWith(
-        placements: {..._progress.placements, s.name: List.of(list)}));
+    _setProgress(_progress
+        .copyWith(placements: {Progress.boardKey: List.of(list)}));
     return true;
   }
 
   /// 회수: 보관함으로 돌아갈 뿐 재지급·삭제 없음
-  void unplace(FocusScene s, int x, int y) {
+  void unplace(int x, int y) {
     _setProgress(_progress.copyWith(placements: {
-      ..._progress.placements,
-      s.name: placementsOf(s).where((p) => p.x != x || p.y != y).toList(),
+      Progress.boardKey:
+          placements.where((p) => p.x != x || p.y != y).toList(),
     }));
   }
 

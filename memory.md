@@ -7,7 +7,7 @@
 ## Android 출시 계정 (2026-10-13)
 - Play **조직 계정**(develop@looinlabs.com, Google Workspace 사용자)으로 새로 가입해 출시. 개인 계정(2001kmin, 개발자명 LooinLabs, 하루전 운영 중)은 2023-11 이후 규정상 새 앱마다 테스터 12명×14일 비공개 테스트 필요 → 사용자가 조직 계정 선택.
 - 주소: 조직 계정은 사업장 주소 공개. 사업장=자택이지만 하루전(인앱 구매)에 이미 공개돼 있어 비상주 사무실 안 함.
-- D-U-N-S: Apple duns-lookup(무료)으로 사용자 제출 완료 2026-10-13. 발급(1~2주) 후 Play 조직 가입($25·인증 사용자) → 서비스 계정 API 키 ~/.config/fokko/.
+- D-U-N-S: 2026-10-16 발급 거절됨(영문 사업자등록증 미제출). '해결(Resolved)'은 발급이 아니라 처리 종료라는 뜻, 본문 끝까지 읽을 것. 이전 기록: Apple duns-lookup(무료)으로 사용자 제출 완료 2026-10-13. 발급(1~2주) 후 Play 조직 가입($25·인증 사용자) → 서비스 계정 API 키 ~/.config/fokko/.
 - 출시 AAB 서명: android/key.properties(gitignore)가 ~/.config/focusone 키를 가리켜야 함. 없으면 debug 키로 조용히 서명됨.
 
 ## 디자인 v2 (2026-10-08 사용자 확정 → main 머지) — 현재 디자인 원본
@@ -71,3 +71,26 @@
 - 친구 식별자는 상대 초대 코드(6자, 0·O·1·I 제외). user_id는 앱에 안 보냄. 대결엔 명예의 전당 참여(닉네임)가 필요 — 친구 목록에 닉네임이 있어야 해서.
 - 카톡: 사용자 선택 = 카카오 SDK 메시지 카드. 키 전엔 공유 시트 폴백(코드+App Store id6821653231 링크). 카톡 버튼 executionParams invite=<코드> → receiveKakaoScheme → pendingInvite → 셸이 집중 끝난 뒤 DuelPage(initialCode).
 - 꾸미기 보관함·도감·상점: 사용자 선택 = 탭바 바로 위 고정.
+
+## 2026-11-06 v3 성장 (growth-v3)
+- 집중 중: 링도 0에서 차오름(배경과 방향 통일, 사용자 지적). 친구 점점 선명해짐은 유지 — 사용자 "선명해지긴 해야돼". 링 안쪽은 불투명 바탕으로 차오르는 색 차단.
+- 장면 표현은 사용자가 직접 정함: 숲 = 물들며 자라 덮임, 밤 = 해질녘→우주(경계선 없음, 시작이 어두우면 변화가 안 보임), 일상 = 아이스 아메리카노+출렁임, 빨대 없음.
+- 성장 데이터는 Progress.growth 한 덩어리, XP·칭호는 세션에서 파생. 보상 키 'daily:<날짜>'·'weekly:<월요일>'로 중복 방지.
+- 순서 함정: 빠진 날 얼음 판단을 보상 지급보다 먼저. 안 그러면 주간 보상 얼음이 지난 공백에 소급 사용됨. 진행 중 세션이 있으면 판단을 미룸(자정 넘겨 복귀 시 얼음 낭비 방지).
+- UI 방향: 사용자가 입체·젤리·Jua 글꼴을 모두 거절, "처음 디자인 느낌이 좋아", 불꽃 색도 별로. 듀오링고는 구조만 따르고 겉모습은 출시 디자인 유지. 새 화면도 기존 카드·PillButton·RoundIconButton·장면 accent로 만든다.
+- 3단계: 보상은 달성 순간 확정 지급, 상자는 unopened 키만 지우는 연출. 칸·칭호·친구 단계·업적은 저장 안 하고 기록에서 계산.
+- 테스트 함정: testWidgets 안(가짜 시간)에서 시작한 저장을 runAsync로 기다리면 영원히 안 끝남 → 저장 파일에 상태를 넣고 init으로 시작.
+- Semantics 라벨이 옆 글자와 합쳐지면 낭독기·bySemanticsLabel에서 안 보임 → 눌리는 항목엔 container: true.
+- 4단계: 리그 점수는 verified_daily만(서버 시계). 구 daily_points·submit_score와 섞지 않음. 서버는 실제 집중을 증명 못 함: 시작~예정 종료가 지났다는 것만 안다. 크론 없이 조회·제출 때 지연 정산.
+- 접근성 함정: Semantics(excludeSemantics: true)는 자식 GestureDetector의 누르기 동작까지 가린다 → 같은 Semantics에 onTap을 직접 넘긴다. test/accessibility_test.dart가 '버튼인데 누르기 없음'을 잡는다.
+
+## v3 레벨·친구 결정 (2026-11-06)
+- 레벨 = 지도 칸 번호. 간격 25분에서 칸마다 15분씩 증가, 칭호 문턱은 가장 가까운 칸을 대체(63칸). 기록에서 계산해 이행 불필요. 사용자: "단계가 너무 많고 물방울만 있어 동기가 안 생김".
+- 기본 친구(해금 0분)는 캐릭터당 1명 고정. ownedCount가 항상 1을 돌려주고 저장값은 안 바꾼다. 처음엔 +1로 만들었으나 사용자가 2개로 보이는 걸 지적함. 수집 재미는 나중에 친구를 36종으로 늘려 채운다. 해금 조건을 올려도 이미 보유한 친구는 isUnlocked 유지.
+- 차오름 overshoot는 물결 폭만큼만. 크게 잡으면 시작이 늦고 끝나기 전에 가득 찬다(사용자가 10분 타이머에서 약 1분 지연으로 발견).
+- 친구 36종, 해금은 장면 누적 0~1500분(9단계) 또는 전체 6000분. 사용자가 '100시간이면 전부'로 정함. codex exec는 stdin을 닫아야 함(</dev/null), 안 그러면 입력을 기다리다 멈춘다.
+
+## iOS 제출 절차 (2026-11-06, Xcode 계정 없이)
+- Xcode가 로그아웃이면 cloud signing이 'No Accounts'로 실패. API 키는 앱 관리 권한이라 cloud signing도 불가. 대신 API로 맥의 iPhone Distribution 인증서(CFCB75UTZP)를 쓰는 App Store 프로파일을 만들어 수동 서명 내보내기: Fokko AppStore / Fokko FocusMonitor AppStore / Fokko BreakActivity AppStore.
+- 순서: xcodebuild archive → exportArchive(signingStyle manual) → IPA 권한 확인(family-controls) → altool 업로드(API_PRIVATE_KEYS_DIR=~/.config/fokko) → tool/asc_release.py → asc_screenshots.py·asc_preview.py → 처리 완료 대기 → 빌드 연결 → asc_submit.py.
+

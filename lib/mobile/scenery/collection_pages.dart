@@ -9,6 +9,7 @@ import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
 import '../../state/app_state.dart';
 import '../adaptive.dart';
+import '../growth/companion_page.dart';
 
 Widget _page(BuildContext context, String title, Widget body) {
   final style = context.watch<AppState>().scene.style;
@@ -58,7 +59,7 @@ class _StoragePageState extends State<StoragePage> {
       ...Companion.all.map((c) => c.id),
       ...Decor.all.map((d) => d.id)
     ].fold(0, (a, id) => a + s.ownedCount(id));
-    final placed = FocusScene.values.expand(s.placementsOf).length;
+    final placed = s.placements.length;
 
     Widget stat(String label, int n) => Expanded(
           child: Container(
@@ -160,7 +161,7 @@ class DexPage extends StatelessWidget {
                     color: style.textStrong)),
             const SizedBox(width: 6),
             Text(
-                '${Companion.of(scene).where((c) => s.ownedCount(c.id) > 0).length}/4',
+                '${Companion.of(scene).where((c) => s.ownedCount(c.id) > 0).length}/${Companion.of(scene).length}',
                 style: TextStyle(fontSize: 13, color: style.textMuted)),
           ]),
           const SizedBox(height: 10),
@@ -173,13 +174,17 @@ class DexPage extends StatelessWidget {
             childAspectRatio: 169 / 156,
             children: [
               for (final c in Companion.of(scene))
-                Container(
+                PressScale(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => CompanionPage(companion: c))),
+                  child: Container(
                   padding: const EdgeInsets.all(MobileSize.cardPadding),
                   decoration: _card(style),
                   child: Column(children: [
                     Expanded(
                       child: s.ownedCount(c.id) > 0
-                          ? Image.asset(c.asset)
+                          ? CompanionPortrait(
+                              companion: c, stage: s.companionStage(c.id))
                           : s.isUnlocked(c)
                               ? Opacity(
                                   opacity: 0.35, child: Image.asset(c.asset))
@@ -195,7 +200,7 @@ class DexPage extends StatelessWidget {
                             color: style.textStrong)),
                     Text(
                       s.ownedCount(c.id) > 0
-                          ? '만남 ×${s.ownedCount(c.id)}'
+                          ? s.companionStage(c.id).label
                           : s.isUnlocked(c)
                               ? '${scene.style.sceneLabel}에서 집중하면 만나요'
                               : '${scene.style.sceneLabel}에서 ${c.unlockMinutes - s.sceneMinutes(scene)}분 더',
@@ -204,6 +209,7 @@ class DexPage extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: style.textMuted),
                     ),
                   ]),
+                  ),
                 ),
             ],
           ),

@@ -8,11 +8,13 @@ import 'adaptive.dart';
 import 'duel/duel_page.dart';
 import 'duel/invite.dart';
 import 'focus/focus_home.dart';
+import 'focus/scene_fill.dart';
+import 'growth/growth_tab.dart';
 import 'records/records_tab.dart';
 import 'scenery/scenery_tab.dart';
 import 'tasks/tasks_tab.dart';
 
-enum MobileTab { focus, scenery, records, tasks }
+enum MobileTab { focus, growth, scenery, records, tasks }
 
 /// 폰 셸: 탭 4개 + 떠 있는 캡슐 탭바. 화면은 P4부터 채운다.
 class MobileShell extends StatefulWidget {
@@ -22,7 +24,7 @@ class MobileShell extends StatefulWidget {
   State<MobileShell> createState() => _MobileShellState();
 }
 
-class _MobileShellState extends State<MobileShell> {
+class _MobileShellState extends State<MobileShell> with WidgetsBindingObserver {
   /// 다른 탭에서 "바로 집중" 등으로 탭을 바꿀 수 있게 Provider로 내려준다
   final _tabs = ValueNotifier(MobileTab.focus);
 
@@ -30,10 +32,20 @@ class _MobileShellState extends State<MobileShell> {
   void initState() {
     super.initState();
     pendingInvite.addListener(_onInvite);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// 앱을 켜 둔 채 날짜가 바뀌었을 수 있다
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AppState>().settleGrowth();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     pendingInvite.removeListener(_onInvite);
     _tabs.dispose();
     super.dispose();
@@ -53,6 +65,7 @@ class _MobileShellState extends State<MobileShell> {
 
   static const _labels = {
     MobileTab.focus: ('집중', Icons.timer_outlined),
+    MobileTab.growth: ('성장', Icons.route_rounded),
     MobileTab.scenery: ('꾸미기', Icons.park_outlined),
     MobileTab.records: ('기록', Icons.bar_chart_rounded),
     MobileTab.tasks: ('할 일', Icons.check_circle_outline),
@@ -76,7 +89,17 @@ class _MobileShellState extends State<MobileShell> {
     }
     return Scaffold(
       backgroundColor: style.cardBg,
-      body: SafeArea(
+      body: Stack(fit: StackFit.expand, children: [
+        // 집중 중 화면 전체 차오름 (SafeArea 밖). 휴식은 가득 찬 채 멈춘다.
+        if (hideBar)
+          SceneFill(
+            scene: FocusScene.values.asNameMap()[state.activeSession?.scene] ??
+                state.scene,
+            progress:
+                state.phase == FocusPhase.breakTime ? 1 : 1 - state.progress,
+            animate: state.isRunning,
+          ),
+        SafeArea(
         // 탭 전환 페이드 120ms (동작 줄이기면 즉시)
         child: AnimatedSwitcher(
           duration: (MediaQuery.maybeDisableAnimationsOf(context) ?? false)
@@ -91,6 +114,7 @@ class _MobileShellState extends State<MobileShell> {
                   : MobileSize.listMaxWidth,
               child: switch (current) {
                 MobileTab.focus => const FocusHome(),
+                MobileTab.growth => const GrowthTab(),
                 MobileTab.tasks => const TasksTab(),
                 MobileTab.records => const RecordsTab(),
                 MobileTab.scenery => const SceneryTab(),
@@ -99,6 +123,7 @@ class _MobileShellState extends State<MobileShell> {
           ),
         ),
       ),
+      ]),
       extendBody: true,
       bottomNavigationBar: hideBar
           ? null
@@ -125,6 +150,7 @@ class _MobileShellState extends State<MobileShell> {
                             selected: t == current,
                             label: '${_labels[t]!.$1} 탭',
                             excludeSemantics: true,
+                            onTap: () => _tabs.value = t,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () => _tabs.value = t,
@@ -137,11 +163,27 @@ class _MobileShellState extends State<MobileShell> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(_labels[t]!.$2,
-                                        size: 22,
-                                        color: t == current
-                                            ? style.accent
-                                            : style.textMuted),
+                                    Stack(clipBehavior: Clip.none, children: [
+                                      Icon(_labels[t]!.$2,
+                                          size: 22,
+                                          color: t == current
+                                              ? style.accent
+                                              : style.textMuted),
+                                      // 안 연 상자 표시
+                                      if (t == MobileTab.growth &&
+                                          state.unopenedChests.isNotEmpty)
+                                        Positioned(
+                                          top: 0,
+                                          right: -2,
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                                color: style.accent,
+                                                shape: BoxShape.circle),
+                                          ),
+                                        ),
+                                    ]),
                                     Text(
                                       _labels[t]!.$1,
                                       style: TextStyle(

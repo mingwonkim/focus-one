@@ -56,6 +56,8 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
         _selected = st.selectedCount;
         _loading = false;
       });
+      context.read<AppState>()
+          .setLockReady(st.authorized && st.selectedCount > 0);
       if (afterSettings && st.authorized) {
         _waitingSettings = false;
         await _pick();
@@ -81,7 +83,9 @@ class _LockPageState extends State<LockPage> with WidgetsBindingObserver {
     final n = Platform.isIOS ? await _lock.pickAppsIOS() : await _pickAndroid();
     if (!mounted) return;
     setState(() => _selected = n);
-    if (n > 0) context.read<AppState>().setLockEnabled(true);
+    final s = context.read<AppState>();
+    if (n > 0) s.setLockEnabled(true);
+    s.setLockReady(_authorized && n > 0);
   }
 
   Future<int> _pickAndroid() async {

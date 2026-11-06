@@ -12,6 +12,7 @@ import '../adaptive.dart';
 import '../lock/lock_page.dart';
 import 'mobile_ring.dart';
 import 'sheets.dart';
+import 'stat_bar.dart';
 
 /// 집중 홈 (docs/mobile/app-design-spec.md §2):
 /// 지금 할 일 카드 → 도구 행(장면·소리·잠금) → 링 → 시간 → 친구·태그 → 시작 + 메모
@@ -41,12 +42,13 @@ class _FocusHomeState extends State<FocusHome> {
     final idle = active == null && s.phase != FocusPhase.breakTime;
     final h = MediaQuery.sizeOf(context).height;
     final tablet = isTablet(context);
+    final small = !tablet && h < 700;
     final landscape = tablet && MediaQuery.sizeOf(context).aspectRatio > 1;
     final ringSize = landscape
         ? (h * 0.52).clamp(232.0, 360.0) // 가로: 높이에 맞춰 크게
         : tablet
         ? (MediaQuery.sizeOf(context).shortestSide * 0.42).clamp(232.0, 320.0)
-        : (h < 700 ? 184.0 : (h > 900 ? 264.0 : MobileSize.ring));
+        : (small ? MobileSize.ringSmall : (h > 900 ? 264.0 : MobileSize.ring));
     _minutes = idle ? s.totalSeconds ~/ 60 : _minutes;
 
     // 완료 직후 보상 시트 1회
@@ -61,18 +63,29 @@ class _FocusHomeState extends State<FocusHome> {
     // 진행 중엔 세션에 고정된 친구
     final companion =
         Companion.byId(active?.companionId) ?? s.selectedCompanion;
-    final progress = idle ? MobileRing.fractionOf(_minutes) : s.progress;
+    // 집중 중 링은 배경과 같이 0에서 채워진다 (휴식은 남은 시간만큼 줄어듦)
+    final progress = idle
+        ? MobileRing.fractionOf(_minutes)
+        : (active != null ? 1 - s.progress : s.progress);
     // 대기: 데려올 친구를 또렷하게 보여 주고, 시작하면 흐려졌다가 집중할수록 선명해짐
     final reveal = idle ? 1.0 : 0.25 + 0.75 * (1 - s.progress);
 
     final header = Column(children: [
-      const SizedBox(height: 8),
+      // 진행 중엔 숨기되 자리는 유지 — 시작해도 링 위치가 그대로다
+      Visibility(
+        visible: idle,
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        child: StatBar(state: s),
+      ),
       _TaskCard(state: s, enabled: idle),
       const SizedBox(height: 8),
       if (idle) _ToolRow(state: s) else _RunningBadge(state: s),
     ]);
     final ring = Column(children: [
-      const SizedBox(height: MobileSize.sectionGap), // 도구 행과 최소 24
+      // 도구 행과 최소 24 (작은 폰은 시간이 가려지지 않게 8)
+      SizedBox(height: small ? MobileSize.cardGap : MobileSize.sectionGap),
       MobileRing(
         scene: s.scene,
         companion: companion,
@@ -83,14 +96,22 @@ class _FocusHomeState extends State<FocusHome> {
         onMinutes: idle ? (m) => _setMinutes(s, m) : null,
       ),
       const SizedBox(height: 8),
-      Text(
-        formatClock(idle ? _minutes * 60 : s.remainingSeconds),
-        style: TextStyle(
-          fontSize: tablet ? 64 : 56,
-          fontWeight: FontWeight.w600,
-          height: 64 / 56,
-          color: style.textStrong,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      // 차오름 위에서도 읽히게 진행 중엔 불투명 받침
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: idle ? null : style.rowBg,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: Text(
+          formatClock(idle ? _minutes * 60 : s.remainingSeconds),
+          style: TextStyle(
+            fontSize: tablet ? 64 : 56,
+            fontWeight: FontWeight.w600,
+            height: 64 / 56,
+            color: style.textStrong,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
       const SizedBox(height: MobileSize.cardGap),
@@ -115,18 +136,26 @@ class _FocusHomeState extends State<FocusHome> {
         SizedBox(
           height: MobileSize.row,
           child: Center(
-            child: Text(
-              s.phase == FocusPhase.breakTime
-                  ? '잠깐 쉬어가요'
-                  : (s.isRunning
-                      ? '집중할수록 ${companion.name}이(가) 선명해져요'
-                      : '잠시 멈춤'),
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: style.textMuted),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: MobileSize.gridGap, vertical: MobileSize.labelGap),
+              decoration: BoxDecoration(
+                color: style.rowBg,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
+              child: Text(
+                s.phase == FocusPhase.breakTime
+                    ? '잠깐 쉬어가요'
+                    : (s.isRunning
+                        ? '집중할수록 ${companion.name}이(가) 선명해져요'
+                        : '잠시 멈춤'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: style.textMuted),
+              ),
             ),
           ),
         ),
-      const SizedBox(height: 16),
+      SizedBox(height: small ? MobileSize.cardGap : 16),
     ]);
 
     return Padding(
@@ -205,11 +234,7 @@ class _TaskCard extends StatelessWidget {
             ? '${state.currentTag?.name ?? '태그'}로 집중 중'
             : a.taskTitle)
         : state.currentTask?.title;
-    return PressScale(
-      onTap: enabled ? () => showTaskSheet(context) : null,
-      child: Opacity(
-        opacity: 1,
-        child: Container(
+    final card = Container(
           constraints: const BoxConstraints(minHeight: MobileSize.taskCard),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: MobileSize.cardPadding),
           decoration: BoxDecoration(
@@ -241,9 +266,11 @@ class _TaskCard extends StatelessWidget {
             if (enabled)
               Icon(Icons.chevron_right_rounded, color: style.textMuted),
           ]),
-        ),
-      ),
     );
+    // 진행 중엔 차오름 위에서 읽혀야 하므로 눌림 비활성 흐림을 쓰지 않는다
+    return enabled
+        ? PressScale(onTap: () => showTaskSheet(context), child: card)
+        : card;
   }
 }
 
@@ -278,13 +305,32 @@ class _ToolRow extends StatelessWidget {
         RoundIconButton(
           size: MobileSize.touchMin,
           style: style,
-          icon: s.lockEnabled ? Icons.lock_rounded : Icons.lock_open_rounded,
-          tooltip: s.lockEnabled ? '앱 잠금 켜짐' : '앱 잠금',
+          icon: !s.lockEnabled
+              ? Icons.lock_open_rounded
+              : (s.lockReady ? Icons.lock_rounded : Icons.no_encryption_rounded),
+          tooltip: !s.lockEnabled
+              ? '앱 잠금'
+              : (s.lockReady ? '앱 잠금 켜짐' : '앱 잠금 꺼짐, 권한을 확인해 주세요'),
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const LockPage())),
         ),
       ]),
     );
+  }
+}
+
+/// 시작. 잠금을 켜 뒀는데 걸 수 없으면 집중은 시작하되 바로 알려 준다.
+void _startFocus(BuildContext context, AppState s) {
+  s.startTimer(allowNoTask: true);
+  if (s.lockEnabled && !s.lockReady) {
+    // 시작 10초 동안만 있는 취소 버튼을 가리지 않게 위로 띄운다
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+            left: MobileSize.gutter,
+            right: MobileSize.gutter,
+            bottom: MobileSize.cta * 2),
+        content: Text('앱 잠금이 꺼져 있어요. 자물쇠에서 권한을 확인해 주세요')));
   }
 }
 
@@ -416,6 +462,8 @@ class _Controls extends StatelessWidget {
     final memo = Semantics(
       button: true,
       label: '딴생각 메모',
+      onTap: () => showMemoSheet(context),
+      excludeSemantics: true,
       child: PressScale(
         onTap: () => showMemoSheet(context),
         child: Container(
@@ -460,7 +508,7 @@ class _Controls extends StatelessWidget {
             height: MobileSize.cta,
             icon: Icons.play_arrow_rounded,
             label: '시작',
-            onTap: () => s.startTimer(allowNoTask: true),
+            onTap: () => _startFocus(context, s),
           ),
         ),
         const SizedBox(width: 12),
@@ -500,7 +548,7 @@ class _Controls extends StatelessWidget {
                 height: MobileSize.cta,
                 icon: Icons.play_arrow_rounded,
                 label: '계속',
-                onTap: () => s.startTimer(allowNoTask: true),
+                onTap: () => _startFocus(context, s),
               ),
       ),
       if (!s.isRunning) ...[const SizedBox(width: 12), memo],

@@ -7,6 +7,7 @@ import 'package:focus_one/core/design_tokens.dart';
 import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/models/collection.dart';
 import 'package:focus_one/models/focus_title.dart';
+import 'package:focus_one/models/growth.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
 import 'package:focus_one/state/stats.dart';
@@ -77,14 +78,14 @@ void main() {
     a.dispose();
 
     final b = await boot(t0.add(const Duration(hours: 1)));
-    expect(b.ownedCount('fawn'), 1);
-    expect(b.drops, 25);
+    expect(b.ownedCount('fawn'), 1); // 기본 친구는 늘지 않는다
+    expect(b.drops, 25 + 5 + Growth.dailyRewardDrops); // 25분 = 첫 집중 + 일일 목표
     expect(b.sessions.single.companionId, 'fawn');
     await b.flush();
     b.dispose();
     final c = await boot(t0.add(const Duration(hours: 2)));
     expect(c.ownedCount('fawn'), 1);
-    expect(c.drops, 25);
+    expect(c.drops, 25 + 5 + Growth.dailyRewardDrops);
     expect(c.buyDecor('grass'), isTrue);
     expect(c.rankScore, 25); // 상점에서 써도 랭킹 점수는 그대로
     c.dispose();
@@ -121,7 +122,7 @@ void main() {
     final a = await boot(t0);
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     withClock(Clock.fixed(t0.add(const Duration(minutes: 20))), a.abandonSession);
-    expect(a.ownedCount('fawn'), 0);
+    expect(a.ownedCount('fawn'), 1);
     expect(a.drops, 0);
     a.dispose();
   });
@@ -132,11 +133,11 @@ void main() {
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     await a.flush();
     a.dispose();
-    final b = await boot(t0.add(const Duration(hours: 1))); // 25분 완료 → 25개
+    final b = await boot(t0.add(const Duration(hours: 1))); // 25분 완료 → 25개 + 보너스 15
     final t1 = t0.add(const Duration(hours: 1));
     withClock(Clock.fixed(t1), () => b.startTimer(allowNoTask: true));
-    withClock(Clock.fixed(t1.add(const Duration(minutes: 5))), () {
-      expect(b.escapeCost, 40); // 20분 남음
+    withClock(Clock.fixed(t1.add(const Duration(minutes: 1))), () {
+      expect(b.escapeCost, 48); // 24분 남음, 가진 건 40개
       expect(b.escapeSession(), isFalse);
     });
     withClock(Clock.fixed(t1.add(const Duration(minutes: 15, seconds: 30))), () {
@@ -144,7 +145,7 @@ void main() {
       expect(b.escapeSession(), isTrue);
     });
     expect(b.activeSession, isNull);
-    expect(b.drops, 5);
+    expect(b.drops, 5 + 5 + Growth.dailyRewardDrops);
     expect(b.ownedCount('fawn'), 1);
     expect(b.rankScore, 5); // 모은 25 − 탈출 20
     b.dispose();
@@ -161,7 +162,7 @@ void main() {
 
   test('배치: 빈 칸·보유 수 안에서만, 회수 가능', () async {
     final a = await boot(DateTime(2026, 10, 11));
-    expect(a.place(FocusScene.forest, 'fawn', 0, 0), isFalse); // 보유 0
+    expect(a.place('squirrel', 0, 0), isFalse); // 보유 0
     expect(a.buyDecor('tree'), isFalse); // 물방울 부족
     a.dispose();
   });
@@ -172,12 +173,12 @@ void main() {
     withClock(Clock.fixed(t0), () => a.startTimer(allowNoTask: true));
     await a.flush();
     a.dispose();
-    final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴 1마리 획득
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
-    expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0)]), isTrue);
-    expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isFalse); // 숲에 이미 놓음
-    expect(b.placementsOf(FocusScene.forest).single.x, 0);
-    expect(b.placementsOf(FocusScene.night), isEmpty);
+    final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴은 기본 1명 고정
+    expect(b.setPlacements(const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
+    expect(b.setPlacements(const [Placement('fawn', 0, 0), Placement('rabbit', 0, 0)]), isFalse); // 겹침
+    expect(b.setPlacements(const [Placement('fawn', 0, 0)]), isTrue);
+    expect(b.setPlacements(const [Placement('squirrel', 1, 1)]), isFalse); // 보유 초과면 안 바뀜
+    expect(b.placements.single.itemId, 'fawn');
     b.dispose();
   });
 

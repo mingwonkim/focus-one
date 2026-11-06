@@ -1,4 +1,6 @@
 // lib/core/design_tokens.dart
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// 디자인 토큰. 하드코딩 색상/매직넘버 금지 — 반드시 여기서 참조한다.
@@ -66,8 +68,15 @@ class SceneStyle {
     required this.divider,
     required this.fieldFill,
     required this.sceneLabel,
+    required this.boardTop,
+    required this.boardBottom,
     required this.footerLabel,
     required this.footerUnit,
+    required this.fillShade,
+    required this.fill,
+    required this.fillDeep,
+    required this.fillCrest,
+    this.fillGlow,
   });
 
   final Brightness brightness;
@@ -96,8 +105,17 @@ class SceneStyle {
   final Color fieldFill;
 
   final String sceneLabel; // 헤더 장면 칩 ("숲")
+  final Color boardTop; // 꾸미기 풍경 그라데이션 위
+  final Color boardBottom; // 아래
   final String footerLabel; // "오늘 심은 나무"
   final String footerUnit; // "그루"
+
+  // 폰 v3 집중 중 화면 전체 차오름
+  final Color fillShade; // 숲: 짙은 나무·땅
+  final Color fill; // 뒤층·연한 나무·밤 시작색·커피 표면
+  final Color fillDeep; // 앞층·진한 나무·우주 끝색·커피 바닥
+  final Color fillCrest; // 물마루·얼음·별 등 밝은 점
+  final Color? fillGlow; // 밤: 시작 하늘의 아래쪽 노을빛
 
   static const forest = SceneStyle(
     brightness: Brightness.light,
@@ -125,8 +143,14 @@ class SceneStyle {
     divider: Color(0xFFDCEEE3),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '숲',
+    boardTop: Color(0xFFFFF3CC), // 크림
+    boardBottom: Color(0xFFBDEBD3), // 민트
     footerLabel: '오늘 심은 나무',
     footerUnit: '그루',
+    fillShade: Color(0xFF14715D),
+    fill: Color(0xFF83DCC1),
+    fillDeep: Color(0xFF22B894),
+    fillCrest: Color(0xFFD9F5E7),
   );
 
   // 밤: spec은 라벤더(#C2B4ED)였으나 달·별 일러스트와 맞춰 달빛 골드 유지 — docs/v2/app-deviations.md
@@ -155,8 +179,15 @@ class SceneStyle {
     divider: Color(0xFF2A2833),
     fieldFill: Color(0xFF24222D),
     sceneLabel: '밤',
+    boardTop: Color(0xFF2E2F6B), // 남색
+    boardBottom: Color(0xFF7652A8), // 보라
     footerLabel: '오늘 모은 별',
     footerUnit: '개',
+    fillShade: Color(0xFF9A7428),
+    fill: Color(0xFF3F42A6),
+    fillDeep: Color(0xFF04040A),
+    fillCrest: Color(0xFFF4F1FF),
+    fillGlow: Color(0xFF9A6FD6),
   );
 
   static const ocean = SceneStyle(
@@ -185,8 +216,14 @@ class SceneStyle {
     divider: Color(0xFFDDEDF7),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '바다',
+    boardTop: Color(0xFFC8EEFF), // 하늘
+    boardBottom: Color(0xFFDCD3F9), // 라벤더
     footerLabel: '오늘 만난 고래',
     footerUnit: '마리',
+    fillShade: Color(0xFF227A9D),
+    fill: Color(0xFF72CCE9),
+    fillDeep: Color(0xFF36BDEB),
+    fillCrest: Color(0xFFE4F7FD),
   );
 
   // 일상: 피치·코랄 파스텔 (베이지 금지). 대비: accent #A3452F / cardBg ≈ 5.9:1
@@ -216,8 +253,14 @@ class SceneStyle {
     divider: Color(0xFFFBE0D8),
     fieldFill: Color(0xFFFFFFFF),
     sceneLabel: '일상',
+    boardTop: Color(0xFFFFEBC8), // 살구
+    boardBottom: Color(0xFFFFC6C2), // 코랄 핑크
     footerLabel: '오늘 마신 커피',
     footerUnit: '잔',
+    fillShade: Color(0xFFAC5948),
+    fill: Color(0xFF8F5220),
+    fillDeep: Color(0xFF7A4720), // 진한 알약 버튼이 묻히지 않는 밝기
+    fillCrest: Color(0xFFF4FBFF),
   );
 }
 
@@ -278,47 +321,134 @@ abstract class AppDuration {
   static const titleSpin = Duration(seconds: 6); // 높은 칭호 테두리 한 바퀴
 }
 
+/// 칭호 칸 테두리에 두르는 장식 모양
+enum TitleOrnamentShape { dot, leaf, crescent, star, scallop, bubble, ray }
+
+class TitleOrnament {
+  const TitleOrnament(this.shape, this.count);
+  final TitleOrnamentShape shape;
+  final int count;
+}
+
 /// 칭호 테두리 한 단계. 장면과 무관한 고정 색 = 칭호의 정체성.
 class TitleRing {
   const TitleRing(this.colors,
-      {required this.width, this.glow = 0, this.spin = false, this.stars = false});
+      {required this.width,
+      this.glow = 0,
+      this.spin = false,
+      this.stars = false,
+      this.ornaments = const []});
   final List<Color> colors; // 1색이면 단색, 2색 이상이면 원형 그라데이션
   final double width;
   final double glow; // 바깥 빛 번짐 반경 (0 = 없음)
   final bool spin; // 천천히 회전
   final bool stars; // 링 위 작은 별 3개 (마스터)
+  final List<TitleOrnament> ornaments; // 지도 칭호 칸 장식
+
+  /// [base] 색 위에 올릴 글자색: 대비가 큰 쪽
+  static Color textOn(Color base) {
+    return _contrast(base, TitleRings.ink) >= _contrast(base, TitleRings.star)
+        ? TitleRings.ink
+        : TitleRings.star;
+  }
+
+  static double _contrast(Color a, Color b) {
+    final x = a.computeLuminance(), y = b.computeLuminance();
+    return (math.max(x, y) + 0.05) / (math.min(x, y) + 0.05);
+  }
 }
 
 /// FocusTitle.index 순 (씨앗 → 마스터). 숲 녹색 → 달빛 금·라벤더 → 바다 청록 → 금.
 abstract class TitleRings {
   static const all = <TitleRing>[
-    TitleRing([Color(0xFFB9C2BC)], width: 2),
-    TitleRing([Color(0xFF8FD3A6)], width: 2.5),
-    TitleRing([Color(0xFF52C47C), Color(0xFF8FE2AB)], width: 3),
-    TitleRing([Color(0xFF246B4B), Color(0xFF8FE2AB)], width: 3),
-    TitleRing([Color(0xFF246B4B), Color(0xFFE3C77F)], width: 3.5, glow: 6),
+    TitleRing([Color(0xFFB9C2BC)],
+        width: 2, ornaments: [TitleOrnament(TitleOrnamentShape.dot, 6)]),
+    TitleRing([Color(0xFF8FD3A6)],
+        width: 2.5, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 4)]),
+    TitleRing([Color(0xFF52C47C), Color(0xFF8FE2AB)],
+        width: 3, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 8)]),
+    TitleRing([Color(0xFF246B4B), Color(0xFF8FE2AB)],
+        width: 3, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 12)]),
+    TitleRing([Color(0xFF246B4B), Color(0xFFE3C77F)],
+        width: 3.5,
+        glow: 6,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.leaf, 8),
+          TitleOrnament(TitleOrnamentShape.dot, 8),
+        ]),
     TitleRing([Color(0xFFE3C77F), Color(0xFFFFF3C4), Color(0xFFC2B4ED)],
-        width: 3.5, glow: 8),
+        width: 3.5,
+        glow: 8,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.crescent, 4),
+          TitleOrnament(TitleOrnamentShape.dot, 8),
+        ]),
     TitleRing([Color(0xFFC2B4ED), Color(0xFFE3C77F), Color(0xFF8FA8FF)],
-        width: 4, glow: 10, spin: true),
+        width: 4,
+        glow: 10,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.star, 8)]),
     TitleRing([Color(0xFF7CBFE7), Color(0xFF3585BD), Color(0xFF9EE6E0)],
-        width: 4, glow: 10, spin: true),
+        width: 4,
+        glow: 10,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.scallop, 14)]),
     TitleRing([Color(0xFF142F40), Color(0xFF3585BD), Color(0xFF9EE6E0)],
-        width: 4.5, glow: 12, spin: true),
+        width: 4.5,
+        glow: 12,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.bubble, 12)]),
     TitleRing([Color(0xFFB98A2E), Color(0xFFFFF3C4), Color(0xFFE3C77F)],
-        width: 5, glow: 16, spin: true, stars: true),
+        width: 5,
+        glow: 16,
+        spin: true,
+        stars: true,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.ray, 12),
+          TitleOrnament(TitleOrnamentShape.star, 4),
+        ]),
   ];
   static const star = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF14211B); // 밝은 칭호 색 위 글자
 }
 
 /// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)
 abstract class MobileSize {
   static const double gutter = 20; // 좌우 여백 (SE는 16)
-  static const double ring = 232; // SE 184, 큰 화면 264
+  static const double ring = 232; // 큰 화면 264
+  static const double ringSmall = 150; // SE: 스탯 바가 늘어 시간이 가려지지 않게
   static const double ringStroke = 24;
   static const double ringInset = 32;
   static const double row = 48;
   static const double cta = 52;
+  static const double statIcon = 22;
+  static const double goalBar = 8;
+  static const double mapRowHeight = 104;
+  static const double mapNode = 64;
+  static const double mapNodeBig = 108;
+  static const double mapNodeCurrent = 88; // 지금 칸
+  static const double mapFutureFade = 0.55; // 아직 안 간 칸·길이 바탕색 쪽으로 옅어지는 비율
+  static const double mapZoneTint = 0.26; // 칭호 구간 배경에 칭호 색을 섞는 비율
+  static const double mapZoneBlendRows = 3; // 다음 칭호로 넘어가는 배경 그라데이션 길이 (줄)
+  static const double mapCheck = 22; // 지나온 칸 체크
+  static const double mapPulse = 18; // 지금 칸에서 링이 퍼지는 폭
+  static const double mapTitleChip = 42; // 지도 칭호 글자 배지
+  static const double mapSwing = 64; // 좌우로 흔들리는 폭
+  static const double zoneIcon = 18; // 리그 승급·강등 구분선
+  static const double mapLink = 14; // 지나온 길
+  static const double mapLinkFuture = 4; // 안 간 길(점선)
+  static const double mapLinkOver = 7; // 지나온 길 위에 덧칠하는 줄
+  static const double mapLinkDeepen = 0.38; // 밝은 칭호의 지나온 길을 진하게
+  static const double mapDash = 7;
+  static const double questCard = 88;
+  static const double chest = 72;
+  static const double chestDot = 12;
+  static const double companionLarge = 144;
+  static const double leagueIcon = 28;
+  static const double leagueIconLarge = 40;
+  static const double leagueRank = 28;
+  static const double streakIcon = 56;
+  static const double weekCell = 36;
   static const double taskCard = 72;
   static const double tabBar = 64;
   static const double sheetRadius = 24;
@@ -350,6 +480,39 @@ abstract class MobileSize {
   static const double badge = 24; // 칭호 배지 (행)
   static const double badgeLarge = 34; // 칭호 배지 (프로필·승급)
   static const double ladderDot = 8; // 칭호 사다리 점
+}
+
+/// 폰 v3 집중 중 차오름 모션 (docs/v3/app-design-spec.md §5). 전력 예산 때문에 프레임을 제한한다.
+abstract class FillMotion {
+  static const frame = Duration(milliseconds: 42); // 약 24fps
+  static const waveBackAmp = 10.0;
+  static const waveBackPeriod = 7.0; // 초
+  static const waveOvershoot = 20.0; // 가득 찰 때 물결 골까지 덮는 여유
+  static const waveFrontAmp = 6.0;
+  static const waveFrontPeriod = 4.0;
+  static const iceBob = 3.0; // 얼음이 위아래로 떠다니는 폭
+  static const iceBobPeriod = 5.0;
+  static const treeSwayDeg = 2.0;
+  static const treeSwayPeriod = 6.0;
+  static const forestRows = 9; // 아래(가까움)부터 위(멀리)까지 줄
+  static const treeNear = 170.0; // 맨 앞 줄 나무 높이 (폭 402 기준)
+  static const treeFar = 84.0; // 맨 뒤 줄
+  static const treeGrow = 0.2; // 한 그루가 다 자라는 데 걸리는 진행 비율
+  static const nightFadeIn = 0.04; // 평소 바탕 → 남색으로 넘어가는 구간
+  static const starPeriod = 8.0;
+  static const starRadius = 1.8;
+  static const starCount = 110;
+  static const brightStarEvery = 11; // 이 간격마다 빛나는 큰 별
+  static const shootingPeriod = 14.0; // 별똥별 간격 (초)
+  static const shootingDuration = 0.9;
+  static const waveFarPeriod = 11.0;
+  static const rayPeriod = 9.0;
+  static const fishSpeed = 16.0; // pt/초
+  static const bubbleCount = 16;
+  static const bubbleSpeed = 34.0; // pt/초
+  static const pollenCount = 18;
+  static const leafCount = 8;
+  static const leafSpeed = 26.0; // pt/초
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
 import '../../models/collection.dart';
+import '../../models/growth.dart';
 import '../../models/focus_title.dart';
 import '../../state/app_state.dart';
 import '../share/share_card.dart';
@@ -355,6 +356,24 @@ class _MemoBodyState extends State<_MemoBody> {
 }
 
 /// 보상: 친구 팝(.85→1 easeOutBack) + 햅틱, 물방울
+class _RewardRow extends StatelessWidget {
+  const _RewardRow({required this.style, required this.text});
+  final SceneStyle style;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minHeight: MobileSize.row),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+            color: style.cardBg,
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
+        child: Text(text,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: style.textStrong)),
+      );
+}
+
 Future<void> showRewardSheet(BuildContext context) {
   final s = context.read<AppState>();
   final r = s.lastReward;
@@ -387,7 +406,7 @@ Future<void> showRewardSheet(BuildContext context) {
             child: Image.asset(c.asset, width: 144, height: 144),
           ),
         if (c != null)
-          Text('${c.name}이(가) 왔어요',
+          Text(c.isStarter ? '${c.name}와(과) 함께 집중했어요' : '${c.name}이(가) 왔어요',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -402,6 +421,36 @@ Future<void> showRewardSheet(BuildContext context) {
           child: Text('💧 물방울 +$drops',
               style: TextStyle(fontSize: 16, color: style.textStrong)),
         ),
+        if (MapNode.levelOf(s.xp - r.minutes) != s.level) ...[
+          const SizedBox(height: 8),
+          _RewardRow(style: style, text: '레벨 업! 이제 Lv.${s.level}'),
+        ],
+        for (final g in s.lastQuestRewards) ...[
+          const SizedBox(height: 8),
+          _RewardRow(
+            style: style,
+            text: switch (g.kind) {
+              QuestKind.firstSession => '오늘 첫 집중 · 물방울 +${g.drops}',
+              QuestKind.dailyGoal => '오늘 목표 달성 · 물방울 +${g.drops}',
+              QuestKind.dailyLong =>
+                '오늘 ${g.kind.minutes}분 달성 · 물방울 +${g.drops}',
+              QuestKind.weeklyGoal =>
+                '이번 주 목표 달성 · 물방울 +${g.drops}${g.ice > 0 ? ' · 얼음 +${g.ice}' : ''}',
+              QuestKind.weeklyHalf || QuestKind.weeklyFull =>
+                '이번 주 ${g.kind.minutes}분 달성 · 물방울 +${g.drops}',
+            },
+          ),
+        ],
+        const SizedBox(height: 8),
+        _RewardRow(style: style, text: '연속 ${s.streakDays}일'),
+        if (c != null &&
+            CompanionStage.of(s.companionMinutes(c.id) - r.minutes) !=
+                s.companionStage(c.id)) ...[
+          const SizedBox(height: 8),
+          _RewardRow(
+              style: style,
+              text: '${c.name}이(가) ${s.companionStage(c.id).label}이 됐어요'),
+        ],
         if (r.taskId.isNotEmpty &&
             s.pendingTasks.any((t) => t.id == r.taskId)) ...[
           const SizedBox(height: 8),

@@ -4,6 +4,8 @@
 // 비상 탈출은 감점, 칭호는 서버가 인정한 누적 분 total_minutes 기준).
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/league.dart';
+
 enum RankPeriod { week, month, all }
 
 typedef RankRow = ({
@@ -102,6 +104,38 @@ class RankingService {
           draws: (r['draws'] as num).toInt(),
         )
     ];
+  }
+
+  // ---- 주간 리그 (점수는 서버 시계로 잰 세션만) ----
+  Future<LeagueStatus> leagueStatus() async {
+    await _signIn();
+    final j = await _db.rpc('league_status') as Map<String, dynamic>;
+    return LeagueStatus.fromJson(j);
+  }
+
+  /// 서버 오류: join first (명예의 전당 닉네임 필요)
+  Future<void> joinLeague() async {
+    await _signIn();
+    await _db.rpc('join_league');
+  }
+
+  Future<void> leaveLeague() async {
+    await _signIn();
+    await _db.rpc('leave_league');
+  }
+
+  Future<void> beginFocus(String sessionId, int plannedSec) async {
+    await _signIn();
+    await _db.rpc('begin_focus_v3',
+        params: {'p_session': sessionId, 'p_planned_sec': plannedSec});
+  }
+
+  /// 인정된 분을 돌려준다. 예약이 없거나 마감이 지났으면 0. 서버 오류: too early
+  Future<int> finishFocus(String sessionId) async {
+    await _signIn();
+    return (await _db.rpc('finish_focus_v3', params: {'p_session': sessionId})
+            as num)
+        .toInt();
   }
 
   Future<void> removeFriend(String code) async {

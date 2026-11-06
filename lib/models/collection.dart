@@ -2,6 +2,7 @@
 // 폰 v1: 태그 · 친구(수집) · 장식 · 풍경 배치 · 재화(물방울).
 // 경제 규칙은 docs/mobile/app-design-spec.md §6 — 완료한 실집중 1분당 물방울 1, 세션당 친구 1.
 import '../core/design_tokens.dart';
+import 'growth.dart';
 
 class Tag {
   final String id;
@@ -25,7 +26,8 @@ class Tag {
       );
 }
 
-/// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분.
+/// 수집 친구 카탈로그 (코드 상수). 해금 = 그 장면에서 완료한 누적 집중 분, 또는 전체 100시간.
+/// 해금 0분 = 기본 친구: 처음부터 캐릭터당 1명 있다.
 class Companion {
   final String id; // 에셋 파일명과 같음
   final FocusScene scene;
@@ -35,24 +37,48 @@ class Companion {
   const Companion(this.id, this.scene, this.name, this.unlockMinutes);
 
   String get asset => 'assets/mobile/companions/$id.webp';
+  bool get isStarter => unlockMinutes == 0;
+
+  /// 이만큼 집중하면 장면과 상관없이 모두 해금 (장면별 끝 조건 1500분 × 4)
+  static const unlockAllMinutes = 6000;
 
   static const all = [
     Companion('fawn', FocusScene.forest, '새싹사슴', 0),
-    Companion('squirrel', FocusScene.forest, '이끼다람', 60),
-    Companion('fox', FocusScene.forest, '잎새여우', 180),
-    Companion('bear', FocusScene.forest, '숲곰', 360),
+    Companion('butterfly', FocusScene.forest, '꽃잎나비', 150),
+    Companion('squirrel', FocusScene.forest, '이끼다람', 300),
+    Companion('frog', FocusScene.forest, '버섯개구리', 450),
+    Companion('fox', FocusScene.forest, '잎새여우', 600),
+    Companion('snail', FocusScene.forest, '덩굴달팽이', 800),
+    Companion('bear', FocusScene.forest, '숲곰', 1000),
+    Companion('boar', FocusScene.forest, '솔방울멧돼지', 1250),
+    Companion('badger', FocusScene.forest, '단풍오소리', 1500),
     Companion('rabbit', FocusScene.night, '달토끼', 0),
-    Companion('owl', FocusScene.night, '별부엉', 60),
-    Companion('firefly', FocusScene.night, '반딧불', 180),
-    Companion('cat', FocusScene.night, '꿈고양', 360),
+    Companion('bat', FocusScene.night, '별박쥐', 150),
+    Companion('owl', FocusScene.night, '별부엉', 300),
+    Companion('moth', FocusScene.night, '달빛나방', 450),
+    Companion('firefly', FocusScene.night, '반딧불', 600),
+    Companion('sheep', FocusScene.night, '구름양', 800),
+    Companion('cat', FocusScene.night, '꿈고양', 1000),
+    Companion('fennec', FocusScene.night, '별빛사막여우', 1250),
+    Companion('wolf', FocusScene.night, '은하늑대', 1500),
     Companion('whale', FocusScene.ocean, '물결고래', 0),
-    Companion('turtle', FocusScene.ocean, '파도거북', 60),
-    Companion('octopus', FocusScene.ocean, '방울문어', 180),
-    Companion('ray', FocusScene.ocean, '구름가오리', 360),
+    Companion('crab', FocusScene.ocean, '모래게', 150),
+    Companion('turtle', FocusScene.ocean, '파도거북', 300),
+    Companion('seahorse', FocusScene.ocean, '산호해마', 450),
+    Companion('octopus', FocusScene.ocean, '방울문어', 600),
+    Companion('puffer', FocusScene.ocean, '풍선복어', 800),
+    Companion('ray', FocusScene.ocean, '구름가오리', 1000),
+    Companion('otter', FocusScene.ocean, '조개수달', 1250),
+    Companion('penguin', FocusScene.ocean, '얼음펭귄', 1500),
     Companion('puppy', FocusScene.daily, '라떼멍', 0),
-    Companion('hamster', FocusScene.daily, '책햄찌', 60),
-    Companion('raccoon', FocusScene.daily, '기차너구리', 180),
-    Companion('hedgehog', FocusScene.daily, '캠프도치', 360),
+    Companion('duck', FocusScene.daily, '우산오리', 150),
+    Companion('hamster', FocusScene.daily, '책햄찌', 300),
+    Companion('loafcat', FocusScene.daily, '식빵냥', 450),
+    Companion('raccoon', FocusScene.daily, '기차너구리', 600),
+    Companion('alpaca', FocusScene.daily, '뜨개알파카', 800),
+    Companion('hedgehog', FocusScene.daily, '캠프도치', 1000),
+    Companion('panda', FocusScene.daily, '도시락판다', 1250),
+    Companion('koala', FocusScene.daily, '자전거코알라', 1500),
   ];
 
   static Companion? byId(String? id) =>
@@ -60,6 +86,12 @@ class Companion {
 
   static List<Companion> of(FocusScene s) =>
       all.where((c) => c.scene == s).toList();
+
+  /// 꾸미기 친구칸 순서: 기본 친구 → 나머지는 해금이 빠른 순
+  static List<Companion> get forScenery => [
+        for (final minutes in {for (final c in all) c.unlockMinutes}.toList()..sort())
+          ...all.where((c) => c.unlockMinutes == minutes)
+      ];
 }
 
 /// 상점 장식 (그림은 코드로). 가격 = 물방울.
@@ -117,12 +149,14 @@ class Progress {
   final String? currentTagId;
   final String? selectedCompanionId; // 다음 세션에 데려올 친구
   final Map<String, int> owned; // 친구·장식 id → 보유 수
-  final Map<String, List<Placement>> placements; // 장면 이름 → 배치
+  final Map<String, List<Placement>> placements; // 꾸미기 배치 ([boardKey] 하나, 예전 파일은 장면별)
+  static const boardKey = 'board';
   final int drops;
   final bool lockEnabled; // 집중 중 앱 잠금 (권한·선택은 OS 쪽)
   final String soundId; // 'scene'(장면 기본) | 장면별 상황 소리 id | 'white' | 'brown'
   final int escapeSpent; // 비상 탈출에 쓴 물방울 누계 — 랭킹 점수에서 뺀다
   final String? rankNickname; // 랭킹 참여 닉네임 (null = 참여 안 함)
+  final Growth growth; // 목표·연속일·얼음 (v3)
 
   const Progress({
     this.tags = const [Tag(id: 'general', name: '미분류')],
@@ -135,7 +169,38 @@ class Progress {
     this.soundId = 'scene',
     this.escapeSpent = 0,
     this.rankNickname,
+    this.growth = const Growth(),
   });
+
+  /// 꾸미기는 풍경 하나: 장면별로 저장된 예전 배치를 모두 모은다. 칸이 겹치면 빈 칸으로 옮기고,
+  /// 기본 친구는 1명만 남긴다. 칸이 모자라면 남는 것은 보관함에 그대로 있다.
+  Progress withSingleBoard() {
+    if (placements.keys.every((k) => k == boardKey)) return this;
+    final merged = <Placement>[];
+    final waiting = <Placement>[];
+    final taken = <(int, int)>{};
+    final starters = <String>{};
+    for (final key in [
+      if (placements.containsKey(boardKey)) boardKey,
+      ...placements.keys.where((k) => k != boardKey),
+    ]) {
+      for (final p in placements[key]!) {
+        if (Companion.byId(p.itemId)?.isStarter == true &&
+            !starters.add(p.itemId)) {
+          continue;
+        }
+        (taken.add((p.x, p.y)) ? merged : waiting).add(p);
+      }
+    }
+    for (var y = 0; y < Placement.grid && waiting.isNotEmpty; y++) {
+      for (var x = 0; x < Placement.grid && waiting.isNotEmpty; x++) {
+        if (taken.add((x, y))) {
+          merged.add(Placement(waiting.removeAt(0).itemId, x, y));
+        }
+      }
+    }
+    return copyWith(placements: {boardKey: merged});
+  }
 
   Progress copyWith({
     List<Tag>? tags,
@@ -148,6 +213,7 @@ class Progress {
     String? soundId,
     int? escapeSpent,
     String? Function()? rankNickname,
+    Growth? growth,
   }) =>
       Progress(
         tags: tags ?? this.tags,
@@ -163,6 +229,7 @@ class Progress {
         escapeSpent: escapeSpent ?? this.escapeSpent,
         rankNickname:
             rankNickname != null ? rankNickname() : this.rankNickname,
+        growth: growth ?? this.growth,
       );
 
   Map<String, dynamic> toJson() => {
@@ -177,6 +244,7 @@ class Progress {
         'soundId': soundId,
         'escapeSpent': escapeSpent,
         'rankNickname': rankNickname,
+        'growth': growth.toJson(),
       };
 
   factory Progress.fromJson(Map<String, dynamic> j) => Progress(
@@ -200,5 +268,6 @@ class Progress {
         soundId: j['soundId'] as String? ?? 'scene',
         escapeSpent: j['escapeSpent'] as int? ?? 0,
         rankNickname: j['rankNickname'] as String?,
+        growth: Growth.fromJson(j['growth'] as Map<String, dynamic>?),
       );
 }
