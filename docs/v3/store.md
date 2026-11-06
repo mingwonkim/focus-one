@@ -69,7 +69,7 @@ Fokko는 산만해지기 쉬운 사람, 특히 ADHD인 사람을 위해 만든 �
 • 할 일과 기록은 기기 안에만 저장돼요. 명예의 전당·리그·대결에 참여하면 닉네임과 집중 시간 등이 서버에 올라가요
 • 광고와 추적이 없어요
 
-문의: harujon@looinlabs.com
+문의: develop@looinlabs.com
 <!-- limit:4000 end -->
 
 ## 업데이트 내용 (App Store · 이후 Play)
