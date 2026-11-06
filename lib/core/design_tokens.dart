@@ -417,6 +417,18 @@ abstract class FillMotion {
   static const nightFadeIn = 0.04; // 평소 바탕 → 남색으로 넘어가는 구간
   static const starPeriod = 8.0;
   static const starRadius = 1.8;
+  static const starCount = 110;
+  static const brightStarEvery = 11; // 이 간격마다 빛나는 큰 별
+  static const shootingPeriod = 14.0; // 별똥별 간격 (초)
+  static const shootingDuration = 0.9;
+  static const waveFarPeriod = 11.0;
+  static const rayPeriod = 9.0;
+  static const fishSpeed = 16.0; // pt/초
+  static const bubbleCount = 16;
+  static const bubbleSpeed = 34.0; // pt/초
+  static const pollenCount = 18;
+  static const leafCount = 8;
+  static const leafSpeed = 26.0; // pt/초
 }
 
 /// 미니 위젯 / 확장 패널 창 크기 규격 (시안 규격)

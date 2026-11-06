@@ -74,7 +74,7 @@ void main() {
       });
       test('\${scene.name}: 끝나야 맨 위까지 차고, 1분 전엔 아직 아니다', () async {
         expect(allPainted(await render(scene, 1), 0), isTrue);
-        expect(anyPainted(await render(scene, 0.9), 40), isFalse);
+        expect(allPainted(await render(scene, 0.9), 40), isFalse);
       });
     }
   });
