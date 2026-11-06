@@ -148,6 +148,115 @@ class _RingPainter extends CustomPainter {
       old.ring != ring || old.scale != scale;
 }
 
+/// 지도 칭호 칸 테두리: 칭호별 장식 + 그라데이션 링. 닿기 전에는 흐리게 보여 준다.
+class TitleFramePainter extends CustomPainter {
+  const TitleFramePainter(
+      {required this.ring, required this.reached, this.ornamentGap = 6});
+
+  final TitleRing ring;
+  final bool reached;
+  final double ornamentGap; // 칸 가장자리에서 장식까지
+
+  static final _leaf = Path()
+    ..moveTo(0, 0.9)
+    ..quadraticBezierTo(0.8, 0, 0, -1)
+    ..quadraticBezierTo(-0.8, 0, 0, 0.9);
+  static final _crescent = Path.combine(
+      PathOperation.difference,
+      Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: 1)),
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(0.42, -0.2), radius: 0.8)));
+  static final _star = Path()
+    ..addPolygon(const [
+      Offset(0, -1.2),
+      Offset(0.26, -0.26),
+      Offset(1.2, 0),
+      Offset(0.26, 0.26),
+      Offset(0, 1.2),
+      Offset(-0.26, 0.26),
+      Offset(-1.2, 0),
+      Offset(-0.26, -0.26),
+    ], true);
+  static final _ray = Path()
+    ..addPolygon(const [Offset(-0.5, 0.8), Offset(0, -1.1), Offset(0.5, 0.8)], true);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final radius = size.shortestSide / 2;
+    final u = size.shortestSide / MobileSize.mapNodeBig;
+    final alpha = reached ? 1.0 : 0.5;
+    Color tone(int i) => ring.colors[i % ring.colors.length].withValues(alpha: alpha);
+
+    for (final o in ring.ornaments) {
+      final far = radius + ornamentGap * u;
+      for (var i = 0; i < o.count; i++) {
+        final a = 2 * math.pi * i / o.count - math.pi / 2;
+        final paint = Paint()..color = tone(i);
+        final at = c + Offset(math.cos(a), math.sin(a)) * far;
+        canvas.save();
+        canvas.translate(at.dx, at.dy);
+        canvas.rotate(a + math.pi / 2); // 바깥을 향한다
+        switch (o.shape) {
+          case TitleOrnamentShape.dot:
+            canvas.drawCircle(Offset.zero, 2.2 * u, paint);
+          case TitleOrnamentShape.leaf:
+            canvas.scale(5.5 * u);
+            canvas.drawPath(_leaf, paint);
+          case TitleOrnamentShape.crescent:
+            canvas.scale(6 * u);
+            canvas.drawPath(_crescent, paint);
+          case TitleOrnamentShape.star:
+            canvas.scale(5.5 * u);
+            canvas.drawPath(_star, paint);
+          case TitleOrnamentShape.scallop:
+            canvas.translate(0, 3 * u);
+            canvas.drawCircle(Offset.zero, 7 * u, paint);
+          case TitleOrnamentShape.bubble:
+            canvas.drawCircle(
+                Offset.zero,
+                (i.isEven ? 3.2 : 1.8) * u,
+                paint
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = 1.4 * u);
+          case TitleOrnamentShape.ray:
+            canvas.scale(5.5 * u);
+            canvas.drawPath(_ray, paint);
+        }
+        canvas.restore();
+      }
+    }
+
+    final w = ring.width * 1.3 * u;
+    final r = radius - w / 2;
+    final rect = Rect.fromCircle(center: c, radius: r);
+    Paint stroke(double width) {
+      final p = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width;
+      if (ring.colors.length == 1) {
+        p.color = tone(0);
+      } else {
+        p.shader = SweepGradient(colors: [
+          for (final x in [...ring.colors, ring.colors.first])
+            x.withValues(alpha: alpha)
+        ]).createShader(rect);
+      }
+      return p;
+    }
+
+    if (reached && ring.glow > 0) {
+      canvas.drawCircle(c, r,
+          stroke(w * 1.6)..maskFilter = MaskFilter.blur(BlurStyle.normal, ring.glow * u));
+    }
+    canvas.drawCircle(c, r, stroke(w));
+  }
+
+  @override
+  bool shouldRepaint(TitleFramePainter o) =>
+      o.ring != ring || o.reached != reached || o.ornamentGap != ornamentGap;
+}
+
 /// 칭호 배지: 메달 아이콘 + 칭호 이름을 칭호 링 색 그라데이션 알약에 담는다.
 /// 숫자 레벨 대신 "이건 칭호다"가 한눈에 보이게. 행·프로필·승급·대결 공통.
 class TitleBadge extends StatelessWidget {

@@ -91,6 +91,23 @@ void main() {
     st.dispose();
   });
 
+  test('칭호 칸 글자는 칭호 색 위에서 읽힌다, 장식은 칭호마다 다르다', () {
+    double contrast(Color a, Color b) {
+      final x = a.computeLuminance(), y = b.computeLuminance();
+      return ((x > y ? x : y) + 0.05) / ((x > y ? y : x) + 0.05);
+    }
+
+    for (final r in TitleRings.all) {
+      expect(contrast(r.colors.first, r.onFill), greaterThanOrEqualTo(4.5),
+          reason: '${r.colors.first}');
+    }
+    final looks = {
+      for (final r in TitleRings.all)
+        r.ornaments.map((o) => '${o.shape.name}${o.count}').join('+')
+    };
+    expect(looks, hasLength(TitleRings.all.length));
+  });
+
   testWidgets('지도 머리에 레벨과 다음 레벨까지 남은 분', (tester) async {
     final st = await seeded(tester, 40); // 30(Lv.2) 지나 65(Lv.3)까지
     await tester.binding.setSurfaceSize(const Size(402, 874));

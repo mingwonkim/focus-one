@@ -1,4 +1,6 @@
 // lib/core/design_tokens.dart
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// 디자인 토큰. 하드코딩 색상/매직넘버 금지 — 반드시 여기서 참조한다.
@@ -307,37 +309,96 @@ abstract class AppDuration {
   static const titleSpin = Duration(seconds: 6); // 높은 칭호 테두리 한 바퀴
 }
 
+/// 칭호 칸 테두리에 두르는 장식 모양
+enum TitleOrnamentShape { dot, leaf, crescent, star, scallop, bubble, ray }
+
+class TitleOrnament {
+  const TitleOrnament(this.shape, this.count);
+  final TitleOrnamentShape shape;
+  final int count;
+}
+
 /// 칭호 테두리 한 단계. 장면과 무관한 고정 색 = 칭호의 정체성.
 class TitleRing {
   const TitleRing(this.colors,
-      {required this.width, this.glow = 0, this.spin = false, this.stars = false});
+      {required this.width,
+      this.glow = 0,
+      this.spin = false,
+      this.stars = false,
+      this.ornaments = const []});
   final List<Color> colors; // 1색이면 단색, 2색 이상이면 원형 그라데이션
   final double width;
   final double glow; // 바깥 빛 번짐 반경 (0 = 없음)
   final bool spin; // 천천히 회전
   final bool stars; // 링 위 작은 별 3개 (마스터)
+  final List<TitleOrnament> ornaments; // 지도 칭호 칸 장식
+
+  /// 칭호 칸을 채우는 색 위에 올릴 글자색: 대비가 큰 쪽
+  Color get onFill {
+    final base = colors.first;
+    return _contrast(base, TitleRings.ink) >= _contrast(base, TitleRings.star)
+        ? TitleRings.ink
+        : TitleRings.star;
+  }
+
+  static double _contrast(Color a, Color b) {
+    final x = a.computeLuminance(), y = b.computeLuminance();
+    return (math.max(x, y) + 0.05) / (math.min(x, y) + 0.05);
+  }
 }
 
 /// FocusTitle.index 순 (씨앗 → 마스터). 숲 녹색 → 달빛 금·라벤더 → 바다 청록 → 금.
 abstract class TitleRings {
   static const all = <TitleRing>[
-    TitleRing([Color(0xFFB9C2BC)], width: 2),
-    TitleRing([Color(0xFF8FD3A6)], width: 2.5),
-    TitleRing([Color(0xFF52C47C), Color(0xFF8FE2AB)], width: 3),
-    TitleRing([Color(0xFF246B4B), Color(0xFF8FE2AB)], width: 3),
-    TitleRing([Color(0xFF246B4B), Color(0xFFE3C77F)], width: 3.5, glow: 6),
+    TitleRing([Color(0xFFB9C2BC)],
+        width: 2, ornaments: [TitleOrnament(TitleOrnamentShape.dot, 6)]),
+    TitleRing([Color(0xFF8FD3A6)],
+        width: 2.5, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 4)]),
+    TitleRing([Color(0xFF52C47C), Color(0xFF8FE2AB)],
+        width: 3, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 8)]),
+    TitleRing([Color(0xFF246B4B), Color(0xFF8FE2AB)],
+        width: 3, ornaments: [TitleOrnament(TitleOrnamentShape.leaf, 12)]),
+    TitleRing([Color(0xFF246B4B), Color(0xFFE3C77F)],
+        width: 3.5,
+        glow: 6,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.leaf, 8),
+          TitleOrnament(TitleOrnamentShape.dot, 8),
+        ]),
     TitleRing([Color(0xFFE3C77F), Color(0xFFFFF3C4), Color(0xFFC2B4ED)],
-        width: 3.5, glow: 8),
+        width: 3.5,
+        glow: 8,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.crescent, 4),
+          TitleOrnament(TitleOrnamentShape.dot, 8),
+        ]),
     TitleRing([Color(0xFFC2B4ED), Color(0xFFE3C77F), Color(0xFF8FA8FF)],
-        width: 4, glow: 10, spin: true),
+        width: 4,
+        glow: 10,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.star, 8)]),
     TitleRing([Color(0xFF7CBFE7), Color(0xFF3585BD), Color(0xFF9EE6E0)],
-        width: 4, glow: 10, spin: true),
+        width: 4,
+        glow: 10,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.scallop, 14)]),
     TitleRing([Color(0xFF142F40), Color(0xFF3585BD), Color(0xFF9EE6E0)],
-        width: 4.5, glow: 12, spin: true),
+        width: 4.5,
+        glow: 12,
+        spin: true,
+        ornaments: [TitleOrnament(TitleOrnamentShape.bubble, 12)]),
     TitleRing([Color(0xFFB98A2E), Color(0xFFFFF3C4), Color(0xFFE3C77F)],
-        width: 5, glow: 16, spin: true, stars: true),
+        width: 5,
+        glow: 16,
+        spin: true,
+        stars: true,
+        ornaments: [
+          TitleOrnament(TitleOrnamentShape.ray, 12),
+          TitleOrnament(TitleOrnamentShape.star, 4),
+        ]),
   ];
   static const star = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF14211B); // 밝은 칭호 색 위 글자
 }
 
 /// 폰 레이아웃 치수 (docs/mobile/app-design-spec.md §1~2)

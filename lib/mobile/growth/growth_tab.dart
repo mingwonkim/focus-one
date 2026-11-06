@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/design_tokens.dart';
 import '../../core/scene_decorations.dart';
+import '../../models/focus_title.dart';
 import '../../models/growth.dart';
 import '../../state/app_state.dart';
 import '../focus/sheets.dart';
@@ -134,11 +135,25 @@ class _MapViewState extends State<_MapView> {
     final level = s.level;
     final reached = MapNode.all[level - 1];
     final next = level < MapNode.all.length ? MapNode.all[level] : null;
+    final ring = TitleRings.all[title.index];
     return Column(children: [
       Container(
         margin: const EdgeInsets.symmetric(horizontal: MobileSize.gutter),
+        padding: EdgeInsets.all(ring.width),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          gradient: LinearGradient(colors: [
+            ring.colors.first,
+            ring.colors.last,
+          ]),
+          boxShadow: AppShadow.card(style.rowShadow),
+        ),
+        child: Container(
         padding: const EdgeInsets.all(MobileSize.cardPadding),
-        decoration: _card(style),
+        decoration: BoxDecoration(
+          color: style.rowBg,
+          borderRadius: BorderRadius.circular(AppRadius.lg - ring.width),
+        ),
         child: Row(children: [
           TitleBadge(
               title: title,
@@ -171,6 +186,7 @@ class _MapViewState extends State<_MapView> {
                 ]),
           ),
         ]),
+        ),
       ),
       Expanded(
         child: ListView.builder(
@@ -250,8 +266,10 @@ class _MapRow extends StatelessWidget {
     final label = big
         ? 'Lv.${node.level}, 칭호 ${node.title!.label}'
         : 'Lv.${node.level}';
+    // 칸은 자기가 속한 칭호 구간의 색을 입는다
+    final zone = TitleRings.all[FocusTitle.of(node.xp).index];
     final numberColor = done
-        ? AppColors.onPrimary
+        ? zone.onFill
         : (isCurrent ? style.accent : style.textFaint);
     return Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
       Positioned.fill(
@@ -259,7 +277,7 @@ class _MapRow extends StatelessWidget {
           painter: _LinkPainter(
             from: dx,
             to: _mapOffset(index + 1),
-            color: done ? style.ringProgress : style.ringTrack,
+            color: done ? zone.colors.first : style.ringTrack,
             last: index == MapNode.all.length - 1,
           ),
         ),
@@ -285,10 +303,17 @@ class _MapRow extends StatelessWidget {
                     : null,
                 child: Padding(
                   padding: EdgeInsets.all(isCurrent ? 6 : 0),
-                  child: DecoratedBox(
+                  child: CustomPaint(
+                    foregroundPainter: big
+                        ? TitleFramePainter(
+                            ring: zone,
+                            reached: done,
+                            ornamentGap: isCurrent ? 12 : 6)
+                        : null,
+                    child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: done ? style.ringProgress : style.rowBg,
+                      color: done ? zone.colors.first : style.rowBg,
                       boxShadow: AppShadow.card(style.rowShadow),
                     ),
                     child: Padding(
@@ -297,8 +322,12 @@ class _MapRow extends StatelessWidget {
                         fit: BoxFit.scaleDown,
                         child: Column(mainAxisSize: MainAxisSize.min, children: [
                           if (big)
-                            Icon(Icons.military_tech_rounded,
-                                size: size * 0.34, color: numberColor),
+                            Icon(
+                                zone.stars
+                                    ? Icons.auto_awesome_rounded
+                                    : Icons.military_tech_rounded,
+                                size: size * 0.34,
+                                color: done ? numberColor : zone.colors.first),
                           Text('${node.level}',
                               style: TextStyle(
                                   fontSize: 20,
@@ -306,6 +335,7 @@ class _MapRow extends StatelessWidget {
                                   color: numberColor)),
                         ]),
                       ),
+                    ),
                     ),
                   ),
                 ),
@@ -316,12 +346,12 @@ class _MapRow extends StatelessWidget {
       ),
       if (big)
         Transform.translate(
-          offset: Offset(dx + chipSide * (size / 2 + MobileSize.cardGap), 0),
+          offset: Offset(dx + chipSide * (size / 2 + 18), 0), // 장식과 닿지 않게
           child: FractionalTranslation(
             translation: Offset(chipSide * 0.5, 0),
             child: ExcludeSemantics(
               child: _TitleChip(
-                  style: style, label: node.title!.label, reached: done),
+                  style: style, title: node.title!, reached: done),
             ),
           ),
         ),
@@ -338,28 +368,28 @@ class _MapRow extends StatelessWidget {
   }
 }
 
-/// 칭호 이름: 지도에서 가장 눈에 띄는 글자. 닿았으면 장면색을 채운다.
+/// 칭호 이름: 지도에서 가장 눈에 띄는 글자. 칭호 배지를 크게, 뒤 길이 비치지 않게 깔고 쓴다.
 class _TitleChip extends StatelessWidget {
   const _TitleChip(
-      {required this.style, required this.label, required this.reached});
+      {required this.style, required this.title, required this.reached});
   final SceneStyle style;
-  final String label;
+  final FocusTitle title;
   final bool reached;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: MobileSize.gridGap, vertical: MobileSize.labelGap),
+  Widget build(BuildContext context) => DecoratedBox(
         decoration: BoxDecoration(
-          color: reached ? style.ringProgress : style.rowBg,
+          color: style.rowBg,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.card(style.rowShadow),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: reached ? AppColors.onPrimary : style.textStrong)),
+        child: Opacity(
+          opacity: reached ? 1 : 0.72,
+          child: TitleBadge(
+              title: title,
+              textColor: style.textStrong,
+              height: MobileSize.badgeLarge),
+        ),
       );
 }
 
