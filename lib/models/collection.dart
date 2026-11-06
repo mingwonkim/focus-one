@@ -87,11 +87,14 @@ class Companion {
   static List<Companion> of(FocusScene s) =>
       all.where((c) => c.scene == s).toList();
 
-  /// 꾸미기 친구칸: 기본 친구 전부 + 이 장면에서 집중으로 만나는 친구
-  static List<Companion> forScenery(FocusScene s) => [
-        ...all.where((c) => c.isStarter),
-        ...all.where((c) => c.scene == s && !c.isStarter),
-      ];
+  /// 꾸미기 친구칸 순서: 이 장면 기본 친구 → 다른 기본 친구 → 이 장면 친구 → 나머지
+  static List<Companion> forScenery(FocusScene s) {
+    int rank(Companion c) =>
+        c.isStarter ? (c.scene == s ? 0 : 1) : (c.scene == s ? 2 : 3);
+    return [
+      for (final r in [0, 1, 2, 3]) ...all.where((c) => rank(c) == r)
+    ];
+  }
 }
 
 /// 상점 장식 (그림은 코드로). 가격 = 물방울.

@@ -324,8 +324,9 @@ void main() {
       expect(st.place(FocusScene.daily, 'whale', 0, 0), isTrue,
           reason: '기본 친구는 다른 장면에도 놓는다');
       final ocean = Companion.forScenery(FocusScene.ocean).map((c) => c.id);
-      expect(ocean, containsAll(['fawn', 'rabbit', 'whale', 'puppy', 'ray']));
-      expect(ocean, isNot(contains('bear')), reason: '다른 장면 친구는 안 나온다');
+      expect(ocean.take(4).toList(), ['whale', 'fawn', 'rabbit', 'puppy'],
+          reason: '이 장면 기본 친구가 맨 앞');
+      expect(ocean.toSet(), hasLength(36), reason: '모든 친구가 나온다');
       st.dispose();
     });
 
@@ -334,6 +335,38 @@ void main() {
       st = await focus(st, day(0), 25); // 새싹사슴과 함께
       st = await focus(st, day(1), 25);
       expect(st.ownedCount('fawn'), 1);
+      st.dispose();
+    });
+
+    test('기본 친구는 다른 장면으로 옮기면 그 장면에서 빠지고, 수집 친구는 보유 수까지만', () async {
+      await LocalStore(file()).save(const StoreData(
+          tasks: [],
+          inbox: [],
+          sessions: [],
+          progress: Progress(owned: {
+            'bear': 1
+          }, placements: {
+            'daily': [Placement('puppy', 0, 0)],
+            'forest': [Placement('bear', 0, 0)],
+          })));
+      final st = await boot(monday);
+      expect(
+          st.setPlacements(FocusScene.ocean, const [Placement('puppy', 1, 1)]),
+          isTrue);
+      expect(st.placementsOf(FocusScene.daily), isEmpty);
+      expect(st.placementsOf(FocusScene.ocean).single.itemId, 'puppy');
+      expect(
+          st.setPlacements(FocusScene.ocean, const [
+            Placement('puppy', 1, 1),
+            Placement('puppy', 2, 1),
+          ]),
+          isFalse,
+          reason: '한 장면에 2명 불가');
+      expect(
+          st.setPlacements(FocusScene.night, const [Placement('bear', 1, 1)]),
+          isFalse,
+          reason: '수집 친구는 옮겨지지 않는다');
+      expect(st.placementsOf(FocusScene.forest).single.itemId, 'bear');
       st.dispose();
     });
 

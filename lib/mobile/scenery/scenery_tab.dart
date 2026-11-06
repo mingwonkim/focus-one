@@ -42,16 +42,60 @@ class _SceneryTabState extends State<SceneryTab> {
     });
   }
 
-  /// 편집 사본 기준 남은 수 = 보유 − (다른 장면 배치 + 사본 배치)
+  /// 이 친구가 놓인 다른 장면 수
+  int _elsewhere(AppState s, FocusScene scene, String id) => FocusScene.values
+      .where((x) => x != scene)
+      .expand(s.placementsOf)
+      .where((p) => p.itemId == id)
+      .length;
+
+  /// 편집 사본 기준 남은 수 = 보유 − (다른 장면 배치 + 사본 배치).
+  /// 기본 친구는 다른 장면에 있어도 이쪽으로 옮겨 올 수 있다.
   int _left(AppState s, FocusScene scene, String id) {
-    final elsewhere = FocusScene.values
-        .where((x) => x != scene)
-        .expand(s.placementsOf)
-        .where((p) => p.itemId == id)
-        .length;
+    final starter = Companion.byId(id)?.isStarter == true;
     final here =
         (_draft ?? s.placementsOf(scene)).where((p) => p.itemId == id).length;
-    return s.ownedCount(id) - elsewhere - here;
+    return s.ownedCount(id) - (starter ? 0 : _elsewhere(s, scene, id)) - here;
+  }
+
+  /// 기본 친구가 지금 놓인 다른 장면 이름
+  String? _placedScene(AppState s, FocusScene scene, String id) {
+    for (final x in FocusScene.values) {
+      if (x != scene && s.placementsOf(x).any((p) => p.itemId == id)) {
+        return x.style.sceneLabel;
+      }
+    }
+    return null;
+  }
+
+  Widget _friendCard(AppState s, FocusScene scene, SceneStyle style, Companion c) {
+    final left = _left(s, scene, c.id);
+    if (s.ownedCount(c.id) == 0) {
+      final open = s.isUnlocked(c);
+      return _StockCard(
+        style: style,
+        id: c.id,
+        name: open ? c.name : '???',
+        note: open
+            ? '집중하면 만나요'
+            : '${c.scene.style.sceneLabel} ${c.unlockMinutes - s.sceneMinutes(c.scene)}분 더',
+        locked: true,
+        picked: false,
+      );
+    }
+    final away = c.isStarter ? _placedScene(s, scene, c.id) : null;
+    return _StockCard(
+      style: style,
+      id: c.id,
+      name: c.name,
+      note: left <= 0
+          ? '모두 놓음'
+          : (away != null ? '$away에서 옮기기' : (c.isStarter ? null : '×$left')),
+      picked: _picked == c.id,
+      onTap: left > 0
+          ? () => setState(() => _picked = _picked == c.id ? null : c.id)
+          : null,
+    );
   }
 
   @override
@@ -61,12 +105,9 @@ class _SceneryTabState extends State<SceneryTab> {
     final style = scene.style;
     final editing = _draft != null;
     final placed = _draft ?? s.placementsOf(scene);
-    final items = _decorTab
-        ? Decor.all.where((d) => d.scene == scene).map((d) => (d.id, d.name))
-        : Companion.forScenery(scene).map((c) => (c.id, c.name));
-    final stock = [
-      for (final (id, name) in items)
-        if (s.ownedCount(id) > 0) (id, name)
+    final decor = [
+      for (final d in Decor.all)
+        if (d.scene == scene && s.ownedCount(d.id) > 0) d
     ];
 
     final kids = <Widget>[
@@ -183,11 +224,11 @@ class _SceneryTabState extends State<SceneryTab> {
             style: TextStyle(fontSize: 13, color: style.textMuted),
           ),
           const SizedBox(height: 8),
-          if (stock.isEmpty)
+          if (_decorTab && decor.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                _decorTab ? '상점에서 물방울로 장식을 살 수 있어요.' : '이 장면의 친구를 아직 못 만났어요.',
+                '상점에서 물방울로 장식을 살 수 있어요.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: style.textMuted),
               ),
@@ -200,18 +241,22 @@ class _SceneryTabState extends State<SceneryTab> {
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
               children: [
-                for (final (id, name) in stock)
-                  _StockCard(
-                    style: style,
-                    id: id,
-                    name: name,
-                    left: _left(s, scene, id),
-                    picked: _picked == id,
-                    onTap: _left(s, scene, id) > 0
-                        ? () =>
-                            setState(() => _picked = _picked == id ? null : id)
-                        : null,
-                  ),
+                if (_decorTab)
+                  for (final d in decor)
+                    _StockCard(
+                      style: style,
+                      id: d.id,
+                      name: d.name,
+                      note: '×${_left(s, scene, d.id)}',
+                      picked: _picked == d.id,
+                      onTap: _left(s, scene, d.id) > 0
+                          ? () => setState(
+                              () => _picked = _picked == d.id ? null : d.id)
+                          : null,
+                    )
+                else
+                  for (final c in Companion.forScenery(scene))
+                    _friendCard(s, scene, style, c),
               ],
             ),
           const SizedBox(height: 16),
@@ -346,13 +391,15 @@ class _StockCard extends StatelessWidget {
     required this.style,
     required this.id,
     required this.name,
-    required this.left,
     required this.picked,
+    this.note,
+    this.locked = false,
     this.onTap,
   });
   final SceneStyle style;
   final String id, name;
-  final int left;
+  final String? note;
+  final bool locked; // 아직 못 만남: 그림자로 보여 준다
   final bool picked;
   final VoidCallback? onTap;
 
@@ -361,7 +408,10 @@ class _StockCard extends StatelessWidget {
     return Semantics(
       button: true,
       selected: picked,
-      label: '$name $left개 남음',
+      enabled: onTap != null,
+      onTap: onTap,
+      label: note == null ? name : '$name, $note',
+      excludeSemantics: true,
       child: PressScale(
         onTap: onTap,
         child: Container(
@@ -373,11 +423,26 @@ class _StockCard extends StatelessWidget {
                 color: picked ? style.accent : Colors.transparent, width: 2),
           ),
           child: Column(children: [
-            Expanded(child: Image.asset(itemAsset(id))),
-            Text('$name ×$left',
+            Expanded(
+              child: locked
+                  ? ColorFiltered(
+                      colorFilter:
+                          ColorFilter.mode(style.divider, BlendMode.srcIn),
+                      child: Image.asset(itemAsset(id)))
+                  : Image.asset(itemAsset(id)),
+            ),
+            Text(name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: style.textStrong)),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: style.textStrong)),
+            if (note != null)
+              Text(note!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, color: style.textMuted)),
           ]),
         ),
       ),

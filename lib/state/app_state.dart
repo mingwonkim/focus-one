@@ -858,6 +858,7 @@ class AppState extends ChangeNotifier {
   }
 
   /// 편집 완료: 장면 배치를 한 번에 교체 (빈 칸·보유 수 검증 실패면 false, 아무것도 안 바꿈)
+  /// 기본 친구를 다른 장면에서 데려오면 그 장면에서는 빠진다.
   bool setPlacements(FocusScene s, List<Placement> list) {
     final cells = <(int, int)>{};
     final used = <String, int>{};
@@ -870,6 +871,10 @@ class AppState extends ChangeNotifier {
     }
     // 다른 장면에 놓인 것까지 합쳐 보유 수 이하
     for (final e in used.entries) {
+      if (Companion.byId(e.key)?.isStarter == true) {
+        if (e.value > 1) return false;
+        continue;
+      }
       final elsewhere = _progress.placements.entries
           .where((x) => x.key != s.name)
           .expand((x) => x.value)
@@ -877,8 +882,13 @@ class AppState extends ChangeNotifier {
           .length;
       if (e.value + elsewhere > ownedCount(e.key)) return false;
     }
-    _setProgress(_progress.copyWith(
-        placements: {..._progress.placements, s.name: List.of(list)}));
+    bool moved(Placement p) =>
+        used.containsKey(p.itemId) && Companion.byId(p.itemId)?.isStarter == true;
+    _setProgress(_progress.copyWith(placements: {
+      for (final e in _progress.placements.entries)
+        e.key: e.value.where((p) => !moved(p)).toList(),
+      s.name: List.of(list),
+    }));
     return true;
   }
 

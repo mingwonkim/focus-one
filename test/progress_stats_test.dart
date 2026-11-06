@@ -176,9 +176,9 @@ void main() {
     final b = await boot(t0.add(const Duration(hours: 1))); // 새싹사슴은 기본 1명 고정
     expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0), Placement('fawn', 1, 0)]), isFalse);
     expect(b.setPlacements(FocusScene.forest, const [Placement('fawn', 0, 0)]), isTrue);
-    expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isFalse); // 숲에 이미 놓음
-    expect(b.placementsOf(FocusScene.forest).single.x, 0);
-    expect(b.placementsOf(FocusScene.night), isEmpty);
+    expect(b.setPlacements(FocusScene.night, const [Placement('fawn', 2, 2)]), isTrue); // 기본 친구는 옮겨 온다
+    expect(b.placementsOf(FocusScene.forest), isEmpty);
+    expect(b.placementsOf(FocusScene.night).single.itemId, 'fawn');
     b.dispose();
   });
 
