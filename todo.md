@@ -195,6 +195,6 @@
 - [ ] 사용자: store.md의 [확인] 항목, 시연 영상 링크 등록, 동의·선언 제출
 - [x] iOS 1.1.0 (7) 심사 제출 — 11/06 18:27 WAITING_FOR_REVIEW, 승인 후 자동 출시, 제출 코드 d21da3b(growth-v3)
 - [ ] iOS 1.1.0 심사 결과 확인
-- [ ] growth-v3를 main에 병합 (제출한 코드가 아직 main에 없음)
+- [x] growth-v3를 main에 병합 (3441fa7), 워크트리 focus-one-v3와 브랜치 삭제 — 이후 main에서 작업
 - [ ] 사용자: ASC 앱 개인정보 항목 확인 (API로 볼 수 없음)
 
