@@ -125,8 +125,11 @@ class _SceneryTabState extends State<SceneryTab> {
                 // 위쪽 줄부터 그려 아래 줄이 앞에 오게
                 for (final p in [...placed]..sort((a, b) => a.y.compareTo(b.y)))
                   Positioned(
-                    left: p.x * cell - cell * 0.1,
-                    top: p.y * cell - cell * 0.25,
+                    // 그림이 칸보다 커도 풍경 밖으로 잘리지 않게
+                    left: (p.x * cell - cell * 0.1)
+                        .clamp(0.0, box.maxWidth - cell * 1.2),
+                    top: (p.y * cell - cell * 0.25)
+                        .clamp(0.0, box.maxWidth - cell * 1.2),
                     width: cell * 1.2,
                     height: cell * 1.2,
                     child: IgnorePointer(
