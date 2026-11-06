@@ -424,6 +424,7 @@ abstract class MobileSize {
   static const double mapSwing = 64; // 좌우로 흔들리는 폭
   static const double mapLink = 9; // 지나온 길
   static const double mapLinkFuture = 4; // 안 간 길(점선)
+  static const double mapLinkOver = 3; // 지나온 길 위에 덧칠하는 줄
   static const double mapDash = 7;
   static const double questCard = 88;
   static const double chest = 72;
