@@ -81,14 +81,18 @@ void main() {
     for (final d in ['grass', 'tree', 'bench', 'mug', 'books']) {
       s.buyDecor(d);
     }
-    s.setPlacements(const [
+    final placed = s.setPlacements(const [
       Placement('tree', 0, 0),
-      Placement('fawn', 2, 2),
-      Placement('squirrel', 4, 1),
-      Placement('grass', 1, 4),
-      Placement('bench', 3, 4),
-      Placement('fox', 5, 3),
+      Placement('fawn', 2, 1),
+      Placement('rabbit', 4, 1),
+      Placement('grass', 1, 3),
+      Placement('whale', 3, 3),
+      Placement('bench', 0, 5),
+      Placement('puppy', 2, 5),
+      Placement('mug', 4, 5),
     ]);
+    if (!placed) throw StateError('시드 배치 실패');
+    s.openChests(s.unopenedChests.toList()); // 지난 상자가 쌓인 화면은 실제 사용 모습이 아니다
     s.setScene(FocusScene.forest);
     s.selectTask(s.pendingTasks.firstWhere((t) => t.title.startsWith('기획서')).id);
     s.setDurationMinutes(50);
