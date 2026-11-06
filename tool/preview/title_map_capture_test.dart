@@ -47,7 +47,7 @@ void main() {
       final st = AppState(LocalStore(file));
       await tester.runAsync(st.init);
       st.setScene(scene);
-      const size = Size(402, 6400);
+      const size = Size(375, 6900);
       await tester.binding.setSurfaceSize(size);
       final key = GlobalKey();
       await tester.pumpWidget(ChangeNotifierProvider.value(

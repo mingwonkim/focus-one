@@ -191,6 +191,7 @@ class _MapViewState extends State<_MapView> {
       Expanded(
         child: ListView.builder(
           controller: _scroll,
+          padding: const EdgeInsets.symmetric(vertical: MobileSize.gridGap),
           itemExtent: MobileSize.mapRowHeight,
           itemCount: MapNode.all.length,
           itemBuilder: (context, i) {
@@ -234,7 +235,12 @@ class _LevelBar extends StatelessWidget {
       );
 }
 
-double _mapOffset(int i) => math.sin(i * math.pi / 3) * MobileSize.mapSwing;
+/// 칸의 좌우 위치. 가운데 오는 칭호 칸은 옆 글자가 화면을 넘지 않게 왼쪽으로 비킨다.
+double _mapOffset(int i) {
+  final dx = math.sin(i * math.pi / 3) * MobileSize.mapSwing;
+  final titled = i < MapNode.all.length && MapNode.all[i].title != null;
+  return titled && dx.abs() < 1 ? -MobileSize.mapSwing / 2 : dx;
+}
 
 class _MapRow extends StatelessWidget {
   const _MapRow({
@@ -326,12 +332,13 @@ class _MapRow extends StatelessWidget {
                                 zone.stars
                                     ? Icons.auto_awesome_rounded
                                     : Icons.military_tech_rounded,
-                                size: size * 0.34,
+                                size: size * 0.3,
                                 color: done ? numberColor : zone.colors.first),
                           Text('${node.level}',
                               style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: big ? 34 : 24,
+                                  height: 1.1,
+                                  fontWeight: FontWeight.w900,
                                   color: numberColor)),
                         ]),
                       ),
@@ -358,7 +365,7 @@ class _MapRow extends StatelessWidget {
       if (isCurrent)
         Transform.translate(
           // 칭호 칸이면 칭호 글자 반대쪽으로 비킨다
-          offset: Offset(dx + (big ? -chipSide : chipSide) * (size + 8), 0),
+          offset: Offset(dx + (big ? -chipSide : chipSide) * (size / 2 + 40), 0),
           child: ExcludeSemantics(
             child: Image.asset(companionAsset,
                 width: MobileSize.mapNode, height: MobileSize.mapNode),
@@ -388,7 +395,8 @@ class _TitleChip extends StatelessWidget {
           child: TitleBadge(
               title: title,
               textColor: style.textStrong,
-              height: MobileSize.badgeLarge),
+              height: MobileSize.mapTitleChip,
+              weight: FontWeight.w900),
         ),
       );
 }

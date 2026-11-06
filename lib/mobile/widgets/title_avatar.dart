@@ -264,11 +264,13 @@ class TitleBadge extends StatelessWidget {
       {super.key,
       required this.title,
       required this.textColor,
-      this.height = MobileSize.badge});
+      this.height = MobileSize.badge,
+      this.weight = FontWeight.w800});
 
   final FocusTitle title;
   final Color textColor;
   final double height;
+  final FontWeight weight;
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +305,7 @@ class TitleBadge extends StatelessWidget {
           Text(title.label,
               style: TextStyle(
                   fontSize: 12.5 * u,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: weight,
                   height: 1.1,
                   color: textColor)),
         ]),

@@ -11,6 +11,8 @@ import 'package:focus_one/data/local_store.dart';
 import 'package:focus_one/mobile/growth/companion_page.dart';
 import 'package:focus_one/mobile/growth/growth_tab.dart';
 import 'package:focus_one/models/collection.dart';
+import 'package:focus_one/mobile/widgets/title_avatar.dart';
+import 'package:focus_one/models/focus_title.dart';
 import 'package:focus_one/models/task.dart';
 import 'package:focus_one/state/app_state.dart';
 
@@ -106,6 +108,29 @@ void main() {
         r.ornaments.map((o) => '${o.shape.name}${o.count}').join('+')
     };
     expect(looks, hasLength(TitleRings.all.length));
+  });
+
+  testWidgets('작은 폰에서 칭호 글자가 모두 화면 안에 있다', (tester) async {
+    final st = await seeded(tester, 40000);
+    const size = Size(375, 7000);
+    await tester.binding.setSurfaceSize(size);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(app(st, size, 1, const GrowthTab()));
+    await tester.pump();
+    tester
+        .state<ScrollableState>(find.byType(Scrollable).last)
+        .position
+        .jumpTo(0);
+    await tester.pump();
+    final badges = find.byType(TitleBadge);
+    expect(badges, findsNWidgets(FocusTitle.values.length + 1)); // 상단 카드 포함
+    for (final e in badges.evaluate()) {
+      final box = e.renderObject! as RenderBox;
+      final left = box.localToGlobal(Offset.zero).dx;
+      expect(left, greaterThanOrEqualTo(0));
+      expect(left + box.size.width, lessThanOrEqualTo(size.width));
+    }
+    st.dispose();
   });
 
   testWidgets('지도 머리에 레벨과 다음 레벨까지 남은 분', (tester) async {

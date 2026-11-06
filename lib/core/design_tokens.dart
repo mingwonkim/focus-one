@@ -412,9 +412,10 @@ abstract class MobileSize {
   static const double cta = 52;
   static const double statIcon = 22;
   static const double goalBar = 8;
-  static const double mapRowHeight = 96;
+  static const double mapRowHeight = 104;
   static const double mapNode = 64;
-  static const double mapNodeBig = 80;
+  static const double mapNodeBig = 108;
+  static const double mapTitleChip = 42; // 지도 칭호 글자 배지
   static const double mapSwing = 64; // 좌우로 흔들리는 폭
   static const double mapLink = 6;
   static const double questCard = 88;
